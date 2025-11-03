@@ -8,8 +8,9 @@ Total test cases: ~15
 
 import pytest
 import pandas as pd
+import requests
 from datetime import datetime, timedelta
-from tests.conftest import load_real_fixture
+from tests.conftest import load_real_fixture_helper as load_real_fixture
 from src.data_collection.usgs_client import USGSClient
 
 

@@ -13,7 +13,7 @@ import pytest
 import pandas as pd
 from datetime import datetime, timedelta
 import time
-from tests.conftest import load_real_fixture
+from tests.conftest import load_real_fixture_helper as load_real_fixture
 from src.data_collection.wqp_client import WQPClient
 
 

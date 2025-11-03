@@ -17,7 +17,7 @@ from pathlib import Path
 # Fixture Loading Helpers
 # =============================================================================
 
-def load_real_fixture(filename):
+def load_real_fixture_helper(filename):
     """
     Load a REAL API response fixture captured from actual API calls.
 
@@ -31,6 +31,12 @@ def load_real_fixture(filename):
     with open(fixture_path, 'r') as f:
         fixture_data = json.load(f)
     return fixture_data['data']
+
+
+@pytest.fixture
+def load_real_fixture():
+    """Fixture that returns the helper function for loading real fixtures."""
+    return load_real_fixture_helper
 
 
 # =============================================================================

@@ -88,7 +88,7 @@ class TestPHScoring:
     def test_ph_none(self):
         """None pH should handle gracefully."""
         result = self.calculator.calculate_ph_score(None)
-        assert pd.isna(result)
+        assert pd.isna(wqi)
 
 
 class TestDissolvedOxygenScoring:
@@ -533,8 +533,8 @@ class TestOverallWQICalculation:
 
     def test_wqi_returns_tuple(self):
         """WQI calculation should return tuple of (wqi, scores, classification)."""
-        result = self.calculator.calculate_wqi(ph=7.0)
-        assert isinstance(result, tuple)
+        wqi, scores, classification = self.calculator.calculate_wqi(ph=7.0)
+        assert isinstance(wqi, tuple)
         assert len(result) == 3
         wqi, scores, classification = result
         assert isinstance(wqi, (int, float))
@@ -673,7 +673,7 @@ class TestWQICalculationNaNHandling:
 
     def test_calculate_wqi_nan_ph_via_pd_isna(self):
         """Test 91: Pass np.nan for ph, verify pd.isna check."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=np.nan,
             dissolved_oxygen=8.0,
             temperature=20.0,
@@ -682,12 +682,12 @@ class TestWQICalculationNaNHandling:
             conductance=500.0
         )
         # Should still calculate WQI without pH
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_nan_dissolved_oxygen(self):
         """Test 92: Pass np.nan for DO, verify skipped."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=np.nan,
             temperature=20.0,
@@ -695,12 +695,12 @@ class TestWQICalculationNaNHandling:
             nitrate=2.0,
             conductance=500.0
         )
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_nan_temperature(self):
         """Test 93: Pass np.nan for temp, verify skipped."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=8.0,
             temperature=np.nan,
@@ -708,12 +708,12 @@ class TestWQICalculationNaNHandling:
             nitrate=2.0,
             conductance=500.0
         )
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_nan_turbidity(self):
         """Test 94: Pass np.nan for turbidity, verify skipped."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=8.0,
             temperature=20.0,
@@ -721,12 +721,12 @@ class TestWQICalculationNaNHandling:
             nitrate=2.0,
             conductance=500.0
         )
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_nan_nitrate(self):
         """Test 95: Pass np.nan for nitrate, verify skipped."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=8.0,
             temperature=20.0,
@@ -734,12 +734,12 @@ class TestWQICalculationNaNHandling:
             nitrate=np.nan,
             conductance=500.0
         )
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_nan_conductance(self):
         """Test 96: Pass np.nan for conductance, verify skipped."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=8.0,
             temperature=20.0,
@@ -747,12 +747,12 @@ class TestWQICalculationNaNHandling:
             nitrate=2.0,
             conductance=np.nan
         )
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_all_nan_returns_nan(self):
         """Test 97: All params NaN → total_weight=0 → NaN."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=np.nan,
             dissolved_oxygen=np.nan,
             temperature=np.nan,
@@ -760,28 +760,28 @@ class TestWQICalculationNaNHandling:
             nitrate=np.nan,
             conductance=np.nan
         )
-        assert pd.isna(result)
+        assert pd.isna(wqi)
 
     def test_calculate_wqi_zero_total_weight_edge_case(self):
         """Test 98: Explicitly test total_weight == 0 path."""
         # All NaN should result in zero weight
-        result = self.calculator.calculate_wqi()
-        assert pd.isna(result)
+        wqi, scores, classification = self.calculator.calculate_wqi()
+        assert pd.isna(wqi)
 
     def test_calculate_wqi_ignores_extra_kwargs(self):
         """Test 99: Pass extra kwargs, verify ignored."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=8.0,
             extra_param=999,  # Should be ignored
             another_param="ignored"
         )
-        assert not pd.isna(result)
-        assert isinstance(result, (int, float))
+        assert not pd.isna(wqi)
+        assert isinstance(wqi, (int, float))
 
     def test_calculate_wqi_partial_params_with_nans(self):
         """Test 100: Mix of valid and NaN params."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,  # Valid
             dissolved_oxygen=np.nan,  # NaN
             temperature=20.0,  # Valid
@@ -790,12 +790,12 @@ class TestWQICalculationNaNHandling:
             conductance=np.nan  # NaN
         )
         # Should calculate with only the valid params
-        assert not pd.isna(result)
-        assert 0 <= result <= 100
+        assert not pd.isna(wqi)
+        assert 0 <= wqi <= 100
 
     def test_calculate_wqi_all_params_at_boundaries(self):
         """Test 101: Test with boundary values for all params."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,  # Ideal pH
             dissolved_oxygen=14.6,  # 100% saturation
             temperature=20.0,  # Ideal temperature
@@ -803,13 +803,13 @@ class TestWQICalculationNaNHandling:
             nitrate=0.0,  # No nitrate
             conductance=500.0  # Good conductance
         )
-        assert not pd.isna(result)
+        assert not pd.isna(wqi)
         # All parameters at good values should give high score
-        assert result > 90
+        assert wqi > 90
 
     def test_calculate_wqi_extremely_poor_all_params(self):
         """Test 102: All params worst case → score near 0."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=0.0,  # Extremely acidic
             dissolved_oxygen=0.0,  # No oxygen
             temperature=40.0,  # Very hot (20 degrees above ideal)
@@ -817,13 +817,13 @@ class TestWQICalculationNaNHandling:
             nitrate=100.0,  # Very high nitrate
             conductance=5000.0  # Very high conductance
         )
-        assert not pd.isna(result)
+        assert not pd.isna(wqi)
         # All poor parameters should give low score
-        assert result < 20
+        assert wqi < 20
 
     def test_calculate_wqi_extremely_good_all_params(self):
         """Test 103: All params ideal → score near 100."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,  # Ideal
             dissolved_oxygen=14.6,  # 100% sat
             temperature=20.0,  # Ideal
@@ -831,12 +831,12 @@ class TestWQICalculationNaNHandling:
             nitrate=0.5,  # Low
             conductance=500.0  # Good
         )
-        assert not pd.isna(result)
-        assert result > 90
+        assert not pd.isna(wqi)
+        assert wqi > 90
 
     def test_calculate_wqi_single_param_only(self):
         """Test 104: Only one param provided, rest NaN."""
-        result = self.calculator.calculate_wqi(
+        wqi, scores, classification = self.calculator.calculate_wqi(
             ph=7.0,
             dissolved_oxygen=np.nan,
             temperature=np.nan,
@@ -845,7 +845,7 @@ class TestWQICalculationNaNHandling:
             conductance=np.nan
         )
         # Should calculate with just pH
-        assert not pd.isna(result)
+        assert not pd.isna(wqi)
         # pH of 7.0 is ideal, should give 100
         assert result == 100.0
 
