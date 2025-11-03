@@ -88,7 +88,7 @@ class TestPHScoring:
     def test_ph_none(self):
         """None pH should handle gracefully."""
         result = self.calculator.calculate_ph_score(None)
-        assert pd.isna(wqi)
+        assert pd.isna(result)
 
 
 class TestDissolvedOxygenScoring:
@@ -533,8 +533,8 @@ class TestOverallWQICalculation:
 
     def test_wqi_returns_tuple(self):
         """WQI calculation should return tuple of (wqi, scores, classification)."""
-        wqi, scores, classification = self.calculator.calculate_wqi(ph=7.0)
-        assert isinstance(wqi, tuple)
+        result = self.calculator.calculate_wqi(ph=7.0)
+        assert isinstance(result, tuple)
         assert len(result) == 3
         wqi, scores, classification = result
         assert isinstance(wqi, (int, float))
@@ -847,7 +847,7 @@ class TestWQICalculationNaNHandling:
         # Should calculate with just pH
         assert not pd.isna(wqi)
         # pH of 7.0 is ideal, should give 100
-        assert result == 100.0
+        assert wqi == 100.0
 
     def test_calculate_wqi_none_vs_nan(self):
         """Test 105: Verify None is treated same as NaN."""

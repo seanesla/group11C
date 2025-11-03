@@ -1,6 +1,6 @@
 # Environmental & Water Quality Prediction - Implementation Plan
 
-## Project Status: ~80% Complete (Phase 4 Complete, Phase 5 Remaining)
+## Project Status: ~82% Complete (WQI Bugs Fixed, Kaggle Dataset Downloaded, ML Models Next)
 
 ### Todo List
 
@@ -13,14 +13,21 @@
 - [x] Build USGS NWIS API client for water quality data
 - [x] Build Water Quality Portal (WQP) API client
 - [x] Implement ZIP code to geolocation mapping
-- [ ] Integrate Kaggle Water Quality Dataset (deferred - not needed for MVP)
+- [x] Integrate Kaggle Water Quality Dataset (downloaded to data/raw/)
+- [x] Configure Kaggle API credentials
+- [x] Add kaggle.json to .gitignore
 
 #### Phase 3: Data Processing Pipeline ✓
 - [x] Implement Water Quality Index (WQI) calculation
 
-#### Phase 4: ML Model Development
-- [ ] Develop ML regression models for trend prediction
-- [ ] Develop classification models for safety assessment
+#### Phase 4: ML Model Development ← IN PROGRESS
+- [ ] Preprocess Kaggle dataset for ML training
+- [ ] Build classification model (safe/unsafe water quality)
+- [ ] Build regression model (WQI trend prediction)
+- [ ] Train and evaluate models with European data
+- [ ] Save trained models to data/models/
+- [ ] Integrate ML predictions into Streamlit app
+- [ ] Test ML models with real US data
 
 #### Phase 5: Streamlit Application ✓
 - [x] Build Streamlit web application with UI components
@@ -29,16 +36,16 @@
 - [x] Add error handling and user-friendly messages
 - [x] Test with real data (DC, NYC, SF, Anchorage)
 
-#### Phase 6: Testing & Validation ← IN PROGRESS
+#### Phase 6: Testing & Validation
 - [x] Set up pytest infrastructure and configuration
 - [x] Capture REAL API fixtures (no mocks)
-- [x] Write WQI Calculator tests (107 tests)
-- [x] Write ZIP Code Mapper tests (37 tests, 59% coverage)
-- [x] Write WQP API Client tests (50 tests, 17% coverage)
-- [x] Write USGS API Client tests (59 tests, 16% coverage)
+- [x] Write WQI Calculator tests (107 tests, ALL PASSING) ✓
+- [x] Write ZIP Code Mapper tests (37 tests, ALL PASSING) ✓
+- [x] Write WQP API Client tests (50 tests, ALL PASSING) ✓
+- [x] Write USGS API Client tests (59 tests, ALL PASSING) ✓
 - [x] Write Streamlit app helper function tests (59 tests, ALL PASSING) ✓
-- [ ] Fix 3 remaining WQI calculator test bugs (tuple unpacking issues)
-- [ ] Write Chrome DevTools E2E tests for Streamlit app (5 scenarios planned) ← NEXT
+- [x] Fix 3 WQI calculator test bugs (FIXED: test_ph_none, test_wqi_returns_tuple, test_calculate_wqi_single_param_only)
+- [ ] Write Chrome DevTools E2E tests for Streamlit app (5 scenarios planned)
 - [ ] Achieve 80%+ overall code coverage
 - [ ] Final validation and bug fixes
 
@@ -55,6 +62,8 @@
 **Team:** Group 11C (Joseann Boneo, Sean Esla, Zizwe Mtonga, Lademi Aromolaran)
 **Goal:** Build an ML system where users input ZIP codes to receive Water Quality Index (WQI) scores and trend predictions showing seasonal/annual water quality changes.
 
+**Critical Discovery:** Project proposal requires ML models trained on Kaggle (European) dataset and applied to US water quality data from USGS/WQP APIs. This is NOT merely a "real-time lookup tool" but requires actual predictive ML models.
+
 ### Critical Rules & Constraints (MUST FOLLOW)
 
 #### From .claude/CLAUDE.md:
@@ -70,6 +79,8 @@
 - User approved detailed test plans with specific test case requirements
 - Previous sessions: "test rigorously. test all edge cases and fix any bugs properly. no cutting corners."
 - User caught previous attempts to use mocks - **ABSOLUTELY FORBIDDEN**
+- **"did you cut corners?"** - User challenged implementation gaps, demanded full accountability
+- **"use kaggle for training anyways"** - User approved using European Kaggle dataset to train ML models despite US focus
 
 ### Current Environment
 - **OS:** macOS (Darwin 25.0.0)
@@ -146,21 +157,19 @@
    - Uses real fixtures via `load_real_fixture("real_wqp_responses/dc_full_data.json")['dataframe']`
    - **ALL 59 TESTS PASSING**
 
-### Current Test Results (After Phase 4 Completion)
+### Current Test Results (Session 2025-11-03 Update)
 
-**Total Tests:** 312 unit tests (excluding 4 integration tests)
+**Total Tests:** 312 unit tests (excluding 4 integration tests) - ALL PASSING ✅
 - test_streamlit_app.py: 59 tests ✓ ALL PASSING
-- test_wqi_calculator.py: 107 tests (104 passing, 3 with minor bugs)
-- test_zipcode_mapper.py: 37 tests ✓
-- test_wqp_client.py: 50 tests ✓
-- test_usgs_client.py: 59 tests ✓
-- Other tests: ~20 tests
+- test_wqi_calculator.py: 107 tests ✓ ALL PASSING (3 bugs FIXED this session)
+- test_zipcode_mapper.py: 37 tests ✓ ALL PASSING
+- test_wqp_client.py: 50 tests ✓ ALL PASSING
+- test_usgs_client.py: 59 tests ✓ ALL PASSING
 
-**Tests Added This Session:**
-- Phase 4: 59 Streamlit app helper function tests
-- Fixed 6 WQI NaN tests
-- Fixed test imports (requests, load_real_fixture)
-- Batch-fixed multiple WQI tests with Python script
+**This Session's Bug Fixes:**
+1. **test_ph_none** (line 91): Fixed `NameError: name 'wqi' is not defined` → Changed to `result`
+2. **test_wqi_returns_tuple** (lines 534-542): Fixed incorrect unpacking before type check → Use `result` variable
+3. **test_calculate_wqi_single_param_only** (line 850): Fixed `NameError: name 'result' is not defined` → Changed to `wqi`
 
 **Coverage Status:**
 - Overall: ~29% (needs improvement to reach 80%)
@@ -227,10 +236,41 @@
 5. `fetch_water_quality_data(zip_code, radius_miles, start_date, end_date) -> Tuple[Optional[pd.DataFrame], Optional[str]]`
 6. `calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[Dict], Optional[str]]`
 
+### Kaggle Dataset Integration (Session 2025-11-03)
+
+**Dataset Downloaded:** data/raw/waterPollution.csv (4.9 MB)
+- **Size:** 20,000 rows × 29 columns
+- **Time Range:** 1991-2017 (27 years of temporal data)
+- **Geographic Coverage:** European countries ONLY (France 48%, UK 20%, Spain 16%, Germany, Czech Republic, etc.)
+- **NO US DATA:** Dataset is exclusively European monitoring stations
+
+**Key Columns:**
+- `parameterWaterBodyCategory`: Water parameter types
+- `observedPropertyDeterminandCode`: Chemical codes (CAS numbers, EEA codes)
+- `resultMeanValue`: Measured values
+- `phenomenonTimeReferenceYear`: Year of measurement
+- `Country`: Country name
+- Environmental indicators: PopulationDensity, GDP, TouristMean, literacyRate, etc.
+
+**Critical Limitation Acknowledged:**
+- Proposal claims "global" dataset but it's European-only
+- User approved training ML models on European data despite US focus
+- Justification: Water quality parameter relationships are universal (pH 5 is acidic everywhere)
+- Known risk: European vs US differences in regulations, pollution sources, methodologies
+
+**Setup Completed:**
+- Kaggle API credentials configured in `~/.kaggle/kaggle.json`
+- `kaggle.json` added to `.gitignore` (security)
+- Dataset downloaded via: `kaggle datasets download -d ozgurdogan646/water-quality-dataset --unzip`
+
 ### What's NOT Built Yet
-1. **ML models** - Regression for trends, classification for safety (deferred)
+1. **ML models** - Regression for trends, classification for safety ← NEXT PRIORITY
+   - Must preprocess Kaggle data
+   - Train classification model (safe/unsafe)
+   - Train regression model (WQI trend prediction)
+   - Apply trained models to US data from USGS/WQP
 2. **Chrome DevTools E2E tests** - 5 scenarios for Streamlit app
-3. **Bug fixes** - 3 WQI calculator tests need tuple handling fixes
+3. **ML model integration** - Connect trained models to Streamlit app
 
 ### Next Priority: Phase 5 - Chrome DevTools E2E Tests
 
@@ -334,13 +374,26 @@
 6. `load_real_fixture` must be imported as helper function, not fixture
 7. Fixture data accessed via `['dataframe']` key
 8. WQI calculator returns tuples, must unpack in most tests
+9. **Session 2025-11-03:** test_ph_none NameError (line 91) - Fixed variable name
+10. **Session 2025-11-03:** test_wqi_returns_tuple unpacking issue (lines 534-542) - Fixed to check type before unpacking
+11. **Session 2025-11-03:** test_calculate_wqi_single_param_only NameError (line 850) - Fixed variable name
 
-**Remaining Known Bugs:**
-1. test_wqi_calculator.py lines 534-542: `test_wqi_returns_tuple` should NOT unpack the result
-2. test_wqi_calculator.py lines 837-850: `test_calculate_wqi_single_param_only` assertion needs fixing
+**No Known Bugs Remaining** ✅
 
 ---
 
-**Last Updated:** 2025-11-03 (Checkpoint after Phase 4 completion)
-**Completion Status:** 80% (Phase 4 complete: 59 Streamlit tests passing, Phase 5 remaining)
-**Next Session:** Fix 3 remaining WQI bugs, then implement Phase 5 (Chrome DevTools E2E tests)
+**Last Updated:** 2025-11-03 (Checkpoint after bug fixes and Kaggle integration)
+**Completion Status:** 82%
+- ✅ All 312 unit tests passing (3 bugs fixed)
+- ✅ Kaggle dataset downloaded and analyzed
+- ⏭️ ML models next priority (classification + regression)
+- ⏭️ Chrome DevTools E2E tests planned
+
+**Next Session:** Build ML models using Kaggle data, then Chrome DevTools E2E tests
+
+**Critical Context for Next AI:**
+- User questioned corner-cutting → Discovered ML models are MISSING (core requirement)
+- User approved using European Kaggle data for training despite US-focused app
+- All test bugs now fixed, codebase is stable
+- Streamlit app running on http://localhost:8502 (may need restart)
+- tests/test_streamlit_e2e.py created but tests not implemented yet
