@@ -1,0 +1,534 @@
+"""
+Water Quality Regression Model
+
+Regression model to predict continuous WQI scores (0-100) and analyze trends.
+Uses RandomForest and GradientBoosting with hyperparameter tuning.
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, Tuple, List, Optional, Any
+import logging
+from pathlib import Path
+import joblib
+from datetime import datetime
+
+from sklearn.model_selection import train_test_split, GridSearchCV, KFold
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import (
+    r2_score, mean_absolute_error, mean_squared_error,
+    explained_variance_score
+)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class WQIPredictionRegressor:
+    """
+    Regression model for WQI score prediction and trend analysis.
+
+    Predicts continuous WQI scores (0-100) based on water quality
+    parameters and contextual features. Supports temporal trend analysis.
+    """
+
+    def __init__(self, model_type: str = 'random_forest'):
+        """
+        Initialize the regressor.
+
+        Args:
+            model_type: 'random_forest' or 'gradient_boosting'
+        """
+        self.model_type = model_type
+        self.model = None
+        self.scaler = StandardScaler()
+        self.imputer = SimpleImputer(strategy='median')
+        self.feature_names = None
+        self.metrics = {}
+        self.grid_search = None
+
+        logger.info(f"Initialized WQIPredictionRegressor with {model_type}")
+
+    def prepare_data(
+        self,
+        df: pd.DataFrame,
+        target_col: str = 'wqi_score',
+        exclude_cols: Optional[List[str]] = None
+    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+        """
+        Prepare features and target for training.
+
+        Args:
+            df: DataFrame with features and target
+            target_col: Name of target column
+            exclude_cols: Columns to exclude from features
+
+        Returns:
+            Tuple of (X, y, feature_names)
+        """
+        logger.info("Preparing data for regression")
+
+        # Default exclude list
+        if exclude_cols is None:
+            exclude_cols = [
+                'waterBodyIdentifier',
+                'wqi_score',
+                'wqi_classification',
+                'is_safe',
+                'parameter_scores',
+                'Country',  # Already one-hot encoded
+                'Country_grouped',
+                'parameterWaterBodyCategory',  # Already one-hot encoded
+                'nitrate_pollution_level'  # Categorical, already processed
+            ]
+
+        # Extract target
+        y = df[target_col].values
+
+        # Extract features
+        feature_cols = [col for col in df.columns if col not in exclude_cols]
+        X = df[feature_cols].copy()
+
+        # Handle any remaining categorical variables
+        for col in X.columns:
+            if X[col].dtype == 'object':
+                logger.warning(f"Found object column {col}, dropping it")
+                X = X.drop(columns=[col])
+
+        self.feature_names = X.columns.tolist()
+        X = X.values
+
+        logger.info(f"Prepared {X.shape[0]} samples with {X.shape[1]} features")
+        logger.info(f"Target statistics: mean={np.mean(y):.2f}, std={np.std(y):.2f}, range=[{np.min(y):.2f}, {np.max(y):.2f}]")
+
+        return X, y, self.feature_names
+
+    def preprocess_features(
+        self,
+        X: np.ndarray,
+        fit: bool = True
+    ) -> np.ndarray:
+        """
+        Impute missing values and scale features.
+
+        Args:
+            X: Feature matrix
+            fit: Whether to fit the imputer and scaler (True for training)
+
+        Returns:
+            Preprocessed feature matrix
+        """
+        logger.info(f"Preprocessing features (fit={fit})")
+
+        # Impute missing values
+        if fit:
+            X_imputed = self.imputer.fit_transform(X)
+        else:
+            X_imputed = self.imputer.transform(X)
+
+        # Scale features
+        if fit:
+            X_scaled = self.scaler.fit_transform(X_imputed)
+        else:
+            X_scaled = self.scaler.transform(X_imputed)
+
+        return X_scaled
+
+    def train(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        test_size: float = 0.2,
+        val_size: float = 0.2,
+        random_state: int = 42,
+        n_jobs: int = -1
+    ) -> Dict[str, Any]:
+        """
+        Train regressor with hyperparameter tuning.
+
+        Args:
+            X: Feature matrix
+            y: Target vector
+            test_size: Proportion for test set
+            val_size: Proportion for validation (from remaining after test split)
+            random_state: Random seed
+            n_jobs: Number of parallel jobs (-1 = all cores)
+
+        Returns:
+            Dictionary with training results and metrics
+        """
+        logger.info("=" * 80)
+        logger.info("Starting regressor training")
+        logger.info("=" * 80)
+
+        # Split data: first separate test set
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=random_state
+        )
+
+        # Then split remaining into train and validation
+        val_size_adjusted = val_size / (1 - test_size)
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_temp, y_temp, test_size=val_size_adjusted, random_state=random_state
+        )
+
+        logger.info(f"Data splits: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
+
+        # Preprocess features
+        X_train_processed = self.preprocess_features(X_train, fit=True)
+        X_val_processed = self.preprocess_features(X_val, fit=False)
+        X_test_processed = self.preprocess_features(X_test, fit=False)
+
+        # Define hyperparameter grid
+        if self.model_type == 'random_forest':
+            base_model = RandomForestRegressor(random_state=random_state)
+            param_grid = {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [10, 20, None],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4]
+            }
+        elif self.model_type == 'gradient_boosting':
+            base_model = GradientBoostingRegressor(random_state=random_state)
+            param_grid = {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [3, 5, 7],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4]
+            }
+        else:
+            raise ValueError(f"Unknown model type: {self.model_type}")
+
+        # Grid search with cross-validation
+        logger.info(f"Starting GridSearchCV with {len(param_grid)} parameters")
+        logger.info(f"Parameter grid: {param_grid}")
+
+        cv = KFold(n_splits=5, shuffle=True, random_state=random_state)
+        self.grid_search = GridSearchCV(
+            base_model,
+            param_grid,
+            cv=cv,
+            scoring='r2',
+            n_jobs=n_jobs,
+            verbose=1
+        )
+
+        # Fit grid search
+        logger.info("Fitting GridSearchCV...")
+        self.grid_search.fit(X_train_processed, y_train)
+
+        # Best model
+        self.model = self.grid_search.best_estimator_
+        logger.info(f"Best parameters: {self.grid_search.best_params_}")
+        logger.info(f"Best CV R² score: {self.grid_search.best_score_:.4f}")
+
+        # Evaluate on validation set
+        val_metrics = self.evaluate(X_val_processed, y_val, dataset_name="Validation")
+
+        # Evaluate on test set
+        test_metrics = self.evaluate(X_test_processed, y_test, dataset_name="Test")
+
+        # Store results
+        results = {
+            'best_params': self.grid_search.best_params_,
+            'best_cv_score': self.grid_search.best_score_,
+            'val_metrics': val_metrics,
+            'test_metrics': test_metrics,
+            'feature_names': self.feature_names,
+            'train_size': len(X_train),
+            'val_size': len(X_val),
+            'test_size': len(X_test)
+        }
+
+        logger.info("=" * 80)
+        logger.info("Training complete!")
+        logger.info("=" * 80)
+
+        return results
+
+    def evaluate(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        dataset_name: str = "Test"
+    ) -> Dict[str, float]:
+        """
+        Evaluate regressor with comprehensive metrics.
+
+        Args:
+            X: Feature matrix (preprocessed)
+            y: True values
+            dataset_name: Name for logging
+
+        Returns:
+            Dictionary of metrics
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet. Call train() first.")
+
+        logger.info(f"\n{'=' * 60}")
+        logger.info(f"Evaluating on {dataset_name} set ({len(X)} samples)")
+        logger.info(f"{'=' * 60}")
+
+        # Predictions
+        y_pred = self.model.predict(X)
+
+        # Calculate metrics
+        metrics = {
+            'r2_score': r2_score(y, y_pred),
+            'mae': mean_absolute_error(y, y_pred),
+            'mse': mean_squared_error(y, y_pred),
+            'rmse': np.sqrt(mean_squared_error(y, y_pred)),
+            'explained_variance': explained_variance_score(y, y_pred)
+        }
+
+        # Additional statistics
+        residuals = y - y_pred
+        metrics.update({
+            'mean_residual': float(np.mean(residuals)),
+            'std_residual': float(np.std(residuals)),
+            'min_residual': float(np.min(residuals)),
+            'max_residual': float(np.max(residuals))
+        })
+
+        # Log results
+        logger.info(f"\nMetrics:")
+        logger.info(f"  R² Score:           {metrics['r2_score']:.4f}")
+        logger.info(f"  Mean Absolute Error: {metrics['mae']:.4f}")
+        logger.info(f"  Mean Squared Error:  {metrics['mse']:.4f}")
+        logger.info(f"  Root Mean Squared Error: {metrics['rmse']:.4f}")
+        logger.info(f"  Explained Variance:  {metrics['explained_variance']:.4f}")
+
+        logger.info(f"\nResidual Statistics:")
+        logger.info(f"  Mean:   {metrics['mean_residual']:.4f}")
+        logger.info(f"  Std:    {metrics['std_residual']:.4f}")
+        logger.info(f"  Range:  [{metrics['min_residual']:.4f}, {metrics['max_residual']:.4f}]")
+
+        # Prediction quality by WQI range
+        logger.info(f"\nPrediction Quality by WQI Range:")
+        ranges = [(0, 25), (25, 50), (50, 70), (70, 90), (90, 100)]
+        for low, high in ranges:
+            mask = (y >= low) & (y < high)
+            if np.sum(mask) > 0:
+                mae_range = mean_absolute_error(y[mask], y_pred[mask])
+                logger.info(f"  WQI [{low:3d}-{high:3d}): {np.sum(mask):4d} samples, MAE={mae_range:.2f}")
+
+        # Store metrics
+        self.metrics[dataset_name.lower()] = metrics
+
+        return metrics
+
+    def get_feature_importance(self, top_n: int = 20) -> pd.DataFrame:
+        """
+        Get feature importance from trained model.
+
+        Args:
+            top_n: Number of top features to return
+
+        Returns:
+            DataFrame with feature names and importance scores
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet. Call train() first.")
+
+        if not hasattr(self.model, 'feature_importances_'):
+            raise ValueError("Model does not support feature importance")
+
+        # Get importances
+        importances = self.model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+
+        # Create dataframe
+        importance_df = pd.DataFrame({
+            'feature': [self.feature_names[i] for i in indices[:top_n]],
+            'importance': importances[indices[:top_n]]
+        })
+
+        logger.info(f"\nTop {top_n} Feature Importances:")
+        for idx, row in importance_df.iterrows():
+            logger.info(f"  {idx+1:2d}. {row['feature']:40s} {row['importance']:.4f}")
+
+        return importance_df
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict WQI scores.
+
+        Args:
+            X: Feature matrix (will be preprocessed)
+
+        Returns:
+            Predicted WQI scores
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet. Call train() first.")
+
+        X_processed = self.preprocess_features(X, fit=False)
+        predictions = self.model.predict(X_processed)
+
+        # Clip predictions to valid WQI range [0, 100]
+        return np.clip(predictions, 0, 100)
+
+    def predict_trend(
+        self,
+        X: np.ndarray,
+        current_year: int = 2024
+    ) -> Dict[str, Any]:
+        """
+        Predict WQI trends over time.
+
+        Args:
+            X: Feature matrix with temporal features
+            current_year: Current year for trend projection
+
+        Returns:
+            Dictionary with trend analysis
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet. Call train() first.")
+
+        # Check if 'year' feature exists
+        if 'year' not in self.feature_names:
+            logger.warning("'year' feature not found, cannot analyze trends")
+            return {'trend': 'unknown', 'message': 'Temporal features not available'}
+
+        year_idx = self.feature_names.index('year')
+
+        # Predict for current and future years
+        predictions = {}
+        for year_offset in [0, 1, 2, 5]:
+            year = current_year + year_offset
+            X_future = X.copy()
+            X_future[:, year_idx] = year
+
+            pred = self.predict(X_future)
+            predictions[year] = float(np.mean(pred))
+
+        # Analyze trend
+        current_wqi = predictions[current_year]
+        future_wqi = predictions[current_year + 5]
+        wqi_change = future_wqi - current_wqi
+
+        if wqi_change > 5:
+            trend = 'improving'
+        elif wqi_change < -5:
+            trend = 'declining'
+        else:
+            trend = 'stable'
+
+        return {
+            'trend': trend,
+            'current_wqi': current_wqi,
+            'future_wqi': future_wqi,
+            'wqi_change': wqi_change,
+            'predictions_by_year': predictions
+        }
+
+    def save(self, filepath: Optional[str] = None) -> str:
+        """
+        Save model and preprocessing components.
+
+        Args:
+            filepath: Path to save (auto-generated if None)
+
+        Returns:
+            Path where model was saved
+        """
+        if self.model is None:
+            raise ValueError("No model to save. Train first.")
+
+        # Generate filepath with timestamp
+        if filepath is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = f"data/models/regressor_{timestamp}.joblib"
+
+        # Ensure directory exists
+        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+
+        # Save everything
+        model_data = {
+            'model': self.model,
+            'scaler': self.scaler,
+            'imputer': self.imputer,
+            'feature_names': self.feature_names,
+            'model_type': self.model_type,
+            'metrics': self.metrics,
+            'best_params': self.grid_search.best_params_ if self.grid_search else None,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        joblib.dump(model_data, filepath)
+        logger.info(f"Model saved to {filepath}")
+
+        return filepath
+
+    @classmethod
+    def load(cls, filepath: str) -> 'WQIPredictionRegressor':
+        """
+        Load a saved model.
+
+        Args:
+            filepath: Path to saved model
+
+        Returns:
+            Loaded WQIPredictionRegressor instance
+        """
+        if not Path(filepath).exists():
+            raise FileNotFoundError(f"Model file not found: {filepath}")
+
+        logger.info(f"Loading model from {filepath}")
+        model_data = joblib.load(filepath)
+
+        # Create instance
+        instance = cls(model_type=model_data['model_type'])
+        instance.model = model_data['model']
+        instance.scaler = model_data['scaler']
+        instance.imputer = model_data['imputer']
+        instance.feature_names = model_data['feature_names']
+        instance.metrics = model_data['metrics']
+
+        logger.info(f"Model loaded successfully")
+        logger.info(f"  Type: {instance.model_type}")
+        logger.info(f"  Features: {len(instance.feature_names)}")
+        logger.info(f"  Saved: {model_data.get('timestamp', 'unknown')}")
+
+        return instance
+
+
+if __name__ == "__main__":
+    # Example usage
+    from src.preprocessing.feature_engineering import prepare_ml_dataset
+
+    logger.info("=" * 80)
+    logger.info("Training WQI Prediction Regressor")
+    logger.info("=" * 80)
+
+    # Load data
+    logger.info("\nLoading and preparing dataset...")
+    df = prepare_ml_dataset()
+
+    # Initialize regressor
+    regressor = WQIPredictionRegressor(model_type='random_forest')
+
+    # Prepare data
+    X, y, feature_names = regressor.prepare_data(df)
+
+    # Train
+    results = regressor.train(X, y)
+
+    # Get feature importance
+    importance = regressor.get_feature_importance(top_n=15)
+
+    # Save model
+    model_path = regressor.save()
+
+    logger.info(f"\n{'=' * 80}")
+    logger.info("TRAINING COMPLETE")
+    logger.info(f"{'=' * 80}")
+    logger.info(f"Model saved to: {model_path}")
+    logger.info(f"Test R² Score: {results['test_metrics']['r2_score']:.4f}")
+    logger.info(f"Test RMSE: {results['test_metrics']['rmse']:.4f}")

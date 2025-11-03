@@ -1,0 +1,11 @@
+"""
+ML Models for Water Quality Prediction
+
+This package contains classifier and regressor models for predicting
+water quality safety and WQI scores.
+"""
+
+from .classifier import WaterQualityClassifier
+from .regressor import WQIPredictionRegressor
+
+__all__ = ['WaterQualityClassifier', 'WQIPredictionRegressor']
