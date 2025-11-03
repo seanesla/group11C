@@ -22,6 +22,8 @@ sys.path.insert(0, str(src_path))
 from geolocation.zipcode_mapper import ZipCodeMapper
 from data_collection.wqp_client import WQPClient
 from utils.wqi_calculator import WQICalculator
+from models.model_utils import load_latest_models
+from preprocessing.us_data_features import prepare_us_features_for_prediction
 
 
 # Page configuration
@@ -43,6 +45,22 @@ WQI_COLORS = {
 }
 
 
+@st.cache_resource
+def load_ml_models():
+    """
+    Load trained ML models with Streamlit caching.
+
+    Returns:
+        Tuple of (classifier, regressor). Either may be None if not found.
+    """
+    try:
+        classifier, regressor = load_latest_models()
+        return classifier, regressor
+    except Exception as e:
+        st.error(f"Failed to load ML models: {e}")
+        return None, None
+
+
 def get_wqi_color(classification: str) -> str:
     """Get color for WQI classification."""
     return WQI_COLORS.get(classification, "#808080")
@@ -53,6 +71,57 @@ def format_coordinates(lat: float, lon: float) -> str:
     lat_dir = "N" if lat >= 0 else "S"
     lon_dir = "E" if lon >= 0 else "W"
     return f"{abs(lat):.4f}°{lat_dir}, {abs(lon):.4f}°{lon_dir}"
+
+
+def make_ml_predictions(
+    aggregated_params: Dict[str, float],
+    classifier,
+    regressor,
+    year: Optional[int] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Make ML predictions from aggregated water quality parameters.
+
+    Args:
+        aggregated_params: Dict with keys like 'ph', 'dissolved_oxygen', etc.
+        classifier: Trained classifier model
+        regressor: Trained regressor model
+        year: Year of measurement (defaults to current year)
+
+    Returns:
+        Dictionary with ML prediction results, or None if models unavailable
+    """
+    if classifier is None or regressor is None:
+        return None
+
+    try:
+        # Prepare features
+        features = prepare_us_features_for_prediction(
+            ph=aggregated_params.get('ph'),
+            dissolved_oxygen=aggregated_params.get('dissolved_oxygen'),
+            temperature=aggregated_params.get('temperature'),
+            turbidity=aggregated_params.get('turbidity'),
+            nitrate=aggregated_params.get('nitrate'),
+            conductance=aggregated_params.get('conductance'),
+            year=year
+        )
+
+        # Make predictions
+        is_safe_pred = classifier.predict(features)[0]
+        is_safe_proba = classifier.predict_proba(features)[0]  # [P(unsafe), P(safe)]
+        wqi_pred = regressor.predict(features)[0]
+
+        return {
+            'is_safe': bool(is_safe_pred),
+            'prob_unsafe': float(is_safe_proba[0]),
+            'prob_safe': float(is_safe_proba[1]),
+            'predicted_wqi': float(wqi_pred),
+            'confidence': float(max(is_safe_proba))  # Confidence is max probability
+        }
+
+    except Exception as e:
+        st.warning(f"ML prediction failed: {e}")
+        return None
 
 
 def create_time_series_chart(df: pd.DataFrame) -> go.Figure:
@@ -283,9 +352,18 @@ def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[D
 def main():
     """Main application logic."""
 
+    # Load ML models (cached)
+    classifier, regressor = load_ml_models()
+
     # Title
     st.title("💧 Water Quality Index Lookup")
     st.markdown("Search for water quality data by ZIP code and view WQI scores with visualizations.")
+
+    # Show ML model status
+    if classifier and regressor:
+        st.sidebar.success("ML models loaded")
+    else:
+        st.sidebar.warning("ML models unavailable")
 
     # Sidebar - User Inputs
     st.sidebar.header("Search Parameters")
@@ -353,6 +431,31 @@ def main():
             st.dataframe(df, use_container_width=True)
             return
 
+        # Get aggregated parameters for ML predictions
+        param_mapping = {
+            'pH': 'ph',
+            'Dissolved oxygen (DO)': 'dissolved_oxygen',
+            'Temperature, water': 'temperature',
+            'Turbidity': 'turbidity',
+            'Nitrate': 'nitrate',
+            'Specific conductance': 'conductance'
+        }
+
+        aggregated = {}
+        for characteristic_name, param_key in param_mapping.items():
+            mask = df['CharacteristicName'] == characteristic_name
+            values = pd.to_numeric(df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
+            if len(values) > 0:
+                aggregated[param_key] = float(values.median())
+
+        # Make ML predictions
+        ml_predictions = make_ml_predictions(
+            aggregated,
+            classifier,
+            regressor,
+            year=datetime.now().year
+        )
+
         # Display results
         st.success(f"✓ Found {len(df)} measurements from {df['MonitoringLocationIdentifier'].nunique()} monitoring stations")
 
@@ -411,6 +514,68 @@ def main():
             )
 
         st.divider()
+
+        # ML Predictions Section
+        if ml_predictions:
+            st.subheader("🤖 ML Model Predictions")
+
+            # Add disclaimer about European training data
+            st.info(
+                "**Note:** These predictions come from machine learning models trained on European water quality data (1991-2017). "
+                "While chemical relationships are universal, predictions for US locations should be interpreted with caution."
+            )
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                # ML Classification
+                ml_safety = "SAFE" if ml_predictions['is_safe'] else "UNSAFE"
+                ml_color = "#00CC00" if ml_predictions['is_safe'] else "#FF6600"
+                st.markdown(
+                    f"<div style='padding: 20px; border-radius: 5px; background-color: {ml_color}20; border: 2px solid {ml_color};'>"
+                    f"<h4 style='margin: 0;'>ML Classification</h4>"
+                    f"<h3 style='margin: 0; color: {ml_color};'>{ml_safety}</h3>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+
+            with col2:
+                # ML Predicted WQI
+                st.metric(
+                    "ML Predicted WQI",
+                    f"{ml_predictions['predicted_wqi']:.1f}",
+                    help="Machine learning regression prediction"
+                )
+
+            with col3:
+                # Confidence
+                confidence_pct = ml_predictions['confidence'] * 100
+                confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
+                st.markdown(
+                    f"<div style='padding: 20px; border-radius: 5px; background-color: {confidence_color}20; border: 2px solid {confidence_color};'>"
+                    f"<h4 style='margin: 0;'>Model Confidence</h4>"
+                    f"<h3 style='margin: 0; color: {confidence_color};'>{confidence_pct:.1f}%</h3>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+
+            # Show probability breakdown
+            with st.expander("View Detailed Probabilities"):
+                prob_df = pd.DataFrame([
+                    {"Prediction": "Unsafe (WQI < 70)", "Probability": f"{ml_predictions['prob_unsafe']*100:.1f}%"},
+                    {"Prediction": "Safe (WQI ≥ 70)", "Probability": f"{ml_predictions['prob_safe']*100:.1f}%"}
+                ])
+                st.dataframe(prob_df, use_container_width=True, hide_index=True)
+
+                st.markdown("""
+                **Model Information:**
+                - **Classifier:** RandomForest (98.64% accuracy on test set)
+                - **Regressor:** RandomForest (R² = 0.9859 on test set)
+                - **Training Data:** 2,939 European water samples (1991-2017)
+                - **Limitations:** Geographic mismatch (Europe → US), missing turbidity data
+                """)
+
+            st.divider()
 
         # Parameter breakdown
         st.subheader("📊 Parameter Breakdown")
