@@ -428,6 +428,103 @@ class WQIPredictionRegressor:
             'predictions_by_year': predictions
         }
 
+    def predict_future_trend(
+        self,
+        X: np.ndarray,
+        start_date: datetime,
+        periods: int = 12,
+        freq: str = 'M'
+    ) -> Dict[str, Any]:
+        """
+        Predict WQI trends over future time periods for visualization.
+
+        Args:
+            X: Feature matrix with temporal features (single sample or multiple)
+            start_date: Starting date for predictions (typically current date)
+            periods: Number of future periods to predict (default: 12 months)
+            freq: Frequency of predictions - 'M' for monthly, 'Y' for yearly
+
+        Returns:
+            Dictionary with:
+                - dates: List of datetime objects for each prediction
+                - predictions: List of WQI predictions
+                - trend: Overall trend direction ('improving', 'stable', 'declining')
+                - trend_slope: Rate of change per period
+                - current_wqi: Starting WQI prediction
+                - final_wqi: Ending WQI prediction
+        """
+        if self.model is None:
+            raise ValueError("Model not trained yet. Call train() first.")
+
+        # Check if 'year' feature exists
+        if 'year' not in self.feature_names:
+            logger.warning("'year' feature not found, cannot analyze trends")
+            return {
+                'trend': 'unknown',
+                'message': 'Temporal features not available',
+                'dates': [],
+                'predictions': []
+            }
+
+        year_idx = self.feature_names.index('year')
+
+        # Generate date range based on frequency
+        from dateutil.relativedelta import relativedelta
+
+        dates = []
+        predictions = []
+
+        for i in range(periods):
+            # Calculate future date
+            if freq == 'M':
+                future_date = start_date + relativedelta(months=i)
+            elif freq == 'Y':
+                future_date = start_date + relativedelta(years=i)
+            else:
+                raise ValueError(f"Unsupported frequency: {freq}. Use 'M' or 'Y'.")
+
+            dates.append(future_date)
+
+            # Calculate fractional year for the prediction
+            # Use decimal year representation (e.g., 2024.5 for mid-2024)
+            year_decimal = future_date.year + (future_date.month - 1) / 12.0
+
+            # Create feature matrix for this time point
+            X_future = X.copy()
+            X_future[:, year_idx] = year_decimal
+
+            # Make prediction
+            pred = self.predict(X_future)
+            predictions.append(float(np.mean(pred)))
+
+        # Analyze overall trend
+        current_wqi = predictions[0]
+        final_wqi = predictions[-1]
+        wqi_change = final_wqi - current_wqi
+
+        # Calculate trend slope (change per period)
+        trend_slope = wqi_change / periods if periods > 0 else 0
+
+        # Determine trend direction
+        if wqi_change > 5:
+            trend = 'improving'
+        elif wqi_change < -5:
+            trend = 'declining'
+        else:
+            trend = 'stable'
+
+        return {
+            'dates': dates,
+            'predictions': predictions,
+            'trend': trend,
+            'trend_slope': trend_slope,
+            'current_wqi': current_wqi,
+            'final_wqi': final_wqi,
+            'wqi_change': wqi_change,
+            'periods': periods,
+            'frequency': freq
+        }
+
     def save(self, filepath: Optional[str] = None) -> str:
         """
         Save model and preprocessing components.

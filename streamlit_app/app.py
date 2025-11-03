@@ -252,6 +252,135 @@ def create_parameter_chart(scores: Dict[str, float]) -> go.Figure:
     return fig
 
 
+def create_future_trend_chart(
+    trend_data: Dict[str, Any],
+    current_wqi: float,
+    current_date: datetime
+) -> go.Figure:
+    """
+    Create line chart showing future WQI predictions over time.
+
+    Args:
+        trend_data: Dictionary from regressor.predict_future_trend() containing:
+            - dates: List of datetime objects
+            - predictions: List of WQI predictions
+            - trend: Overall trend direction
+        current_wqi: Current WQI score (for reference line)
+        current_date: Current date (for "Today" marker)
+
+    Returns:
+        Plotly Figure object
+    """
+    if not trend_data or 'dates' not in trend_data or not trend_data['dates']:
+        return None
+
+    dates = trend_data['dates']
+    predictions = trend_data['predictions']
+    trend = trend_data.get('trend', 'unknown')
+    wqi_change = trend_data.get('wqi_change', 0)
+
+    # Create figure
+    fig = go.Figure()
+
+    # Add quality zones as background shapes
+    fig.add_hrect(y0=90, y1=100, fillcolor=WQI_COLORS["Excellent"], opacity=0.1, line_width=0)
+    fig.add_hrect(y0=70, y1=90, fillcolor=WQI_COLORS["Good"], opacity=0.1, line_width=0)
+    fig.add_hrect(y0=50, y1=70, fillcolor=WQI_COLORS["Fair"], opacity=0.1, line_width=0)
+    fig.add_hrect(y0=25, y1=50, fillcolor=WQI_COLORS["Poor"], opacity=0.1, line_width=0)
+    fig.add_hrect(y0=0, y1=25, fillcolor=WQI_COLORS["Very Poor"], opacity=0.1, line_width=0)
+
+    # Add "Today" vertical line using add_shape instead of add_vline
+    # (add_vline has issues with datetime objects in some Plotly versions)
+    fig.add_shape(
+        type="line",
+        x0=current_date,
+        x1=current_date,
+        y0=0,
+        y1=105,
+        line=dict(color="gray", width=2, dash="dash"),
+        xref="x",
+        yref="y"
+    )
+
+    # Add "Today" annotation
+    fig.add_annotation(
+        x=current_date,
+        y=100,
+        text="Today",
+        showarrow=False,
+        yshift=10,
+        font=dict(color="gray", size=12)
+    )
+
+    # Add current WQI point
+    fig.add_trace(go.Scatter(
+        x=[current_date],
+        y=[current_wqi],
+        mode='markers',
+        name='Current WQI',
+        marker=dict(size=10, color='#1f77b4', symbol='circle'),
+        showlegend=True
+    ))
+
+    # Add predicted WQI line
+    fig.add_trace(go.Scatter(
+        x=dates,
+        y=predictions,
+        mode='lines+markers',
+        name='Predicted WQI',
+        line=dict(color='#ff7f0e', width=2, dash='dot'),
+        marker=dict(size=6, color='#ff7f0e'),
+        showlegend=True
+    ))
+
+    # Determine trend color and symbol
+    if trend == 'improving':
+        trend_color = WQI_COLORS["Good"]
+        trend_symbol = "↗"
+    elif trend == 'declining':
+        trend_color = WQI_COLORS["Poor"]
+        trend_symbol = "↘"
+    else:
+        trend_color = WQI_COLORS["Fair"]
+        trend_symbol = "→"
+
+    # Add trend annotation
+    trend_text = f"{trend_symbol} {trend.upper()}: {wqi_change:+.1f} points"
+    fig.add_annotation(
+        x=dates[-1],
+        y=predictions[-1],
+        text=trend_text,
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor=trend_color,
+        bgcolor=trend_color,
+        font=dict(color='white', size=12),
+        bordercolor=trend_color,
+        borderwidth=2,
+        borderpad=4,
+        opacity=0.8
+    )
+
+    # Update layout
+    fig.update_layout(
+        title="Future Water Quality Forecast (12 Months)",
+        xaxis_title="Date",
+        yaxis_title="WQI Score",
+        yaxis=dict(range=[0, 105]),
+        hovermode='x unified',
+        height=450,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    return fig
+
+
 def fetch_water_quality_data(
     zip_code: str,
     radius_miles: float,
@@ -574,6 +703,103 @@ def main():
                 - **Training Data:** 2,939 European water samples (1991-2017)
                 - **Limitations:** Geographic mismatch (Europe → US), missing turbidity data
                 """)
+
+            st.divider()
+
+            # Future Trend Prediction Section
+            st.subheader("📈 Future Water Quality Forecast")
+
+            st.markdown("""
+            Based on current water quality parameters and historical trends, here's the predicted WQI over the next 12 months.
+            """)
+
+            try:
+                # Prepare features for prediction
+                import numpy as np
+                X_features = prepare_us_features_for_prediction(
+                    ph=aggregated.get('ph'),
+                    dissolved_oxygen=aggregated.get('dissolved_oxygen'),
+                    temperature=aggregated.get('temperature'),
+                    turbidity=aggregated.get('turbidity'),
+                    nitrate=aggregated.get('nitrate'),
+                    conductance=aggregated.get('conductance'),
+                    year=datetime.now().year
+                )
+                X_array = np.array(X_features).reshape(1, -1)
+
+                # Generate 12-month forecast
+                current_date = datetime.now()
+                trend_data = regressor.predict_future_trend(
+                    X=X_array,
+                    start_date=current_date,
+                    periods=12,
+                    freq='M'
+                )
+
+                # Create and display the forecast chart
+                if trend_data and trend_data.get('dates'):
+                    trend_chart = create_future_trend_chart(
+                        trend_data=trend_data,
+                        current_wqi=wqi,
+                        current_date=current_date
+                    )
+
+                    if trend_chart:
+                        st.plotly_chart(trend_chart, use_container_width=True)
+
+                        # Display trend analysis
+                        trend = trend_data.get('trend', 'unknown')
+                        wqi_change = trend_data.get('wqi_change', 0)
+                        final_wqi = trend_data.get('final_wqi', wqi)
+
+                        # Trend description with appropriate icon and color
+                        if trend == 'improving':
+                            trend_icon = "📈"
+                            trend_color = "#00CC00"
+                            trend_desc = "improving"
+                        elif trend == 'declining':
+                            trend_icon = "📉"
+                            trend_color = "#FF6600"
+                            trend_desc = "declining"
+                        else:
+                            trend_icon = "➡️"
+                            trend_color = "#0066FF"
+                            trend_desc = "stable"
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            st.markdown(
+                                f"<div style='padding: 15px; border-radius: 5px; background-color: {trend_color}20; border: 2px solid {trend_color};'>"
+                                f"<h4 style='margin: 0;'>{trend_icon} Trend Analysis</h4>"
+                                f"<p style='margin: 5px 0 0 0; color: {trend_color}; font-size: 18px; font-weight: bold;'>"
+                                f"{trend_desc.upper()}: {wqi_change:+.1f} points over 12 months</p>"
+                                f"</div>",
+                                unsafe_allow_html=True
+                            )
+
+                        with col2:
+                            st.metric(
+                                "Projected WQI (12 months)",
+                                f"{final_wqi:.1f}",
+                                delta=f"{wqi_change:.1f}",
+                                help="Predicted WQI score after 12 months"
+                            )
+
+                        # Forecast disclaimer
+                        st.warning(
+                            "⚠️ **Forecast Limitations:** These predictions assume current water quality parameters remain constant "
+                            "and are based on models trained on historical European data (1991-2017). Actual water quality may vary "
+                            "due to seasonal changes, environmental factors, and human activities. Use as guidance only."
+                        )
+
+                else:
+                    st.info("Unable to generate forecast: temporal features not available in model.")
+
+            except Exception as e:
+                st.error(f"Error generating forecast: {str(e)}")
+                import traceback
+                st.code(traceback.format_exc())
 
             st.divider()
 
