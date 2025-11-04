@@ -36,16 +36,19 @@ class WQICalculator:
     """
 
     # Parameter weights based on NSF-WQI methodology
+    # We use 6 of the 9 NSF parameters, substituting conductance for total_solids
+    # Weights maintain NSF-WQI relative importance with dynamic normalization
     PARAMETER_WEIGHTS = {
         'dissolved_oxygen': 0.17,
         'ph': 0.11,
         'temperature': 0.10,
         'turbidity': 0.08,
-        'total_phosphate': 0.10,
         'nitrate': 0.10,
-        'fecal_coliform': 0.16,
-        'biochemical_oxygen_demand': 0.11,
-        'total_solids': 0.07
+        'conductance': 0.07,  # Substituting for total_solids
+        # Not used (data not readily available):
+        # 'total_phosphate': 0.10,
+        # 'fecal_coliform': 0.16,
+        # 'biochemical_oxygen_demand': 0.11,
     }
 
     # Ideal parameter ranges and quality curves
@@ -303,27 +306,27 @@ class WQICalculator:
 
         if ph is not None and not pd.isna(ph):
             scores['ph'] = self.calculate_ph_score(ph)
-            weights_used['ph'] = 0.20
+            weights_used['ph'] = self.PARAMETER_WEIGHTS['ph']
 
         if dissolved_oxygen is not None and not pd.isna(dissolved_oxygen):
             scores['dissolved_oxygen'] = self.calculate_do_score(dissolved_oxygen)
-            weights_used['dissolved_oxygen'] = 0.25
+            weights_used['dissolved_oxygen'] = self.PARAMETER_WEIGHTS['dissolved_oxygen']
 
         if temperature is not None and not pd.isna(temperature):
             scores['temperature'] = self.calculate_temperature_score(temperature)
-            weights_used['temperature'] = 0.15
+            weights_used['temperature'] = self.PARAMETER_WEIGHTS['temperature']
 
         if turbidity is not None and not pd.isna(turbidity):
             scores['turbidity'] = self.calculate_turbidity_score(turbidity)
-            weights_used['turbidity'] = 0.15
+            weights_used['turbidity'] = self.PARAMETER_WEIGHTS['turbidity']
 
         if nitrate is not None and not pd.isna(nitrate):
             scores['nitrate'] = self.calculate_nitrate_score(nitrate)
-            weights_used['nitrate'] = 0.15
+            weights_used['nitrate'] = self.PARAMETER_WEIGHTS['nitrate']
 
         if conductance is not None and not pd.isna(conductance):
             scores['conductance'] = self.calculate_conductance_score(conductance)
-            weights_used['conductance'] = 0.10
+            weights_used['conductance'] = self.PARAMETER_WEIGHTS['conductance']
 
         if not scores:
             logger.warning("No valid parameters provided for WQI calculation")
