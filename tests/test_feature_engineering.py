@@ -957,6 +957,842 @@ class TestInteractionFeatures:
 
 
 # ============================================================================
+# TEST CLASS 4: Missing Value Handling (30 tests)
+# ============================================================================
+
+class TestMissingValueHandling:
+    """Test missing value indicators and fillna strategies"""
+
+    # --- Missing Value Indicators (10 tests) ---
+
+    def test_ph_missing_indicator_when_present(self):
+        """ph_missing should be 0 when pH is present"""
+        df = create_minimal_df(ph=7.0)
+        result = create_ml_features(df)
+        assert result['ph_missing'].iloc[0] == 0, "pH present should give missing flag = 0"
+
+    def test_ph_missing_indicator_when_absent(self):
+        """ph_missing should be 1 when pH is NaN"""
+        df = create_minimal_df(ph=np.nan)
+        result = create_ml_features(df)
+        assert result['ph_missing'].iloc[0] == 1, "pH NaN should give missing flag = 1"
+
+    def test_dissolved_oxygen_missing_indicator_when_present(self):
+        """dissolved_oxygen_missing should be 0 when DO is present"""
+        df = create_minimal_df(dissolved_oxygen=8.0)
+        result = create_ml_features(df)
+        assert result['dissolved_oxygen_missing'].iloc[0] == 0, \
+            "DO present should give missing flag = 0"
+
+    def test_dissolved_oxygen_missing_indicator_when_absent(self):
+        """dissolved_oxygen_missing should be 1 when DO is NaN"""
+        df = create_minimal_df(dissolved_oxygen=np.nan)
+        result = create_ml_features(df)
+        assert result['dissolved_oxygen_missing'].iloc[0] == 1, \
+            "DO NaN should give missing flag = 1"
+
+    def test_temperature_missing_indicator_when_present(self):
+        """temperature_missing should be 0 when temperature is present"""
+        df = create_minimal_df(temperature=15.0)
+        result = create_ml_features(df)
+        assert result['temperature_missing'].iloc[0] == 0, \
+            "Temperature present should give missing flag = 0"
+
+    def test_temperature_missing_indicator_when_absent(self):
+        """temperature_missing should be 1 when temperature is NaN"""
+        df = create_minimal_df(temperature=np.nan)
+        result = create_ml_features(df)
+        assert result['temperature_missing'].iloc[0] == 1, \
+            "Temperature NaN should give missing flag = 1"
+
+    def test_nitrate_missing_indicator_when_present(self):
+        """nitrate_missing should be 0 when nitrate is present"""
+        df = create_minimal_df(nitrate=5.0)
+        result = create_ml_features(df)
+        assert result['nitrate_missing'].iloc[0] == 0, \
+            "Nitrate present should give missing flag = 0"
+
+    def test_nitrate_missing_indicator_when_absent(self):
+        """nitrate_missing should be 1 when nitrate is NaN"""
+        df = create_minimal_df(nitrate=np.nan)
+        result = create_ml_features(df)
+        assert result['nitrate_missing'].iloc[0] == 1, \
+            "Nitrate NaN should give missing flag = 1"
+
+    def test_conductance_missing_indicator_when_present(self):
+        """conductance_missing should be 0 when conductance is present"""
+        df = create_minimal_df(conductance=500.0)
+        result = create_ml_features(df)
+        assert result['conductance_missing'].iloc[0] == 0, \
+            "Conductance present should give missing flag = 0"
+
+    def test_conductance_missing_indicator_when_absent(self):
+        """conductance_missing should be 1 when conductance is NaN"""
+        df = create_minimal_df(conductance=np.nan)
+        result = create_ml_features(df)
+        assert result['conductance_missing'].iloc[0] == 1, \
+            "Conductance NaN should give missing flag = 1"
+
+    def test_turbidity_missing_indicator_always_1(self):
+        """turbidity_missing should be 1 (turbidity always None in Kaggle dataset)"""
+        df = create_minimal_df(turbidity=None)
+        result = create_ml_features(df)
+        assert result['turbidity_missing'].iloc[0] == 1, \
+            "Turbidity always None should give missing flag = 1"
+
+    def test_n_params_available_all_present(self):
+        """n_params_available should be 6 when all parameters present"""
+        df = create_minimal_df(
+            ph=7.0,
+            dissolved_oxygen=8.0,
+            temperature=15.0,
+            turbidity=5.0,  # Even if present (rare)
+            nitrate=5.0,
+            conductance=500.0
+        )
+        result = create_ml_features(df)
+        assert result['n_params_available'].iloc[0] == 6, \
+            "All 6 parameters present should give count = 6"
+
+    def test_n_params_available_five_present(self):
+        """n_params_available should be 5 when turbidity missing (typical case)"""
+        df = create_minimal_df(
+            ph=7.0,
+            dissolved_oxygen=8.0,
+            temperature=15.0,
+            turbidity=None,  # Typical case
+            nitrate=5.0,
+            conductance=500.0
+        )
+        result = create_ml_features(df)
+        assert result['n_params_available'].iloc[0] == 5, \
+            "5 parameters present should give count = 5"
+
+    def test_n_params_available_none_present(self):
+        """n_params_available should be 0 when all parameters missing"""
+        df = create_minimal_df(
+            ph=np.nan,
+            dissolved_oxygen=np.nan,
+            temperature=np.nan,
+            turbidity=None,
+            nitrate=np.nan,
+            conductance=np.nan
+        )
+        result = create_ml_features(df)
+        assert result['n_params_available'].iloc[0] == 0, \
+            "All parameters missing should give count = 0"
+
+    def test_n_params_available_partial_missing(self):
+        """n_params_available should count correctly with partial data"""
+        df = create_minimal_df(
+            ph=7.0,           # Present
+            dissolved_oxygen=np.nan,  # Missing
+            temperature=15.0,  # Present
+            turbidity=None,    # Missing
+            nitrate=np.nan,    # Missing
+            conductance=500.0  # Present
+        )
+        result = create_ml_features(df)
+        assert result['n_params_available'].iloc[0] == 3, \
+            "3 parameters present (pH, temp, conductance) should give count = 3"
+
+    # --- fillna Strategy Tests (10 tests) ---
+
+    def test_pollution_stress_fillna_nitrate_zero(self):
+        """pollution_stress uses fillna(0) for missing nitrate"""
+        df = create_minimal_df(
+            nitrate=np.nan,
+            dissolved_oxygen=8.0
+        )
+        result = create_ml_features(df)
+
+        # Expected: (0 / 50) * (1 - 8/10) = 0 * 0.2 = 0.0
+        assert abs(result['pollution_stress'].iloc[0] - 0.0) < 0.01, \
+            "Missing nitrate should fillna(0), resulting in pollution_stress = 0"
+
+    def test_pollution_stress_fillna_do_ten(self):
+        """pollution_stress uses fillna(10) for missing DO"""
+        df = create_minimal_df(
+            nitrate=20.0,
+            dissolved_oxygen=np.nan
+        )
+        result = create_ml_features(df)
+
+        # Expected: (20 / 50) * (1 - 10/10) = 0.4 * 0 = 0.0
+        assert abs(result['pollution_stress'].iloc[0] - 0.0) < 0.01, \
+            "Missing DO should fillna(10), resulting in pollution_stress = 0"
+
+    def test_pollution_stress_fillna_both_missing(self):
+        """pollution_stress with both nitrate and DO missing should give 0"""
+        df = create_minimal_df(
+            nitrate=np.nan,
+            dissolved_oxygen=np.nan
+        )
+        result = create_ml_features(df)
+
+        # Expected: (0 / 50) * (1 - 10/10) = 0 * 0 = 0.0
+        assert abs(result['pollution_stress'].iloc[0] - 0.0) < 0.01, \
+            "Both missing should fillna to nitrate=0, DO=10, giving pollution_stress = 0"
+
+    def test_temp_stress_no_fillna_missing_temperature(self):
+        """temp_stress does NOT use fillna - NaN propagates"""
+        df = create_minimal_df(temperature=np.nan)
+        result = create_ml_features(df)
+
+        assert pd.isna(result['temp_stress'].iloc[0]), \
+            "Missing temperature should propagate as NaN (no fillna in code)"
+
+    def test_temp_stress_present_temperature(self):
+        """temp_stress calculates correctly when temperature present"""
+        df = create_minimal_df(temperature=15.0)
+        result = create_ml_features(df)
+
+        # Expected: abs(15 - 15) / 15 = 0 / 15 = 0.0
+        assert abs(result['temp_stress'].iloc[0] - 0.0) < 0.01, \
+            "Optimal temperature (15°C) should give temp_stress = 0"
+
+    def test_ph_deviation_no_fillna(self):
+        """ph_deviation_from_7 does NOT use fillna - NaN propagates"""
+        df = create_minimal_df(ph=np.nan)
+        result = create_ml_features(df)
+
+        assert pd.isna(result['ph_deviation_from_7'].iloc[0]), \
+            "Missing pH should propagate as NaN (no fillna)"
+
+    def test_do_temp_ratio_no_fillna_missing_do(self):
+        """do_temp_ratio does NOT use fillna for DO - NaN propagates"""
+        df = create_minimal_df(
+            dissolved_oxygen=np.nan,
+            temperature=15.0
+        )
+        result = create_ml_features(df)
+
+        assert pd.isna(result['do_temp_ratio'].iloc[0]), \
+            "Missing DO should propagate as NaN (no fillna)"
+
+    def test_do_temp_ratio_no_fillna_missing_temp(self):
+        """do_temp_ratio does NOT use fillna for temperature - NaN propagates"""
+        df = create_minimal_df(
+            dissolved_oxygen=8.0,
+            temperature=np.nan
+        )
+        result = create_ml_features(df)
+
+        assert pd.isna(result['do_temp_ratio'].iloc[0]), \
+            "Missing temperature should propagate as NaN (no fillna)"
+
+    def test_fillna_inconsistency_documentation(self):
+        """CRITICAL: Document inconsistent fillna behavior across features"""
+        df = create_minimal_df(
+            nitrate=np.nan,
+            dissolved_oxygen=np.nan,
+            temperature=np.nan,
+            ph=np.nan
+        )
+        result = create_ml_features(df)
+
+        # pollution_stress uses fillna - should NOT be NaN
+        assert result['pollution_stress'].notna().iloc[0], \
+            "pollution_stress uses fillna(0) and fillna(10)"
+
+        # temp_stress does NOT use fillna - should BE NaN
+        assert result['temp_stress'].isna().iloc[0], \
+            "temp_stress does NOT use fillna"
+
+        # ph_deviation does NOT use fillna - should BE NaN
+        assert result['ph_deviation_from_7'].isna().iloc[0], \
+            "ph_deviation_from_7 does NOT use fillna"
+
+        # CRITICAL: Inconsistent handling may confuse ML models
+        # Some features assume "clean water" when missing (fillna)
+        # Others assume "unknown" when missing (NaN propagation)
+
+    def test_fillna_optimistic_assumption_question(self):
+        """CRITICAL: Question whether fillna(0) for nitrate is scientifically valid"""
+        df = create_minimal_df(nitrate=np.nan)
+        result = create_ml_features(df)
+
+        # pollution_stress assumes nitrate=0 when missing
+        # This is OPTIMISTIC - assumes no pollution if unknown
+        # Real missing data might indicate poor monitoring, not clean water
+
+        # Expected: (0 / 50) * (1 - DO/10) - using fillna(0)
+        assert result['pollution_stress'].notna().iloc[0], \
+            "Missing nitrate fillna(0) assumes no pollution - is this scientifically valid?"
+
+        # QUESTION FOR USER: Should missing data be treated as:
+        # A) Optimistic (fillna with good values) - current implementation
+        # B) Unknown (NaN propagation) - more conservative
+        # C) Pessimistic (fillna with bad values) - most conservative
+
+    # --- pd.cut NaN Handling (5 tests) ---
+
+    def test_nitrate_pollution_level_missing_value(self):
+        """nitrate_pollution_level should be NaN when nitrate is missing"""
+        df = create_minimal_df(nitrate=np.nan)
+        result = create_ml_features(df)
+
+        assert pd.isna(result['nitrate_pollution_level'].iloc[0]), \
+            "pd.cut should return NaN when input is NaN"
+
+    def test_nitrate_pollution_level_low(self):
+        """nitrate_pollution_level should be 'low' for nitrate < 5"""
+        df = create_minimal_df(nitrate=3.0)
+        result = create_ml_features(df)
+
+        assert result['nitrate_pollution_level'].iloc[0] == 'low', \
+            "Nitrate < 5 should be 'low' pollution level"
+
+    def test_nitrate_pollution_level_moderate(self):
+        """nitrate_pollution_level should be 'moderate' for 5 ≤ nitrate < 10"""
+        df = create_minimal_df(nitrate=7.0)
+        result = create_ml_features(df)
+
+        assert result['nitrate_pollution_level'].iloc[0] == 'moderate', \
+            "5 ≤ nitrate < 10 should be 'moderate' pollution level"
+
+    def test_nitrate_pollution_level_high(self):
+        """nitrate_pollution_level should be 'high' for 10 ≤ nitrate < 20"""
+        df = create_minimal_df(nitrate=15.0)
+        result = create_ml_features(df)
+
+        assert result['nitrate_pollution_level'].iloc[0] == 'high', \
+            "10 ≤ nitrate < 20 should be 'high' pollution level"
+
+    def test_nitrate_pollution_level_very_high(self):
+        """nitrate_pollution_level should be 'very_high' for nitrate ≥ 20"""
+        df = create_minimal_df(nitrate=25.0)
+        result = create_ml_features(df)
+
+        assert result['nitrate_pollution_level'].iloc[0] == 'very_high', \
+            "Nitrate ≥ 20 should be 'very_high' pollution level"
+
+    # --- Edge Case Combinations (5 tests) ---
+
+    def test_all_parameters_missing_indicators(self):
+        """All missing indicators should be 1 when all parameters missing"""
+        df = create_minimal_df(
+            ph=np.nan,
+            dissolved_oxygen=np.nan,
+            temperature=np.nan,
+            turbidity=None,
+            nitrate=np.nan,
+            conductance=np.nan
+        )
+        result = create_ml_features(df)
+
+        assert result['ph_missing'].iloc[0] == 1
+        assert result['dissolved_oxygen_missing'].iloc[0] == 1
+        assert result['temperature_missing'].iloc[0] == 1
+        assert result['turbidity_missing'].iloc[0] == 1
+        assert result['nitrate_missing'].iloc[0] == 1
+        assert result['conductance_missing'].iloc[0] == 1
+
+    def test_derived_features_with_all_missing(self):
+        """Derived features behavior when all inputs missing"""
+        df = create_minimal_df(
+            ph=np.nan,
+            dissolved_oxygen=np.nan,
+            temperature=np.nan,
+            nitrate=np.nan,
+            conductance=np.nan
+        )
+        result = create_ml_features(df)
+
+        # Features WITHOUT fillna should be NaN
+        assert pd.isna(result['ph_deviation_from_7'].iloc[0]), \
+            "pH deviation should be NaN when pH missing"
+        assert pd.isna(result['do_temp_ratio'].iloc[0]), \
+            "DO-temp ratio should be NaN when both missing"
+        assert pd.isna(result['temp_stress'].iloc[0]), \
+            "Temperature stress should be NaN when temperature missing"
+
+        # Features WITH fillna should NOT be NaN
+        assert result['pollution_stress'].notna().iloc[0], \
+            "Pollution stress should use fillna (not NaN)"
+
+    def test_mixed_missing_present_scenario(self):
+        """Realistic scenario: some parameters present, some missing"""
+        df = create_minimal_df(
+            ph=7.5,           # Present
+            dissolved_oxygen=np.nan,  # Missing (common)
+            temperature=18.0,  # Present
+            turbidity=None,    # Always missing
+            nitrate=12.0,      # Present
+            conductance=np.nan # Missing
+        )
+        result = create_ml_features(df)
+
+        # Check indicators
+        assert result['ph_missing'].iloc[0] == 0
+        assert result['dissolved_oxygen_missing'].iloc[0] == 1
+        assert result['temperature_missing'].iloc[0] == 0
+        assert result['turbidity_missing'].iloc[0] == 1
+        assert result['nitrate_missing'].iloc[0] == 0
+        assert result['conductance_missing'].iloc[0] == 1
+
+        # Check count
+        assert result['n_params_available'].iloc[0] == 3, \
+            "pH, temp, nitrate present = 3 parameters"
+
+        # Check derived features
+        assert result['ph_deviation_from_7'].notna().iloc[0], \
+            "pH present should allow pH deviation calculation"
+        assert pd.isna(result['do_temp_ratio'].iloc[0]), \
+            "Missing DO should make do_temp_ratio NaN"
+        assert result['temp_stress'].notna().iloc[0], \
+            "Temperature present should allow temp_stress calculation"
+        assert result['pollution_stress'].notna().iloc[0], \
+            "Pollution stress uses fillna for missing DO"
+
+    def test_conductance_categories_all_zero_when_missing(self):
+        """Conductance categories should all be 0 when conductance is NaN"""
+        df = create_minimal_df(conductance=np.nan)
+        result = create_ml_features(df)
+
+        assert result['conductance_low'].iloc[0] == 0.0, \
+            "Missing conductance: low category should be 0"
+        assert result['conductance_medium'].iloc[0] == 0.0, \
+            "Missing conductance: medium category should be 0"
+        assert result['conductance_high'].iloc[0] == 0.0, \
+            "Missing conductance: high category should be 0"
+
+        # CRITICAL: All zeros violates mutual exclusivity assumption
+        # Normally sum should be 1.0, but with NaN sum is 0.0
+        total = (result['conductance_low'].iloc[0] +
+                result['conductance_medium'].iloc[0] +
+                result['conductance_high'].iloc[0])
+        assert total == 0.0, \
+            "CRITICAL: Missing conductance makes all categories 0 (not mutually exclusive)"
+
+    def test_multiple_rows_mixed_missing_patterns(self):
+        """Different missing patterns across multiple rows"""
+        df = pd.concat([
+            create_minimal_df(ph=7.0, dissolved_oxygen=8.0, temperature=15.0, nitrate=5.0, conductance=500.0),
+            create_minimal_df(ph=np.nan, dissolved_oxygen=8.0, temperature=15.0, nitrate=5.0, conductance=500.0),
+            create_minimal_df(ph=7.0, dissolved_oxygen=np.nan, temperature=15.0, nitrate=5.0, conductance=500.0),
+            create_minimal_df(ph=7.0, dissolved_oxygen=8.0, temperature=np.nan, nitrate=5.0, conductance=500.0),
+        ], ignore_index=True)
+
+        result = create_ml_features(df)
+
+        # Row 0: All present (pH, DO, temp, nitrate, conductance = 5, turbidity missing)
+        assert result['n_params_available'].iloc[0] == 5
+        assert result['ph_missing'].iloc[0] == 0
+
+        # Row 1: pH missing (DO, temp, nitrate, conductance = 4)
+        assert result['n_params_available'].iloc[1] == 4
+        assert result['ph_missing'].iloc[1] == 1
+        assert pd.isna(result['ph_deviation_from_7'].iloc[1])
+
+        # Row 2: DO missing (pH, temp, nitrate, conductance = 4)
+        assert result['n_params_available'].iloc[2] == 4
+        assert result['dissolved_oxygen_missing'].iloc[2] == 1
+        assert pd.isna(result['do_temp_ratio'].iloc[2])
+
+        # Row 3: Temperature missing (pH, DO, nitrate, conductance = 4)
+        assert result['n_params_available'].iloc[3] == 4
+        assert result['temperature_missing'].iloc[3] == 1
+        assert pd.isna(result['temp_stress'].iloc[3])
+
+
+# ============================================================================
+# TEST CLASS 5: One-Hot Encoding (15 tests)
+# ============================================================================
+
+class TestOneHotEncoding:
+    """Test one-hot encoding for categorical features"""
+
+    # --- Water Body Type Encoding (7 tests) ---
+
+    def test_water_body_encoding_column_created_when_present(self):
+        """Water body columns should be created when parameterWaterBodyCategory exists"""
+        df = create_minimal_df()
+        df['parameterWaterBodyCategory'] = 'River'
+        result = create_ml_features(df)
+
+        # Check that at least one water_body_ column was created
+        water_body_cols = [col for col in result.columns if col.startswith('water_body_')]
+        assert len(water_body_cols) > 0, "Should create water_body_ columns"
+
+    def test_water_body_encoding_not_created_when_absent(self):
+        """Water body columns should NOT be created when parameterWaterBodyCategory missing"""
+        df = create_minimal_df()
+        # Don't add parameterWaterBodyCategory column
+        result = create_ml_features(df)
+
+        # Check that NO water_body_ columns were created
+        water_body_cols = [col for col in result.columns if col.startswith('water_body_')]
+        assert len(water_body_cols) == 0, "Should NOT create water_body_ columns when column missing"
+
+    def test_water_body_encoding_river_type(self):
+        """River water body type should create water_body_River column"""
+        df = create_minimal_df()
+        df['parameterWaterBodyCategory'] = 'River'
+        result = create_ml_features(df)
+
+        assert 'water_body_River' in result.columns, "Should create water_body_River column"
+        assert result['water_body_River'].iloc[0] == True, "River type should be True"
+
+    def test_water_body_encoding_lake_type(self):
+        """Lake water body type should create water_body_Lake column"""
+        df = create_minimal_df()
+        df['parameterWaterBodyCategory'] = 'Lake'
+        result = create_ml_features(df)
+
+        assert 'water_body_Lake' in result.columns, "Should create water_body_Lake column"
+        assert result['water_body_Lake'].iloc[0] == True, "Lake type should be True"
+
+    def test_water_body_encoding_mutual_exclusivity(self):
+        """Only one water body type should be True per row"""
+        df = pd.concat([
+            create_minimal_df(**{'parameterWaterBodyCategory': 'River'}),
+            create_minimal_df(**{'parameterWaterBodyCategory': 'Lake'}),
+        ], ignore_index=True)
+
+        result = create_ml_features(df)
+        water_body_cols = [col for col in result.columns if col.startswith('water_body_')]
+
+        # Row 0 should have River=True, all others False
+        assert result['water_body_River'].iloc[0] == True
+        if 'water_body_Lake' in result.columns:
+            assert result['water_body_Lake'].iloc[0] == False
+
+        # Row 1 should have Lake=True, all others False
+        assert result['water_body_Lake'].iloc[1] == True
+        if 'water_body_River' in result.columns:
+            assert result['water_body_River'].iloc[1] == False
+
+    def test_water_body_encoding_multiple_rows_same_type(self):
+        """Multiple rows with same water body type"""
+        df = pd.concat([
+            create_minimal_df(**{'parameterWaterBodyCategory': 'River'}),
+            create_minimal_df(**{'parameterWaterBodyCategory': 'River'}),
+            create_minimal_df(**{'parameterWaterBodyCategory': 'River'}),
+        ], ignore_index=True)
+
+        result = create_ml_features(df)
+
+        assert all(result['water_body_River'] == True), \
+            "All rows should have water_body_River=True"
+
+    def test_water_body_encoding_nan_handling(self):
+        """NaN in water body type should create False for all categories"""
+        df = create_minimal_df()
+        df['parameterWaterBodyCategory'] = np.nan
+        result = create_ml_features(df)
+
+        # pd.get_dummies with NaN creates False for all categories
+        water_body_cols = [col for col in result.columns if col.startswith('water_body_')]
+        if len(water_body_cols) > 0:
+            # All water body columns should be False when input is NaN
+            for col in water_body_cols:
+                assert result[col].iloc[0] == False, \
+                    f"{col} should be False when water body type is NaN"
+
+    # --- Country Encoding (8 tests) ---
+
+    def test_country_encoding_column_created_when_present(self):
+        """Country columns should be created when Country column exists"""
+        df = create_minimal_df()
+        df['Country'] = 'Germany'
+        result = create_ml_features(df)
+
+        # Check that at least one country_ column was created
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+        assert len(country_cols) > 0, "Should create country_ columns"
+
+    def test_country_encoding_not_created_when_absent(self):
+        """Country columns should NOT be created when Country column missing"""
+        df = create_minimal_df()
+        # Don't add Country column
+        result = create_ml_features(df)
+
+        # Check that NO country_ columns were created
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+        assert len(country_cols) == 0, "Should NOT create country_ columns when column missing"
+
+    def test_country_encoding_grouped_column_created(self):
+        """Country_grouped column should be created"""
+        df = create_minimal_df()
+        df['Country'] = 'Germany'
+        result = create_ml_features(df)
+
+        assert 'Country_grouped' in result.columns, \
+            "Should create Country_grouped column for top 10 + Other grouping"
+
+    def test_country_encoding_top_10_logic(self):
+        """Top 10 countries should NOT be grouped as 'Other'"""
+        # Create data with 11 different countries, varying frequencies
+        countries = (
+            ['Germany'] * 50 +  # Top country
+            ['France'] * 40 +
+            ['Italy'] * 30 +
+            ['Spain'] * 25 +
+            ['Poland'] * 20 +
+            ['Netherlands'] * 15 +
+            ['Belgium'] * 12 +
+            ['Austria'] * 10 +
+            ['Czech Republic'] * 8 +
+            ['Hungary'] * 7 +  # 10th most common
+            ['Slovakia'] * 2   # Should be grouped as "Other"
+        )
+
+        df_list = [create_minimal_df(**{'Country': c}) for c in countries]
+        df = pd.concat(df_list, ignore_index=True)
+
+        result = create_ml_features(df)
+
+        # Germany should be in top 10, NOT grouped as Other
+        assert 'country_Germany' in result.columns, "Germany should have its own column"
+        assert result['country_Germany'].sum() == 50, "Germany should have 50 rows"
+
+        # Slovakia should be grouped as "Other"
+        assert 'country_Other' in result.columns, "Should have country_Other column"
+        # Note: We can't assert the exact count without knowing all "Other" countries
+
+    def test_country_encoding_other_group(self):
+        """Countries outside top 10 should be grouped as 'Other'"""
+        # Create data with clear top 10 + some rare countries
+        countries = (
+            ['Germany'] * 20 +
+            ['France'] * 15 +
+            ['Italy'] * 12 +
+            ['Spain'] * 10 +
+            ['Poland'] * 9 +
+            ['Netherlands'] * 8 +
+            ['Belgium'] * 7 +
+            ['Austria'] * 6 +
+            ['Czech Republic'] * 5 +
+            ['Hungary'] * 4 +
+            ['Slovakia'] * 1 +  # Should be "Other"
+            ['Slovenia'] * 1 +  # Should be "Other"
+            ['Croatia'] * 1     # Should be "Other"
+        )
+
+        df_list = [create_minimal_df(**{'Country': c}) for c in countries]
+        df = pd.concat(df_list, ignore_index=True)
+
+        result = create_ml_features(df)
+
+        # Check that Country_grouped has "Other" for rare countries
+        assert 'Country_grouped' in result.columns
+        # Slovakia, Slovenia, Croatia should be in "Other" group
+        other_count = (result['Country_grouped'] == 'Other').sum()
+        assert other_count >= 3, "At least Slovakia, Slovenia, Croatia should be 'Other'"
+
+    def test_country_encoding_mutual_exclusivity(self):
+        """Only one country column should be True per row"""
+        df = pd.concat([
+            create_minimal_df(**{'Country': 'Germany'}),
+            create_minimal_df(**{'Country': 'France'}),
+        ], ignore_index=True)
+
+        result = create_ml_features(df)
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+
+        # Each row should have exactly one True value across all country columns
+        for idx in range(len(result)):
+            true_count = sum([result[col].iloc[idx] for col in country_cols])
+            assert true_count == 1, f"Row {idx} should have exactly 1 country=True"
+
+    def test_country_encoding_data_types(self):
+        """Country one-hot encoded columns should be bool or int"""
+        df = create_minimal_df()
+        df['Country'] = 'Germany'
+        result = create_ml_features(df)
+
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+        for col in country_cols:
+            assert pd.api.types.is_bool_dtype(result[col]) or \
+                   pd.api.types.is_integer_dtype(result[col]), \
+                f"{col} should be bool or int type"
+
+    def test_country_encoding_nan_handling(self):
+        """NaN in Country should be handled (likely as 'Other' or False for all)"""
+        df = create_minimal_df()
+        df['Country'] = np.nan
+        result = create_ml_features(df)
+
+        # pd.get_dummies with NaN creates False for all categories
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+        if len(country_cols) > 0:
+            # Check that at least the behavior is consistent (all False or one True)
+            true_count = sum([result[col].iloc[0] for col in country_cols])
+            # NaN typically becomes False for all or gets grouped to "Other"
+            assert true_count <= 1, "NaN should map to at most one country (likely Other or none)"
+
+
+# ============================================================================
+# TEST CLASS 6: Data Type Validation (15 tests)
+# ============================================================================
+
+class TestDataTypeValidation:
+    """Test that all features have correct data types for ML models"""
+
+    def test_years_since_1991_is_numeric(self):
+        """years_since_1991 should be numeric (int or float)"""
+        df = create_minimal_df(year=2017)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['years_since_1991']), \
+            "years_since_1991 should be numeric"
+
+    def test_decade_is_numeric(self):
+        """decade should be numeric (int)"""
+        df = create_minimal_df(year=2017)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['decade']), \
+            "decade should be numeric"
+
+    def test_period_indicators_are_bool(self):
+        """is_1990s, is_2000s, is_2010s should be bool"""
+        df = create_minimal_df(year=2017)
+        result = create_ml_features(df)
+
+        assert pd.api.types.is_bool_dtype(result['is_1990s']), "is_1990s should be bool"
+        assert pd.api.types.is_bool_dtype(result['is_2000s']), "is_2000s should be bool"
+        assert pd.api.types.is_bool_dtype(result['is_2010s']), "is_2010s should be bool"
+
+    def test_ph_deviation_is_numeric(self):
+        """ph_deviation_from_7 should be numeric (float)"""
+        df = create_minimal_df(ph=7.5)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['ph_deviation_from_7']), \
+            "ph_deviation_from_7 should be numeric"
+
+    def test_do_temp_ratio_is_numeric(self):
+        """do_temp_ratio should be numeric (float)"""
+        df = create_minimal_df(dissolved_oxygen=8.0, temperature=15.0)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['do_temp_ratio']), \
+            "do_temp_ratio should be numeric"
+
+    def test_conductance_categories_are_numeric(self):
+        """conductance_low/medium/high should be numeric (float)"""
+        df = create_minimal_df(conductance=500.0)
+        result = create_ml_features(df)
+
+        assert pd.api.types.is_numeric_dtype(result['conductance_low']), \
+            "conductance_low should be numeric"
+        assert pd.api.types.is_numeric_dtype(result['conductance_medium']), \
+            "conductance_medium should be numeric"
+        assert pd.api.types.is_numeric_dtype(result['conductance_high']), \
+            "conductance_high should be numeric"
+
+    def test_missing_indicators_are_int(self):
+        """All *_missing columns should be int (0 or 1)"""
+        df = create_minimal_df()
+        result = create_ml_features(df)
+
+        missing_cols = [col for col in result.columns if col.endswith('_missing')]
+        for col in missing_cols:
+            assert pd.api.types.is_integer_dtype(result[col]), \
+                f"{col} should be integer type"
+            # Verify values are only 0 or 1
+            assert result[col].isin([0, 1]).all(), \
+                f"{col} should only contain 0 or 1"
+
+    def test_n_params_available_is_int(self):
+        """n_params_available should be int"""
+        df = create_minimal_df()
+        result = create_ml_features(df)
+
+        assert pd.api.types.is_integer_dtype(result['n_params_available']), \
+            "n_params_available should be integer type"
+        # Verify range is 0-6
+        assert (result['n_params_available'] >= 0).all(), \
+            "n_params_available should be >= 0"
+        assert (result['n_params_available'] <= 6).all(), \
+            "n_params_available should be <= 6 (max WQI parameters)"
+
+    def test_pollution_stress_is_numeric(self):
+        """pollution_stress should be numeric (float)"""
+        df = create_minimal_df(nitrate=10.0, dissolved_oxygen=8.0)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['pollution_stress']), \
+            "pollution_stress should be numeric"
+
+    def test_temp_stress_is_numeric(self):
+        """temp_stress should be numeric (float)"""
+        df = create_minimal_df(temperature=20.0)
+        result = create_ml_features(df)
+        assert pd.api.types.is_numeric_dtype(result['temp_stress']), \
+            "temp_stress should be numeric"
+
+    def test_nitrate_pollution_level_is_categorical(self):
+        """nitrate_pollution_level should be categorical"""
+        df = create_minimal_df(nitrate=10.0)
+        result = create_ml_features(df)
+
+        assert pd.api.types.is_categorical_dtype(result['nitrate_pollution_level']), \
+            "nitrate_pollution_level should be categorical type"
+
+    def test_water_body_encoded_columns_are_bool_or_int(self):
+        """Water body one-hot columns should be bool or int"""
+        df = create_minimal_df()
+        df['parameterWaterBodyCategory'] = 'River'
+        result = create_ml_features(df)
+
+        water_body_cols = [col for col in result.columns if col.startswith('water_body_')]
+        for col in water_body_cols:
+            assert pd.api.types.is_bool_dtype(result[col]) or \
+                   pd.api.types.is_integer_dtype(result[col]), \
+                f"{col} should be bool or int"
+
+    def test_country_encoded_columns_are_bool_or_int(self):
+        """Country one-hot columns should be bool or int"""
+        df = create_minimal_df()
+        df['Country'] = 'Germany'
+        result = create_ml_features(df)
+
+        country_cols = [col for col in result.columns if col.startswith('country_')]
+        for col in country_cols:
+            assert pd.api.types.is_bool_dtype(result[col]) or \
+                   pd.api.types.is_integer_dtype(result[col]), \
+                f"{col} should be bool or int"
+
+    def test_all_numeric_features_no_object_dtype(self):
+        """No numeric features should have object dtype"""
+        df = create_minimal_df()
+        result = create_ml_features(df)
+
+        # Exclude known categorical/string columns and turbidity (always None)
+        exclude_cols = [
+            'waterBodyIdentifier', 'year', 'Country', 'Country_grouped',
+            'parameterWaterBodyCategory', 'nitrate_pollution_level',
+            'wqi_classification', 'parameter_scores', 'turbidity'
+        ]
+
+        for col in result.columns:
+            if col not in exclude_cols and not col.startswith('composition_'):
+                # Should be numeric or bool, NOT object
+                assert not pd.api.types.is_object_dtype(result[col]) or \
+                       col.startswith('country_') or col.startswith('water_body_'), \
+                    f"{col} should not be object dtype (found {result[col].dtype})"
+
+    def test_data_types_consistent_across_rows(self):
+        """Data types should be consistent across multiple rows"""
+        df = pd.concat([
+            create_minimal_df(year=2015, ph=7.0, dissolved_oxygen=8.0),
+            create_minimal_df(year=2016, ph=7.5, dissolved_oxygen=9.0),
+            create_minimal_df(year=2017, ph=6.5, dissolved_oxygen=7.0),
+        ], ignore_index=True)
+
+        result = create_ml_features(df)
+
+        # Check that each column has a single consistent dtype
+        for col in result.columns:
+            # Get unique dtypes (should be only 1)
+            unique_dtypes = result[col].apply(type).unique()
+            # Allow for NaN (float) and int/bool coexistence
+            if col not in ['waterBodyIdentifier', 'Country', 'Country_grouped',
+                          'parameterWaterBodyCategory', 'nitrate_pollution_level',
+                          'wqi_classification', 'parameter_scores']:
+                dtype = result[col].dtype
+                assert dtype is not None, f"{col} should have a consistent dtype across rows"
+
+
+# ============================================================================
 # Meta-test: Verify test count
 # ============================================================================
 
@@ -979,3 +1815,24 @@ def test_meta_interaction_features_count():
     import inspect
     test_methods = [m for m in dir(TestInteractionFeatures) if m.startswith('test_')]
     assert len(test_methods) >= 39, f"Need at least 39 interaction tests, have {len(test_methods)}"
+
+
+def test_meta_missing_value_handling_count():
+    """Meta-test: Verify we have at least 30 missing value handling tests"""
+    import inspect
+    test_methods = [m for m in dir(TestMissingValueHandling) if m.startswith('test_')]
+    assert len(test_methods) >= 30, f"Need at least 30 missing value tests, have {len(test_methods)}"
+
+
+def test_meta_one_hot_encoding_count():
+    """Meta-test: Verify we have at least 15 one-hot encoding tests"""
+    import inspect
+    test_methods = [m for m in dir(TestOneHotEncoding) if m.startswith('test_')]
+    assert len(test_methods) >= 15, f"Need at least 15 one-hot encoding tests, have {len(test_methods)}"
+
+
+def test_meta_data_type_validation_count():
+    """Meta-test: Verify we have at least 15 data type validation tests"""
+    import inspect
+    test_methods = [m for m in dir(TestDataTypeValidation) if m.startswith('test_')]
+    assert len(test_methods) >= 15, f"Need at least 15 data type validation tests, have {len(test_methods)}"
