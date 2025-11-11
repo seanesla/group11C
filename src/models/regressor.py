@@ -115,13 +115,23 @@ class WQIPredictionRegressor:
         Impute missing values and scale features.
 
         Args:
-            X: Feature matrix
+            X: Feature matrix (numpy array or DataFrame)
             fit: Whether to fit the imputer and scaler (True for training)
 
         Returns:
             Preprocessed feature matrix
         """
         logger.info(f"Preprocessing features (fit={fit})")
+
+        # CRITICAL: Convert DataFrame to numpy array to avoid feature name mismatch
+        # Models were trained on numpy arrays without feature names
+        if hasattr(X, 'values'):  # Check if X is a DataFrame
+            logger.info("Converting DataFrame to numpy array (preserving feature order)")
+            X = X.values
+
+        # Verify X is now a numpy array
+        if not isinstance(X, np.ndarray):
+            raise TypeError(f"Expected numpy array after conversion, got {type(X)}")
 
         # Impute missing values
         if fit:

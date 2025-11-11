@@ -159,12 +159,44 @@ def prepare_us_features_for_prediction(
     # 59. GDP per capita proxy
     features['gdp_per_capita_proxy'] = np.nan
 
-    # Convert to DataFrame
-    df = pd.DataFrame([features])
+    # Convert to DataFrame with explicit column order
+    # CRITICAL: Column order must match training data EXACTLY
+    column_order = [
+        'year', 'PopulationDensity', 'TerraMarineProtected_2016_2018',
+        'TouristMean_1990_2020', 'VenueCount', 'netMigration_2011_2018',
+        'droughts_floods_temperature', 'literacyRate_2010_2018',
+        'combustibleRenewables_2009_2014', 'gdp',
+        'composition_food_organic_waste_percent', 'composition_glass_percent',
+        'composition_metal_percent', 'composition_other_percent',
+        'composition_paper_cardboard_percent', 'composition_plastic_percent',
+        'composition_rubber_leather_percent', 'composition_wood_percent',
+        'composition_yard_garden_green_waste_percent',
+        'waste_treatment_recycling_percent',
+        'conductance', 'dissolved_oxygen', 'nitrate', 'ph', 'temperature',
+        'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s',
+        'ph_deviation_from_7', 'do_temp_ratio',
+        'conductance_low', 'conductance_medium', 'conductance_high',
+        'ph_missing', 'dissolved_oxygen_missing', 'temperature_missing',
+        'turbidity_missing', 'nitrate_missing', 'conductance_missing',
+        'n_params_available',
+        'water_body_GW', 'water_body_LW', 'water_body_RW',
+        'country_Belgium', 'country_Bulgaria', 'country_Finland',
+        'country_France', 'country_Germany', 'country_Italy',
+        'country_Lithuania', 'country_Serbia', 'country_Spain',
+        'country_United Kingdom', 'country_Other',
+        'pollution_stress', 'temp_stress', 'gdp_per_capita_proxy'
+    ]
+
+    df = pd.DataFrame([features], columns=column_order)
 
     # Verify we have exactly 59 features
     if len(df.columns) != 59:
         raise ValueError(f"Expected 59 features, got {len(df.columns)}")
+
+    # Verify all expected features are present
+    missing_features = set(column_order) - set(features.keys())
+    if missing_features:
+        raise ValueError(f"Missing required features: {missing_features}")
 
     logger.info(f"Prepared {len(features)} features for US data prediction")
     logger.info(f"  WQI parameters provided: {features['n_params_available']}/6")

@@ -29,7 +29,7 @@ from preprocessing.us_data_features import prepare_us_features_for_prediction
 # Page configuration
 st.set_page_config(
     page_title="Water Quality Index Lookup",
-    page_icon="💧",
+    page_icon="💧",  # Keep page icon for browser tab
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -485,7 +485,7 @@ def main():
     classifier, regressor = load_ml_models()
 
     # Title
-    st.title("💧 Water Quality Index Lookup")
+    st.title("Water Quality Index Lookup")
     st.markdown("Search for water quality data by ZIP code and view WQI scores with visualizations.")
 
     # Show ML model status
@@ -535,7 +535,7 @@ def main():
     end_date = datetime.combine(end_date, datetime.min.time())
 
     # Submit button
-    search_button = st.sidebar.button("🔍 Search", type="primary", use_container_width=True)
+    search_button = st.sidebar.button("Search", type="primary", use_container_width=True)
 
     # Main area
     if search_button:
@@ -544,7 +544,7 @@ def main():
 
         if error:
             st.error(error)
-            st.info("💡 Try increasing the search radius or adjusting the date range.")
+            st.info("Try increasing the search radius or adjusting the date range.")
             return
 
         # Get location info
@@ -586,10 +586,10 @@ def main():
         )
 
         # Display results
-        st.success(f"✓ Found {len(df)} measurements from {df['MonitoringLocationIdentifier'].nunique()} monitoring stations")
+        st.success(f"Found {len(df)} measurements from {df['MonitoringLocationIdentifier'].nunique()} monitoring stations")
 
         # Location info card
-        st.subheader("📍 Location Information")
+        st.subheader("Location Information")
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -608,7 +608,7 @@ def main():
         st.divider()
 
         # WQI Summary
-        st.subheader("💧 Water Quality Summary")
+        st.subheader("Water Quality Summary")
 
         col1, col2, col3 = st.columns(3)
 
@@ -631,7 +631,7 @@ def main():
         with col3:
             calculator = WQICalculator()
             is_safe = calculator.is_safe(wqi)
-            safety_icon = "✓" if is_safe else "⚠️"
+            safety_icon = "" if is_safe else ""
             safety_text = "Safe for drinking" if is_safe else "May be unsafe"
             safety_color = "#00CC00" if is_safe else "#FF6600"
 
@@ -646,7 +646,7 @@ def main():
 
         # ML Predictions Section
         if ml_predictions:
-            st.subheader("🤖 ML Model Predictions")
+            st.subheader("ML Model Predictions")
 
             # Add disclaimer about European training data
             st.info(
@@ -707,7 +707,7 @@ def main():
             st.divider()
 
             # Future Trend Prediction Section
-            st.subheader("📈 Future Water Quality Forecast")
+            st.subheader("Future Water Quality Forecast")
 
             st.markdown("""
             Based on current water quality parameters and historical trends, here's the predicted WQI over the next 12 months.
@@ -754,15 +754,15 @@ def main():
 
                         # Trend description with appropriate icon and color
                         if trend == 'improving':
-                            trend_icon = "📈"
+                            trend_icon = "IMPROVING"
                             trend_color = "#00CC00"
                             trend_desc = "improving"
                         elif trend == 'declining':
-                            trend_icon = "📉"
+                            trend_icon = "DECLINING"
                             trend_color = "#FF6600"
                             trend_desc = "declining"
                         else:
-                            trend_icon = "➡️"
+                            trend_icon = "STABLE"
                             trend_color = "#0066FF"
                             trend_desc = "stable"
 
@@ -788,7 +788,7 @@ def main():
 
                         # Forecast disclaimer
                         st.warning(
-                            "⚠️ **Forecast Limitations:** These predictions assume current water quality parameters remain constant "
+                            "**Forecast Limitations:** These predictions assume current water quality parameters remain constant "
                             "and are based on models trained on historical European data (1991-2017). Actual water quality may vary "
                             "due to seasonal changes, environmental factors, and human activities. Use as guidance only."
                         )
@@ -804,7 +804,7 @@ def main():
             st.divider()
 
         # Parameter breakdown
-        st.subheader("📊 Parameter Breakdown")
+        st.subheader("Parameter Breakdown")
 
         if scores:
             # Create DataFrame for display
@@ -822,7 +822,7 @@ def main():
         st.divider()
 
         # Visualizations
-        st.subheader("📈 Visualizations")
+        st.subheader("Visualizations")
 
         # Time series chart
         time_series_fig = create_time_series_chart(df)
@@ -839,7 +839,7 @@ def main():
         st.divider()
 
         # Raw data
-        with st.expander("🔍 View Raw Data"):
+        with st.expander("View Raw Data"):
             st.dataframe(df, use_container_width=True)
 
             # Download button
@@ -853,7 +853,7 @@ def main():
 
     else:
         # Show instructions
-        st.info("👈 Enter a ZIP code and click Search to view water quality data")
+        st.info("Enter a ZIP code in the sidebar and click Search to view water quality data")
 
         st.markdown("""
         ### How to use this app:
