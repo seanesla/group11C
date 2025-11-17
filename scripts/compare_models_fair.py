@@ -20,11 +20,13 @@ import sys
 import json
 import logging
 from pathlib import Path
+from typing import Tuple, Dict, List, Optional, Any
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.isotonic import IsotonicRegression
 from scipy import stats
@@ -46,9 +48,9 @@ logger = logging.getLogger(__name__)
 
 
 def validate_inputs(
-    X: np.ndarray,
-    y: np.ndarray,
-    ml_preds: np.ndarray = None,
+    X: npt.NDArray[np.float64],
+    y: npt.NDArray[np.float64],
+    ml_preds: Optional[npt.NDArray[np.float64]] = None,
     function_name: str = "unknown"
 ) -> None:
     """
@@ -138,7 +140,7 @@ def validate_inputs(
     logger.debug(f"{function_name}: Input validation passed ({len(X)} samples, {X.shape[1]} features)")
 
 
-def load_us_ground_truth(min_params: int = 6):
+def load_us_ground_truth(min_params: int = 6) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], List[Dict[str, Any]]]:
     """
     Load US samples with ground truth WQI, features, and EU model predictions.
 
@@ -284,41 +286,94 @@ def load_us_ground_truth(min_params: int = 6):
     return X, y, ml_preds, metadata_list
 
 
-def cross_val_us_only_model(X, y, n_folds=10, random_state=42):
+def cross_val_us_only_model(
+    X: npt.NDArray[np.float64],
+    y: npt.NDArray[np.float64],
+    n_folds: int = 10,
+    random_state: int = 42,
+    use_nested_cv: bool = False
+) -> Dict[str, Any]:
     """
     10-fold cross-validation for US-only RandomForest model.
+
+    Args:
+        X: Feature matrix
+        y: Target WQI values
+        n_folds: Number of outer CV folds (default: 10)
+        random_state: Random seed
+        use_nested_cv: If True, use nested CV with grid search (BLOCK-9)
 
     Returns:
         Dictionary with CV scores and per-fold predictions
     """
     logger.info(f"\n{'='*80}")
-    logger.info("US-ONLY MODEL: Cross-Validation")
+    logger.info(f"US-ONLY MODEL: {'Nested ' if use_nested_cv else ''}Cross-Validation")
     logger.info(f"{'='*80}")
 
-    # Model configuration (same as train_us_only_model.py)
-    model = RandomForestRegressor(
-        n_estimators=100,
-        max_depth=10,  # Regularization for small dataset
-        min_samples_leaf=5,  # 3.9% of data
-        min_samples_split=10,
-        random_state=random_state,
-        n_jobs=-1,
-        bootstrap=True
-    )
+    if use_nested_cv:
+        logger.info("BLOCK-9: Using nested cross-validation with inner 5-fold grid search")
+        # BLOCK-9: Grid search parameters
+        param_grid = {
+            'max_depth': [8, 10, 12],
+            'min_samples_leaf': [3, 5, 7],
+            'min_samples_split': [8, 10, 12]
+        }
+        logger.info(f"  Hyperparameter grid: {param_grid}")
+        logger.info(f"  Total combinations: {len(param_grid['max_depth']) * len(param_grid['min_samples_leaf']) * len(param_grid['min_samples_split'])}")
+
+    else:
+        # Fixed hyperparameters (original approach)
+        logger.info("Using fixed hyperparameters (max_depth=10, min_samples_leaf=5, min_samples_split=10)")
 
     kfold = KFold(n_splits=n_folds, shuffle=True, random_state=random_state)
 
     cv_predictions = np.zeros(len(y))
     fold_scores = {'mae': [], 'rmse': [], 'r2': []}
+    best_params_per_fold = []
 
     for fold_idx, (train_idx, val_idx) in enumerate(kfold.split(X)):
         X_train, X_val = X[train_idx], X[val_idx]
         y_train, y_val = y[train_idx], y[val_idx]
 
-        # Train on fold
-        model.fit(X_train, y_train)
+        if use_nested_cv:
+            # BLOCK-9: Inner grid search with 5-fold CV
+            base_model = RandomForestRegressor(
+                n_estimators=100,
+                random_state=random_state,
+                n_jobs=-1,
+                bootstrap=True
+            )
 
-        # Predict on validation
+            grid_search = GridSearchCV(
+                estimator=base_model,
+                param_grid=param_grid,
+                cv=5,  # Inner 5-fold CV
+                scoring='neg_mean_absolute_error',
+                n_jobs=-1,
+                verbose=0
+            )
+
+            grid_search.fit(X_train, y_train)
+            model = grid_search.best_estimator_
+            best_params = grid_search.best_params_
+            best_params_per_fold.append(best_params)
+
+            logger.info(f"  Fold {fold_idx+1}/{n_folds}: Best params: {best_params} (inner CV MAE={-grid_search.best_score_:.2f})")
+
+        else:
+            # Fixed hyperparameters
+            model = RandomForestRegressor(
+                n_estimators=100,
+                max_depth=10,
+                min_samples_leaf=5,
+                min_samples_split=10,
+                random_state=random_state,
+                n_jobs=-1,
+                bootstrap=True
+            )
+            model.fit(X_train, y_train)
+
+        # Predict on validation fold (outer CV)
         y_pred = model.predict(X_val)
         cv_predictions[val_idx] = y_pred
 
@@ -331,7 +386,8 @@ def cross_val_us_only_model(X, y, n_folds=10, random_state=42):
         fold_scores['rmse'].append(rmse)
         fold_scores['r2'].append(r2)
 
-        logger.info(f"  Fold {fold_idx+1}/{n_folds}: MAE={mae:.2f}, RMSE={rmse:.2f}, R²={r2:.3f}")
+        if not use_nested_cv:
+            logger.info(f"  Fold {fold_idx+1}/{n_folds}: MAE={mae:.2f}, RMSE={rmse:.2f}, R²={r2:.3f}")
 
     # Overall CV metrics
     cv_mae = np.mean(fold_scores['mae'])
@@ -344,17 +400,32 @@ def cross_val_us_only_model(X, y, n_folds=10, random_state=42):
     logger.info(f"  RMSE: {cv_rmse:.2f} ± {np.std(fold_scores['rmse']):.2f}")
     logger.info(f"  R²:   {cv_r2:.3f} ± {np.std(fold_scores['r2']):.3f}")
 
-    return {
+    result = {
         'cv_predictions': cv_predictions,
         'fold_scores': fold_scores,
         'cv_mae': cv_mae,
         'cv_mae_std': cv_mae_std,
         'cv_rmse': cv_rmse,
-        'cv_r2': cv_r2
+        'cv_r2': cv_r2,
+        'use_nested_cv': use_nested_cv
     }
 
+    if use_nested_cv:
+        result['best_params_per_fold'] = best_params_per_fold
+        logger.info(f"\nBest hyperparameters across folds:")
+        for idx, params in enumerate(best_params_per_fold):
+            logger.info(f"  Fold {idx+1}: {params}")
 
-def cross_val_calibrated_model(X, y, ml_preds, n_folds=10, random_state=42):
+    return result
+
+
+def cross_val_calibrated_model(
+    X: npt.NDArray[np.float64],
+    y: npt.NDArray[np.float64],
+    ml_preds: npt.NDArray[np.float64],
+    n_folds: int = 10,
+    random_state: int = 42
+) -> Dict[str, Any]:
     """
     10-fold cross-validation for Calibrated EU model.
 
@@ -424,7 +495,12 @@ def cross_val_calibrated_model(X, y, ml_preds, n_folds=10, random_state=42):
     }
 
 
-def statistical_significance_tests(y_true, pred_us, pred_cal, random_state=42):
+def statistical_significance_tests(
+    y_true: npt.NDArray[np.float64],
+    pred_us: npt.NDArray[np.float64],
+    pred_cal: npt.NDArray[np.float64],
+    random_state: int = 42
+) -> Dict[str, Any]:
     """
     Test if US model is statistically better than calibrated model.
 
@@ -576,7 +652,13 @@ def statistical_significance_tests(y_true, pred_us, pred_cal, random_state=42):
     return results
 
 
-def bootstrap_confidence_intervals(y_true, pred_us, pred_cal, n_bootstrap=1000, random_state=42):
+def bootstrap_confidence_intervals(
+    y_true: npt.NDArray[np.float64],
+    pred_us: npt.NDArray[np.float64],
+    pred_cal: npt.NDArray[np.float64],
+    n_bootstrap: int = 1000,
+    random_state: int = 42
+) -> Dict[str, Any]:
     """
     Compute bootstrap 95% confidence intervals on MAE difference.
 
@@ -639,7 +721,12 @@ def bootstrap_confidence_intervals(y_true, pred_us, pred_cal, n_bootstrap=1000, 
     }
 
 
-def generate_comparison_report(us_results, cal_results, stat_tests, bootstrap):
+def generate_comparison_report(
+    us_results: Dict[str, Any],
+    cal_results: Dict[str, Any],
+    stat_tests: Dict[str, Any],
+    bootstrap: Dict[str, Any]
+) -> None:
     """Generate comprehensive comparison report."""
     logger.info(f"\n{'='*80}")
     logger.info("FINAL COMPARISON: US-Only vs Calibrated EU Model")
@@ -712,7 +799,7 @@ def generate_comparison_report(us_results, cal_results, stat_tests, bootstrap):
     logger.info(f"  Inflation factor: {44 / mae_improvement:.1f}×")
 
 
-def main():
+def main() -> None:
     """Run fair model comparison."""
     logger.info("="*80)
     logger.info("FAIR MODEL COMPARISON: US-Only vs Calibrated EU Model")
