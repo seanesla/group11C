@@ -24,6 +24,11 @@ from utils.wqi_calculator import WQICalculator
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Nitrate unit conversion constant: NO3 (molecular form) → N (nitrogen form)
+# Kaggle dataset uses mg{NO3}/L, but EPA standards and US APIs use mg/L as N
+# Conversion factor = atomic_weight(N) / molecular_weight(NO3) = 14.0067 / 62.0049 = 0.2258
+NITRATE_NO3_TO_N = 0.2258  # Multiply NO3 values by this to get N values
+
 
 # Verified parameter code mappings from data analysis
 PARAMETER_MAPPING = {
@@ -170,6 +175,13 @@ def extract_wqi_parameters(df: pd.DataFrame) -> pd.DataFrame:
     # Rename year column for clarity
     df_wide = df_wide.rename(columns={'phenomenonTimeReferenceYear': 'year'})
 
+    # CRITICAL: Convert nitrate from mg{NO3}/L to mg/L as N (EPA standard)
+    # Kaggle dataset uses mg{NO3}/L but EPA/USGS standards use mg/L as N
+    # Conversion factor = atomic_weight(N) / molecular_weight(NO3) = 14.0067 / 62.0049 = 0.2258
+    if 'nitrate' in df_wide.columns:
+        df_wide['nitrate'] = df_wide['nitrate'] * NITRATE_NO3_TO_N
+        logger.info(f"Converted nitrate from mg{{NO3}}/L to mg/L as N (multiplied by {NITRATE_NO3_TO_N})")
+
     # Add turbidity column (always None - not available in Kaggle dataset)
     df_wide['turbidity'] = None
 
@@ -216,12 +228,14 @@ def calculate_wqi_labels(df: pd.DataFrame) -> pd.DataFrame:
     for idx, row in df.iterrows():
         try:
             # Extract parameters (handle None and NaN)
+            # NOTE: Nitrate already converted to mg/L as N by extract_wqi_parameters() at line 182
+            # Do NOT convert again here (previous bug: double conversion)
             params = {
                 'ph': row.get('ph') if pd.notna(row.get('ph')) else None,
                 'dissolved_oxygen': row.get('dissolved_oxygen') if pd.notna(row.get('dissolved_oxygen')) else None,
                 'temperature': row.get('temperature') if pd.notna(row.get('temperature')) else None,
                 'turbidity': row.get('turbidity') if pd.notna(row.get('turbidity')) else None,
-                'nitrate': row.get('nitrate') if pd.notna(row.get('nitrate')) else None,
+                'nitrate': row.get('nitrate') if pd.notna(row.get('nitrate')) else None,  # Already in mg/L as N from extract_wqi_parameters()
                 'conductance': row.get('conductance') if pd.notna(row.get('conductance')) else None,
             }
 
@@ -391,6 +405,106 @@ def create_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"  Original WQI parameters: {len(original_features)}")
     logger.info(f"  New features created: {len(new_features)}")
     logger.info(f"  Total features: {len(df.columns)}")
+
+    return df
+
+
+def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create CORE feature set for machine learning models (universal water quality only).
+
+    This function creates features based ONLY on water quality parameters and temporal
+    information, excluding European-specific geographic, economic, and waste management
+    features. This enables better generalization to non-European water quality data.
+
+    Features created:
+    1. Water quality features: Raw parameters + derived ratios
+    2. Temporal features: Year, season, trend indicators
+    3. Missing indicators: Flags for missing parameters
+    4. Interaction features: Scientifically relevant combinations
+
+    Features EXCLUDED (vs create_ml_features):
+    - Geographic features: Country, water body type one-hot encoding
+    - Environmental/economic: Population density, GDP, tourism, migration, etc.
+    - Waste management: Composition and treatment features
+    - GDP interactions
+
+    Args:
+        df: DataFrame with WQI parameters and labels
+
+    Returns:
+        DataFrame ready for ML training with core features only (~25-30 features)
+    """
+    logger.info("Creating CORE ML features (water quality + temporal only)")
+
+    df = df.copy()
+
+    # === 1. TEMPORAL FEATURES ===
+    logger.info("Creating temporal features")
+
+    # Years since baseline
+    df['years_since_1991'] = df['year'] - 1991
+
+    # Decade bins
+    df['decade'] = (df['year'] // 10) * 10
+
+    # Time period indicators
+    df['is_1990s'] = (df['year'] >= 1990) & (df['year'] < 2000)
+    df['is_2000s'] = (df['year'] >= 2000) & (df['year'] < 2010)
+    df['is_2010s'] = (df['year'] >= 2010) & (df['year'] < 2020)
+
+    # === 2. WATER QUALITY DERIVED FEATURES ===
+    logger.info("Creating water quality derived features")
+
+    # pH deviation from neutral
+    df['ph_deviation_from_7'] = np.abs(df['ph'] - 7.0)
+
+    # DO saturation estimate (rough approximation based on temperature)
+    # DO saturation decreases with temperature
+    df['do_temp_ratio'] = df['dissolved_oxygen'] / (df['temperature'] + 1)  # +1 to avoid div by zero
+
+    # Conductance categories (low/medium/high)
+    df['conductance_low'] = (df['conductance'] < 200).astype(float)
+    df['conductance_medium'] = ((df['conductance'] >= 200) & (df['conductance'] < 800)).astype(float)
+    df['conductance_high'] = (df['conductance'] >= 800).astype(float)
+
+    # Nitrate pollution level
+    df['nitrate_pollution_level'] = pd.cut(
+        df['nitrate'],
+        bins=[-np.inf, 5, 10, 20, np.inf],
+        labels=['low', 'moderate', 'high', 'very_high']
+    )
+
+    # === 3. MISSING VALUE INDICATORS ===
+    logger.info("Creating missing value indicators")
+
+    wqi_params = ['ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance']
+    for param in wqi_params:
+        df[f'{param}_missing'] = df[param].isna().astype(int)
+
+    # Count of available parameters
+    df['n_params_available'] = sum([~df[param].isna() for param in wqi_params if param in df.columns])
+
+    # === 4. INTERACTION FEATURES ===
+    logger.info("Creating interaction features")
+
+    # Pollution stress index (high nitrate + low DO)
+    df['pollution_stress'] = (
+        (df['nitrate'].fillna(0) / 50) * (1 - df['dissolved_oxygen'].fillna(10) / 10)
+    )
+
+    # Temperature stress (extreme cold or warm)
+    df['temp_stress'] = np.abs(df['temperature'] - 15) / 15  # Optimal around 15°C
+
+    # === SUMMARY ===
+    original_features = ['ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance']
+    new_features = [col for col in df.columns if col not in original_features and col not in ['waterBodyIdentifier', 'year', 'Country', 'wqi_score', 'wqi_classification', 'is_safe', 'parameter_scores', 'turbidity']]
+
+    logger.info(f"\nCORE feature engineering complete:")
+    logger.info(f"  Original WQI parameters: {len(original_features)}")
+    logger.info(f"  New features created: {len(new_features)}")
+    logger.info(f"  Total features: {len(df.columns)}")
+    logger.info(f"  (Excluded: geographic, environmental, economic, waste management features)")
 
     return df
 
