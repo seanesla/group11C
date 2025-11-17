@@ -6,11 +6,16 @@ This script trains both the classifier and regressor models on the
 Kaggle European water quality dataset.
 
 Usage:
+    # Standard training (full feature set):
     poetry run python train_models.py
+
+    # Core parameters only (universal water quality features):
+    poetry run python train_models.py --core-params-only
 """
 
 import sys
 import logging
+import argparse
 from pathlib import Path
 
 # Add src to path
@@ -27,16 +32,52 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Train water quality ML models',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Train with full feature set (59 features):
+  python train_models.py
+
+  # Train with core parameters only (24 features):
+  python train_models.py --core-params-only
+        """
+    )
+
+    parser.add_argument(
+        '--core-params-only',
+        action='store_true',
+        help='Train using only core water quality features (~24 features) instead of '
+             'full feature set (59 features). This excludes European-specific features '
+             '(geographic, environmental, economic, waste management) to enable better '
+             'generalization to non-European water quality data.'
+    )
+
+    return parser.parse_args()
+
+
 def main():
     """Main training pipeline"""
+    args = parse_args()
+
     logger.info("=" * 80)
     logger.info("WATER QUALITY ML MODEL TRAINING")
+    if args.core_params_only:
+        logger.info("MODE: CORE PARAMETERS ONLY (universal water quality features)")
+    else:
+        logger.info("MODE: FULL FEATURE SET (includes European-specific features)")
     logger.info("=" * 80)
 
     try:
         # Step 1: Prepare dataset
         logger.info("\nStep 1: Preparing ML dataset...")
-        df = prepare_ml_dataset(save_processed=True)
+        df = prepare_ml_dataset(
+            save_processed=True,
+            core_params_only=args.core_params_only
+        )
         logger.info(f"Dataset prepared: {df.shape[0]} samples, {df.shape[1]} features")
 
         # Step 2: Train both models

@@ -511,7 +511,8 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def prepare_ml_dataset(
     file_path: str = "data/raw/waterPollution.csv",
-    save_processed: bool = True
+    save_processed: bool = True,
+    core_params_only: bool = False
 ) -> pd.DataFrame:
     """
     Complete pipeline: Load → Extract → Calculate → Feature Engineering.
@@ -521,12 +522,18 @@ def prepare_ml_dataset(
     Args:
         file_path: Path to raw Kaggle CSV
         save_processed: Whether to save processed data to data/processed/
+        core_params_only: If True, use core water quality features only (~24 features)
+                         If False, use full feature set including European-specific (59 features)
 
     Returns:
         Complete DataFrame ready for ML model training
     """
     logger.info("=" * 80)
     logger.info("Starting ML dataset preparation pipeline")
+    if core_params_only:
+        logger.info("Feature mode: CORE PARAMETERS ONLY (~24 features)")
+    else:
+        logger.info("Feature mode: FULL FEATURE SET (59 features)")
     logger.info("=" * 80)
 
     # Step 1: Load raw data
@@ -538,8 +545,11 @@ def prepare_ml_dataset(
     # Step 3: Calculate WQI labels
     df = calculate_wqi_labels(df)
 
-    # Step 4: Create ML features
-    df = create_ml_features(df)
+    # Step 4: Create ML features (conditional based on mode)
+    if core_params_only:
+        df = create_core_ml_features(df)
+    else:
+        df = create_ml_features(df)
 
     # Step 5: Remove rows with invalid WQI scores
     valid_df = df[df['wqi_score'].notna()].copy()
