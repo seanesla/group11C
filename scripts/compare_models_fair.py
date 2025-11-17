@@ -45,6 +45,99 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def validate_inputs(
+    X: np.ndarray,
+    y: np.ndarray,
+    ml_preds: np.ndarray = None,
+    function_name: str = "unknown"
+) -> None:
+    """
+    Validate all inputs before processing.
+
+    Args:
+        X: Feature matrix (n_samples, n_features)
+        y: Target WQI values (n_samples,)
+        ml_preds: Optional ML predictions (n_samples,)
+        function_name: Name of calling function for error messages
+
+    Raises:
+        ValueError: If any validation check fails
+    """
+    # Check for empty arrays
+    if X.size == 0:
+        raise ValueError(f"{function_name}: X array is empty")
+
+    if y.size == 0:
+        raise ValueError(f"{function_name}: y array is empty")
+
+    # Check shapes match
+    if len(X) != len(y):
+        raise ValueError(
+            f"{function_name}: Shape mismatch\n"
+            f"  X has {len(X)} samples\n"
+            f"  y has {len(y)} samples\n"
+            f"  These must be equal"
+        )
+
+    # Check for NaN/Inf in X
+    if np.any(np.isnan(X)):
+        nan_count = np.sum(np.isnan(X))
+        raise ValueError(
+            f"{function_name}: X contains {nan_count} NaN values\n"
+            f"  Cannot perform calculations with NaN"
+        )
+
+    if np.any(np.isinf(X)):
+        inf_count = np.sum(np.isinf(X))
+        raise ValueError(
+            f"{function_name}: X contains {inf_count} Inf values\n"
+            f"  Cannot perform calculations with Inf"
+        )
+
+    # Check for NaN/Inf in y
+    if np.any(np.isnan(y)):
+        nan_indices = np.where(np.isnan(y))[0]
+        raise ValueError(
+            f"{function_name}: y contains {len(nan_indices)} NaN values\n"
+            f"  Indices: {nan_indices[:10].tolist()}..." if len(nan_indices) > 10 else f"  Indices: {nan_indices.tolist()}"
+        )
+
+    if np.any(np.isinf(y)):
+        inf_indices = np.where(np.isinf(y))[0]
+        raise ValueError(
+            f"{function_name}: y contains {len(inf_indices)} Inf values\n"
+            f"  Indices: {inf_indices[:10].tolist()}..." if len(inf_indices) > 10 else f"  Indices: {inf_indices.tolist()}"
+        )
+
+    # Check WQI range [0, 100]
+    if np.any(y < 0) or np.any(y > 100):
+        out_of_range = np.where((y < 0) | (y > 100))[0]
+        bad_values = y[out_of_range]
+        raise ValueError(
+            f"{function_name}: WQI values out of valid range [0, 100]\n"
+            f"  Found {len(out_of_range)} invalid values\n"
+            f"  Range: [{y.min():.2f}, {y.max():.2f}]\n"
+            f"  Invalid values: {bad_values[:5].tolist()}..."
+        )
+
+    # Check ml_preds if provided
+    if ml_preds is not None:
+        if len(ml_preds) != len(y):
+            raise ValueError(
+                f"{function_name}: ml_preds length mismatch\n"
+                f"  ml_preds has {len(ml_preds)} samples\n"
+                f"  y has {len(y)} samples"
+            )
+
+        if np.any(np.isnan(ml_preds)):
+            raise ValueError(f"{function_name}: ml_preds contains NaN values")
+
+        if np.any(np.isinf(ml_preds)):
+            raise ValueError(f"{function_name}: ml_preds contains Inf values")
+
+    logger.debug(f"{function_name}: Input validation passed ({len(X)} samples, {X.shape[1]} features)")
+
+
 def load_us_ground_truth(min_params: int = 6):
     """
     Load US samples with ground truth WQI, features, and EU model predictions.
@@ -54,8 +147,29 @@ def load_us_ground_truth(min_params: int = 6):
     """
     logger.info("Loading US ground truth data...")
 
-    with open('tests/geographic_coverage_191_results.json', 'r') as f:
-        data = json.load(f)
+    input_path = Path('tests/geographic_coverage_191_results.json')
+
+    if not input_path.exists():
+        raise FileNotFoundError(
+            f"Input file not found: {input_path}\n"
+            f"Expected: US ground truth data (191 locations, 128 usable samples)\n"
+            f"Ensure file exists and path is correct."
+        )
+
+    if input_path.stat().st_size == 0:
+        raise ValueError(f"Input file is empty: {input_path}")
+
+    try:
+        with open(input_path, 'r') as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Malformed JSON in {input_path}\n"
+            f"Error: {e}\n"
+            f"Line: {e.lineno}, Column: {e.colno}"
+        ) from e
+    except PermissionError:
+        raise PermissionError(f"Cannot read {input_path}: permission denied")
 
     results = data['results']
 
