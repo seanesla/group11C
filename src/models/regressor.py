@@ -49,6 +49,7 @@ class WQIPredictionRegressor:
         self.feature_names = None
         self.metrics = {}
         self.grid_search = None
+        self.calibrator = None  # Optional domain calibration for US predictions
 
         logger.info(f"Initialized WQIPredictionRegressor with {model_type}")
 
@@ -364,12 +365,13 @@ class WQIPredictionRegressor:
 
         return importance_df
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray, apply_calibration: bool = True) -> np.ndarray:
         """
-        Predict WQI scores.
+        Predict WQI scores with optional domain calibration.
 
         Args:
             X: Feature matrix (will be preprocessed)
+            apply_calibration: Whether to apply domain calibration if available
 
         Returns:
             Predicted WQI scores
@@ -379,6 +381,11 @@ class WQIPredictionRegressor:
 
         X_processed = self.preprocess_features(X, fit=False)
         predictions = self.model.predict(X_processed)
+
+        # Apply domain calibration if available (corrects EU → US domain shift)
+        if apply_calibration and self.calibrator is not None:
+            predictions = self.calibrator.calibrate(predictions)
+            logger.debug(f"Applied domain calibration to {len(predictions)} predictions")
 
         # Clip predictions to valid WQI range [0, 100]
         return np.clip(predictions, 0, 100)
@@ -574,12 +581,13 @@ class WQIPredictionRegressor:
         return filepath
 
     @classmethod
-    def load(cls, filepath: str) -> 'WQIPredictionRegressor':
+    def load(cls, filepath: str, load_calibration: bool = True) -> 'WQIPredictionRegressor':
         """
-        Load a saved model.
+        Load a saved model with optional domain calibration.
 
         Args:
             filepath: Path to saved model
+            load_calibration: Whether to auto-load calibration if available
 
         Returns:
             Loaded WQIPredictionRegressor instance
@@ -602,6 +610,20 @@ class WQIPredictionRegressor:
         logger.info(f"  Type: {instance.model_type}")
         logger.info(f"  Features: {len(instance.feature_names)}")
         logger.info(f"  Saved: {model_data.get('timestamp', 'unknown')}")
+
+        # Auto-load companion calibrator if exists
+        if load_calibration:
+            calibrator_path = str(filepath).replace('regressor_', 'calibrator_us_').replace('.joblib', '.joblib')
+            if Path(calibrator_path).exists():
+                try:
+                    from src.models.domain_calibrator import DomainCalibrator
+                    instance.calibrator = DomainCalibrator.load(calibrator_path)
+                    logger.info(f"✓ Loaded domain calibration for US predictions")
+                except Exception as e:
+                    logger.warning(f"Failed to load calibration: {e}")
+                    instance.calibrator = None
+            else:
+                logger.info(f"No calibration file found (looked for {Path(calibrator_path).name})")
 
         return instance
 
