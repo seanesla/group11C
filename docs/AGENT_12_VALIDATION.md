@@ -277,11 +277,11 @@ Top 10 most predictive features:
 ✅ **ADOPT US-ONLY MODEL** for all US water quality predictions.
 
 **Rationale**:
-1. **44% better accuracy** (1.98 vs 3.54 MAE)
+1. **15.6% better performance** (CV MAE 3.07 vs 3.64, statistically significant p<0.05)
 2. **Fixes edge case failures** (69% improvement on low-DO)
 3. **Simpler architecture** (no calibration layer)
 4. **Better interpretability** (trained on same distribution)
-5. **Scientifically validated** (10-fold CV, bootstrap, comparison)
+5. **Scientifically validated** (10-fold CV, 4 statistical tests, bootstrap CI)
 
 ### What to Abandon
 
