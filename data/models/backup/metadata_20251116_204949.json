@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-11-16T20:49:49.841077",
+  "classifier": {
+    "path": "data/models/classifier_20251116_204909.joblib",
+    "metrics": {
+      "accuracy": 0.9829931972789115,
+      "precision": 0.9910714285714286,
+      "recall": 0.9794117647058823,
+      "f1_score": 0.985207100591716,
+      "roc_auc": 0.9981261859582543,
+      "true_negatives": 245,
+      "false_positives": 3,
+      "false_negatives": 7,
+      "true_positives": 333
+    }
+  },
+  "regressor": {
+    "path": "data/models/regressor_20251116_204949.joblib",
+    "metrics": {
+      "r2_score": 0.9919088404431179,
+      "mae": 1.0204544217687128,
+      "mse": 7.073187811428579,
+      "rmse": 2.6595465424445157,
+      "explained_variance": 0.9919347265093367,
+      "mean_residual": 0.15043027210884205,
+      "std_residual": 2.655288787431951,
+      "min_residual": -16.9974,
+      "max_residual": 28.25
+    }
+  },
+  "training_info": {
+    "dataset": "Kaggle European Water Quality (1991-2017)",
+    "samples": 2939,
+    "features": 69,
+    "target_classifier": "is_safe (WQI >= 70)",
+    "target_regressor": "wqi_score (0-100)"
+  }
+}
