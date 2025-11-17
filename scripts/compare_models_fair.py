@@ -178,43 +178,99 @@ def load_us_ground_truth(min_params: int = 6):
     ml_pred_list = []
     metadata_list = []
 
-    for r in results:
-        # Must have WQI ground truth
-        if not r.get('wqi') or not r['wqi'].get('score'):
+    skipped_samples = 0
+    failed_samples = []
+
+    for idx, r in enumerate(results):
+        try:
+            # Must have WQI ground truth
+            if not r.get('wqi') or not r['wqi'].get('score'):
+                continue
+
+            # Must have sufficient parameters
+            if r['wqi']['parameter_count'] < min_params:
+                continue
+
+            # Must have ML prediction from EU model
+            ml_preds = r.get('ml_predictions')
+            if not ml_preds or ml_preds.get('regressor_wqi') is None:
+                continue
+
+            # Extract parameters
+            params = r['wqi']['parameters']
+
+            # Prepare features using same pipeline as production
+            features_df = prepare_us_features_for_prediction(
+                ph=params.get('ph'),
+                dissolved_oxygen=params.get('dissolved_oxygen'),
+                temperature=params.get('temperature'),
+                turbidity=params.get('turbidity'),
+                nitrate=params.get('nitrate'),
+                conductance=params.get('conductance'),
+                year=2024  # Consistent year
+            )
+
+            features_list.append(features_df.values[0])
+            actual_wqi_list.append(r['wqi']['score'])
+            ml_pred_list.append(ml_preds['regressor_wqi'])
+            metadata_list.append({
+                'zip_code': r['zip_code'],
+                'state': r['geolocation']['state_code'] if r.get('geolocation') and isinstance(r['geolocation'], dict) else 'Unknown',
+                'parameter_count': r['wqi']['parameter_count'],
+                'dissolved_oxygen': params.get('dissolved_oxygen')
+            })
+
+        except KeyError as e:
+            failed_samples.append({
+                'index': idx,
+                'zip_code': r.get('zip_code', 'UNKNOWN'),
+                'error_type': 'KeyError',
+                'missing_key': str(e)
+            })
+            logger.warning(
+                f"Sample {idx} (zip={r.get('zip_code', 'UNKNOWN')}): Missing required key {e}, skipping"
+            )
+            skipped_samples += 1
             continue
 
-        # Must have sufficient parameters
-        if r['wqi']['parameter_count'] < min_params:
+        except TypeError as e:
+            failed_samples.append({
+                'index': idx,
+                'zip_code': r.get('zip_code', 'UNKNOWN'),
+                'error_type': 'TypeError',
+                'error_message': str(e)
+            })
+            logger.warning(
+                f"Sample {idx} (zip={r.get('zip_code', 'UNKNOWN')}): Type error ({e}), skipping"
+            )
+            skipped_samples += 1
             continue
 
-        # Must have ML prediction from EU model
-        ml_preds = r.get('ml_predictions')
-        if not ml_preds or ml_preds.get('regressor_wqi') is None:
+        except IndexError as e:
+            failed_samples.append({
+                'index': idx,
+                'zip_code': r.get('zip_code', 'UNKNOWN'),
+                'error_type': 'IndexError',
+                'error_message': str(e)
+            })
+            logger.warning(
+                f"Sample {idx} (zip={r.get('zip_code', 'UNKNOWN')}): Index error ({e}), likely malformed features_df"
+            )
+            skipped_samples += 1
             continue
 
-        # Extract parameters
-        params = r['wqi']['parameters']
-
-        # Prepare features using same pipeline as production
-        features_df = prepare_us_features_for_prediction(
-            ph=params.get('ph'),
-            dissolved_oxygen=params.get('dissolved_oxygen'),
-            temperature=params.get('temperature'),
-            turbidity=params.get('turbidity'),
-            nitrate=params.get('nitrate'),
-            conductance=params.get('conductance'),
-            year=2024  # Consistent year
+    if skipped_samples > 0:
+        logger.warning(
+            f"Skipped {skipped_samples} samples due to parsing errors\n"
+            f"  Total results: {len(results)}\n"
+            f"  Successfully parsed: {len(features_list)}\n"
+            f"  Failed: {skipped_samples}"
         )
-
-        features_list.append(features_df.values[0])
-        actual_wqi_list.append(r['wqi']['score'])
-        ml_pred_list.append(ml_preds['regressor_wqi'])
-        metadata_list.append({
-            'zip_code': r['zip_code'],
-            'state': r['geolocation']['state_code'] if r['geolocation'] else 'Unknown',
-            'parameter_count': r['wqi']['parameter_count'],
-            'dissolved_oxygen': params.get('dissolved_oxygen')
-        })
+        if skipped_samples > len(results) * 0.1:  # More than 10% failures
+            logger.error(
+                f"HIGH FAILURE RATE: {skipped_samples}/{len(results)} ({100*skipped_samples/len(results):.1f}%) samples failed to parse\n"
+                f"  This may indicate a data format change or corrupted input file"
+            )
 
     X = np.array(features_list)
     y = np.array(actual_wqi_list)
@@ -368,9 +424,15 @@ def cross_val_calibrated_model(X, y, ml_preds, n_folds=10, random_state=42):
     }
 
 
-def statistical_significance_tests(y_true, pred_us, pred_cal):
+def statistical_significance_tests(y_true, pred_us, pred_cal, random_state=42):
     """
     Test if US model is statistically better than calibrated model.
+
+    Args:
+        y_true: Actual WQI values
+        pred_us: US model predictions
+        pred_cal: Calibrated model predictions
+        random_state: Random seed for reproducibility (default: 42)
 
     Returns:
         Dictionary with test results and p-values
@@ -379,21 +441,50 @@ def statistical_significance_tests(y_true, pred_us, pred_cal):
     logger.info("STATISTICAL SIGNIFICANCE TESTS")
     logger.info(f"{'='*80}")
 
+    # BLOCK-5: Create seeded random number generator for reproducibility
+    rng = np.random.RandomState(random_state)
+    logger.debug(f"Using random_state={random_state} for permutation test reproducibility")
+
     # Compute errors for each sample
     errors_us = np.abs(y_true - pred_us)
     errors_cal = np.abs(y_true - pred_cal)
 
     results = {}
 
+    # BLOCK-8: Test normality assumption before parametric t-test
+    error_diffs = errors_cal - errors_us
+    shapiro_stat, shapiro_p = stats.shapiro(error_diffs)
+    normality_ok = shapiro_p >= 0.05
+
+    results['normality_test'] = {
+        'shapiro_stat': shapiro_stat,
+        'shapiro_p': shapiro_p,
+        'is_normal': normality_ok
+    }
+
+    logger.info(f"\n0. Shapiro-Wilk Normality Test (for t-test validity):")
+    logger.info(f"   H0: Error differences are normally distributed")
+    logger.info(f"   W-statistic: {shapiro_stat:.4f}")
+    logger.info(f"   p-value: {shapiro_p:.6f}")
+    if normality_ok:
+        logger.info(f"   ✅ Normality assumption satisfied (p >= 0.05) - t-test is valid")
+    else:
+        logger.warning(
+            f"   ⚠️ NORMALITY VIOLATED (p < 0.05) - t-test may be unreliable\n"
+            f"   → Rely on Wilcoxon signed-rank test (non-parametric) instead"
+        )
+
     # 1. Paired t-test (parametric)
     t_stat, p_ttest = stats.ttest_rel(errors_cal, errors_us)
-    results['t_test'] = {'t_stat': t_stat, 'p_value': p_ttest}
+    results['t_test'] = {'t_stat': t_stat, 'p_value': p_ttest, 'valid': normality_ok}
 
-    logger.info(f"\n1. Paired t-test:")
+    logger.info(f"\n1. Paired t-test {'(VALID)' if normality_ok else '(INVALID - normality violated)'}:")
     logger.info(f"   H0: Calibrated and US models have equal mean error")
     logger.info(f"   t-statistic: {t_stat:.4f}")
     logger.info(f"   p-value: {p_ttest:.6f}")
-    if p_ttest < 0.001:
+    if not normality_ok:
+        logger.warning(f"   ⚠️ Result unreliable due to normality violation - use Wilcoxon instead")
+    elif p_ttest < 0.001:
         logger.info(f"   ✅ US model is SIGNIFICANTLY better (p < 0.001)")
     elif p_ttest < 0.05:
         logger.info(f"   ✅ US model is significantly better (p < 0.05)")
@@ -413,15 +504,15 @@ def statistical_significance_tests(y_true, pred_us, pred_cal):
     else:
         logger.info(f"   ❌ No significant difference (p >= 0.05)")
 
-    # 3. Permutation test (10,000 permutations)
+    # 3. Permutation test (10,000 permutations) - BLOCK-5: Now seeded
     observed_diff = errors_cal.mean() - errors_us.mean()
 
     n_perm = 10000
     perm_diffs = []
 
     for _ in range(n_perm):
-        # Randomly swap errors
-        swap = np.random.binomial(1, 0.5, len(y_true))
+        # Randomly swap errors using seeded RNG
+        swap = rng.binomial(1, 0.5, len(y_true))
         perm_errors_cal = np.where(swap, errors_cal, errors_us)
         perm_errors_us = np.where(swap, errors_us, errors_cal)
         perm_diff = perm_errors_cal.mean() - perm_errors_us.mean()
@@ -431,7 +522,7 @@ def statistical_significance_tests(y_true, pred_us, pred_cal):
     p_perm = np.mean(np.abs(perm_diffs) >= np.abs(observed_diff))
     results['permutation'] = {'observed_diff': observed_diff, 'p_value': p_perm}
 
-    logger.info(f"\n3. Permutation test ({n_perm:,} permutations):")
+    logger.info(f"\n3. Permutation test ({n_perm:,} permutations, seeded={random_state}):")
     logger.info(f"   Observed MAE difference: {observed_diff:.4f} points")
     logger.info(f"   p-value: {p_perm:.6f}")
     if p_perm < 0.05:
@@ -439,25 +530,79 @@ def statistical_significance_tests(y_true, pred_us, pred_cal):
     else:
         logger.info(f"   ❌ No significant difference (p >= 0.05)")
 
+    # BLOCK-7: Bonferroni correction for multiple testing
+    n_tests = 3  # t-test, Wilcoxon, permutation
+    alpha_original = 0.05
+    alpha_corrected = alpha_original / n_tests  # 0.0167
+
+    # Determine which tests pass Bonferroni-corrected threshold
+    bonferroni_results = {
+        't_test': p_ttest < alpha_corrected if normality_ok else None,
+        'wilcoxon': p_wilcoxon < alpha_corrected,
+        'permutation': p_perm < alpha_corrected
+    }
+
+    # Count how many tests pass
+    valid_tests = [v for v in bonferroni_results.values() if v is not None]
+    n_significant = sum(valid_tests)
+
+    results['bonferroni'] = {
+        'n_tests': n_tests,
+        'alpha_original': alpha_original,
+        'alpha_corrected': alpha_corrected,
+        'results': bonferroni_results,
+        'n_significant': n_significant,
+        'all_significant': n_significant == len(valid_tests)
+    }
+
+    logger.info(f"\n{'='*80}")
+    logger.info(f"BONFERRONI CORRECTION FOR MULTIPLE TESTING")
+    logger.info(f"{'='*80}")
+    logger.info(f"  Number of tests: {n_tests}")
+    logger.info(f"  Original α: {alpha_original:.4f}")
+    logger.info(f"  Corrected α: {alpha_corrected:.6f} (α/{n_tests})")
+    logger.info(f"\n  Bonferroni-Corrected Results:")
+    logger.info(f"    t-test:      {'✅ PASS' if bonferroni_results['t_test'] else ('⚠️ INVALID' if bonferroni_results['t_test'] is None else '❌ FAIL')} (p={p_ttest:.6f} {'<' if bonferroni_results['t_test'] else '>='} {alpha_corrected:.6f})")
+    logger.info(f"    Wilcoxon:    {'✅ PASS' if bonferroni_results['wilcoxon'] else '❌ FAIL'} (p={p_wilcoxon:.6f} {'<' if bonferroni_results['wilcoxon'] else '>='} {alpha_corrected:.6f})")
+    logger.info(f"    Permutation: {'✅ PASS' if bonferroni_results['permutation'] else '❌ FAIL'} (p={p_perm:.6f} {'<' if bonferroni_results['permutation'] else '>='} {alpha_corrected:.6f})")
+
+    if n_significant == len(valid_tests):
+        logger.info(f"\n  ✅ VERDICT: US model is significantly better ({n_significant}/{len(valid_tests)} tests pass Bonferroni correction)")
+    elif n_significant > 0:
+        logger.warning(f"\n  ⚠️ VERDICT: Mixed results ({n_significant}/{len(valid_tests)} tests pass Bonferroni correction)")
+    else:
+        logger.info(f"\n  ❌ VERDICT: No significant difference (0/{len(valid_tests)} tests pass Bonferroni correction)")
+
     return results
 
 
-def bootstrap_confidence_intervals(y_true, pred_us, pred_cal, n_bootstrap=1000):
+def bootstrap_confidence_intervals(y_true, pred_us, pred_cal, n_bootstrap=1000, random_state=42):
     """
     Compute bootstrap 95% confidence intervals on MAE difference.
+
+    Args:
+        y_true: Actual WQI values
+        pred_us: US model predictions
+        pred_cal: Calibrated model predictions
+        n_bootstrap: Number of bootstrap iterations (default: 1000)
+        random_state: Random seed for reproducibility (default: 42)
 
     Returns:
         Dictionary with CI bounds
     """
     logger.info(f"\n{'='*80}")
-    logger.info(f"BOOTSTRAP CONFIDENCE INTERVALS ({n_bootstrap} iterations)")
+    logger.info(f"BOOTSTRAP CONFIDENCE INTERVALS ({n_bootstrap} iterations, seeded={random_state})")
     logger.info(f"{'='*80}")
+
+    # BLOCK-6: Create seeded random number generator for reproducibility
+    rng = np.random.RandomState(random_state)
+    logger.debug(f"Using random_state={random_state} for bootstrap reproducibility")
 
     mae_diffs = []
 
     for i in range(n_bootstrap):
-        # Resample with replacement
-        indices = np.random.choice(len(y_true), size=len(y_true), replace=True)
+        # Resample with replacement using seeded RNG
+        indices = rng.choice(len(y_true), size=len(y_true), replace=True)
 
         y_boot = y_true[indices]
         pred_us_boot = pred_us[indices]
@@ -579,6 +724,48 @@ def main():
 
     # Load data
     X, y, ml_preds, metadata = load_us_ground_truth(min_params=6)
+
+    # BLOCK-4: Validate minimum sample size for 10-fold CV
+    MIN_SAMPLES_FOR_10_FOLD = 100
+    n_samples = len(X)
+
+    if n_samples < MIN_SAMPLES_FOR_10_FOLD:
+        raise ValueError(
+            f"Insufficient samples for 10-fold cross-validation\n"
+            f"  Current: {n_samples} samples\n"
+            f"  Required: >= {MIN_SAMPLES_FOR_10_FOLD} samples\n"
+            f"  Reason: 10-fold CV requires ~10 samples/fold minimum\n"
+            f"  Current samples/fold: {n_samples/10:.1f}\n"
+            f"\n"
+            f"Solutions:\n"
+            f"  1. Collect more US ground truth samples ({MIN_SAMPLES_FOR_10_FOLD - n_samples} more needed)\n"
+            f"  2. Use 5-fold CV instead (requires >= 50 samples)\n"
+            f"  3. Lower min_params threshold (currently {6})"
+        )
+
+    logger.info(f"✓ Sample size validation passed: {n_samples} >= {MIN_SAMPLES_FOR_10_FOLD} (sufficient for 10-fold CV)")
+
+    # BLOCK-11: Remove zero-variance features
+    VARIANCE_THRESHOLD = 1e-10
+    feature_variances = np.var(X, axis=0)
+    zero_variance_mask = feature_variances < VARIANCE_THRESHOLD
+    n_zero_variance = np.sum(zero_variance_mask)
+
+    if n_zero_variance > 0:
+        zero_variance_indices = np.where(zero_variance_mask)[0]
+        logger.warning(
+            f"Found {n_zero_variance} zero-variance features (variance < {VARIANCE_THRESHOLD})\n"
+            f"  Feature indices: {zero_variance_indices.tolist()}\n"
+            f"  Variances: {feature_variances[zero_variance_mask]}\n"
+            f"  Removing these features to prevent model training issues"
+        )
+
+        # Keep only non-zero-variance features
+        X = X[:, ~zero_variance_mask]
+
+        logger.info(f"✓ Zero-variance removal: {X.shape[1]} features retained (removed {n_zero_variance})")
+    else:
+        logger.info(f"✓ Zero-variance check passed: All {X.shape[1]} features have variance >= {VARIANCE_THRESHOLD}")
 
     # Run fair cross-validation for both models
     us_results = cross_val_us_only_model(X, y, n_folds=10, random_state=42)
