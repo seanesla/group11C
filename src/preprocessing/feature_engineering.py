@@ -496,15 +496,42 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     # Temperature stress (extreme cold or warm)
     df['temp_stress'] = np.abs(df['temperature'] - 15) / 15  # Optimal around 15°C
 
-    # === SUMMARY ===
-    original_features = ['ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance']
-    new_features = [col for col in df.columns if col not in original_features and col not in ['waterBodyIdentifier', 'year', 'Country', 'wqi_score', 'wqi_classification', 'is_safe', 'parameter_scores', 'turbidity']]
+    # === 5. EXCLUDE EUROPEAN-SPECIFIC FEATURES ===
+    logger.info("Removing European-specific features")
 
+    # Define columns to KEEP (core water quality + temporal + derived only)
+    core_columns_to_keep = [
+        # Identifiers & targets
+        'waterBodyIdentifier', 'year', 'wqi_score', 'wqi_classification', 'is_safe',
+        # Raw WQI parameters
+        'ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance',
+        # Temporal features
+        'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s',
+        # Water quality derived
+        'ph_deviation_from_7', 'do_temp_ratio',
+        'conductance_low', 'conductance_medium', 'conductance_high',
+        'nitrate_pollution_level',
+        # Missing indicators
+        'ph_missing', 'dissolved_oxygen_missing', 'temperature_missing',
+        'turbidity_missing', 'nitrate_missing', 'conductance_missing',
+        'n_params_available',
+        # Interaction features
+        'pollution_stress', 'temp_stress'
+    ]
+
+    # Only keep columns that exist AND are in our allow list
+    columns_to_keep = [col for col in core_columns_to_keep if col in df.columns]
+    df = df[columns_to_keep]
+
+    # === SUMMARY ===
     logger.info(f"\nCORE feature engineering complete:")
-    logger.info(f"  Original WQI parameters: {len(original_features)}")
-    logger.info(f"  New features created: {len(new_features)}")
-    logger.info(f"  Total features: {len(df.columns)}")
-    logger.info(f"  (Excluded: geographic, environmental, economic, waste management features)")
+    logger.info(f"  Raw WQI parameters: 5")
+    logger.info(f"  Temporal features: 5")
+    logger.info(f"  Water quality derived: 6")
+    logger.info(f"  Missing indicators: 7")
+    logger.info(f"  Interaction features: 2")
+    logger.info(f"  Total ML features: {len(df.columns) - 5}")  # Minus identifiers/targets
+    logger.info(f"  EXCLUDED: geographic, environmental, economic, waste management features")
 
     return df
 
