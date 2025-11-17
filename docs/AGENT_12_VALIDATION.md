@@ -2,6 +2,31 @@
 
 **Date**: November 17, 2025
 **Status**: ✅ **VALIDATED - Agent 12 Was Correct**
+**Update**: November 17, 2025 14:30 - **CORRECTED** after fair comparison methodology
+
+---
+
+## 🚨 CRITICAL CORRECTION (November 17, 2025)
+
+**Original Claim (INVALID)**: "US-only model is 44% better (MAE 1.98 vs 3.54)"
+**Problem**: Compared in-sample performance (optimistic) to out-of-sample performance (realistic)
+
+**Fair Comparison (VALID)**: Both models evaluated with 10-fold cross-validation on identical splits
+
+### Corrected Results:
+
+| Model | CV MAE | CV RMSE | CV R² | Statistical Significance |
+|-------|--------|---------|-------|--------------------------|
+| **Calibrated EU** | 3.64 ± 0.75 | 4.56 ± 0.90 | 0.360 ± 0.233 | Baseline |
+| **US-Only** | **3.07 ± 0.64** | **3.96 ± 0.97** | **0.525 ± 0.159** | **✅ 15.6% better** |
+
+**Statistical Tests (ALL SIGNIFICANT at p < 0.05):**
+- ✅ Paired t-test: p = 0.012
+- ✅ Wilcoxon signed-rank test: p = 0.003
+- ✅ Permutation test (10,000 iterations): p = 0.014
+- ✅ Bootstrap 95% CI: [0.11, 0.99] points (excludes zero)
+
+**Verdict**: US-only model IS statistically significantly better, but improvement is **15.6%** (not 44%). Original claim was inflated by 2.8× due to methodology flaw.
 
 ---
 
@@ -45,11 +70,22 @@ After implementing isotonic regression calibration to correct EU→US domain shi
 
 ### Overall Performance (128 US samples)
 
+#### ⚠️ DEPRECATED: In-Sample vs Mixed Comparison (Methodologically Flawed)
+
 | Model | MAE | RMSE | R² | Notes |
 |-------|-----|------|-----|-------|
 | **EU Uncalibrated** | 19.63 | 20.20 | -10.15 | ❌ Massive systematic bias |
-| **EU Calibrated** | 3.54 | 4.66 | 0.41 | ⚠️ Better but still suboptimal |
-| **US-Only** | **1.98** | **2.65** | **0.81** | ✅ **WINNER (44% better)** |
+| **EU Calibrated** | 3.54 | 4.66 | 0.41 | ⚠️ Mixed train/val (80/20) |
+| **US-Only (in-sample)** | ~~1.98~~ | ~~2.65~~ | ~~0.81~~ | ❌ **INVALID** (trained on same data) |
+
+**Problem**: Above comparison mixes in-sample (US) with out-of-sample (EU+Cal), inflating improvement by 2.8×.
+
+#### ✅ CORRECTED: Fair Cross-Validation Comparison
+
+| Model | CV MAE | CV RMSE | CV R² | Improvement |
+|-------|--------|---------|-------|-------------|
+| **EU Calibrated** | 3.64 ± 0.75 | 4.56 ± 0.90 | 0.360 ± 0.233 | Baseline |
+| **US-Only** | **3.07 ± 0.64** | **3.96 ± 0.97** | **0.525 ± 0.159** | ✅ **15.6% better (p<0.05)** |
 
 ### Cross-Validation Stability (US Model)
 
@@ -78,13 +114,21 @@ The 4/128 calibration failures (3.1% failure rate) were all in low-DO conditions
 ## Improvement Analysis
 
 ### Calibration Improvement (EU → EU+Cal)
-- MAE: 19.63 → 3.54 (**81.9% reduction**)
-- Significant but still suboptimal
+- MAE: 19.63 → 3.64 (**81.5% reduction** using CV)
+- Significant improvement but domain mismatch remains
 
-### US Model Improvement (EU+Cal → US-Only)
-- MAE: 3.54 → 1.98 (**44.1% better**)
-- R²: 0.41 → 0.81 (**98% better**)
-- Low-DO MAE: 9.35 → 2.86 (**69.4% better**)
+### US Model Improvement (EU+Cal → US-Only) - CORRECTED
+
+#### ❌ Original (INVALID - methodology flaw):
+- ~~MAE: 3.54 → 1.98 (44.1% better)~~ ← Compared in-sample to out-of-sample
+- ~~R²: 0.41 → 0.81 (98% better)~~ ← Overstated due to in-sample bias
+
+#### ✅ Corrected (VALID - fair CV comparison):
+- **MAE**: 3.64 → 3.07 (**15.6% better**, p<0.05)
+- **RMSE**: 4.56 → 3.96 (**13.2% better**)
+- **R²**: 0.360 → 0.525 (**46.0% better**)
+- **Absolute improvement**: 0.57 points MAE reduction
+- **Statistical significance**: ALL 4 tests pass (t-test, Wilcoxon, permutation, bootstrap)
 
 ---
 
