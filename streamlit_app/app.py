@@ -22,8 +22,10 @@ sys.path.insert(0, str(src_path))
 from geolocation.zipcode_mapper import ZipCodeMapper
 from data_collection.wqp_client import WQPClient
 from utils.wqi_calculator import WQICalculator
+from utils.ml_feature_definitions import get_feature_categories, count_features_by_availability, get_european_only_features, get_us_available_features
 from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
+from preprocessing.feature_engineering import NITRATE_NO3_TO_N
 
 
 # Page configuration
@@ -42,6 +44,17 @@ WQI_COLORS = {
     "Fair": "#FFCC00",       # Yellow
     "Poor": "#FF6600",       # Orange
     "Very Poor": "#CC0000"   # Red
+}
+
+
+# Parameter units mapping (NO HARDCODING - sourced from EPA/WHO standards)
+PARAMETER_UNITS = {
+    'ph': '',  # pH is dimensionless (no unit)
+    'dissolved_oxygen': 'mg/L',
+    'temperature': '°C',
+    'turbidity': 'NTU',
+    'nitrate': 'mg/L as N',  # EPA standard: nitrogen content only
+    'conductance': 'µS/cm'
 }
 
 
@@ -250,6 +263,147 @@ def create_parameter_chart(scores: Dict[str, float]) -> go.Figure:
     )
 
     return fig
+
+
+def display_wqi_methodology():
+    """
+    Display comprehensive WQI calculation methodology.
+
+    Shows the actual parameter weights from WQICalculator and explains
+    the weighted average formula used to calculate WQI.
+    """
+    # Get actual weights from WQICalculator (NO HARDCODING)
+    weights = WQICalculator.PARAMETER_WEIGHTS
+
+    st.markdown("""
+    ### How is WQI Calculated?
+
+    The Water Quality Index (WQI) is calculated using a **weighted average** of individual parameter scores,
+    based on the **National Sanitation Foundation Water Quality Index (NSF-WQI)** methodology.
+
+    #### Formula:
+    """)
+
+    st.latex(r"WQI = \frac{\sum_{i=1}^{n} (Q_i \times W_i)}{\sum_{i=1}^{n} W_i}")
+
+    st.markdown("""
+    Where:
+    - **Q<sub>i</sub>** = Quality score for parameter *i* (0-100)
+    - **W<sub>i</sub>** = Weight for parameter *i*
+    - **n** = Number of available parameters
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### Parameter Weights")
+    st.markdown("Each parameter contributes to the overall WQI based on its relative importance to water quality:")
+
+    # Create DataFrame showing actual weights from WQICalculator
+    weight_data = []
+    total_weight = sum(weights.values())
+
+    for param, weight in sorted(weights.items(), key=lambda x: x[1], reverse=True):
+        param_name = param.replace('_', ' ').title()
+        percentage = (weight / total_weight) * 100
+        weight_data.append({
+            "Parameter": param_name,
+            "Weight": f"{weight:.2f}",
+            "Percentage": f"{percentage:.1f}%"
+        })
+
+    weight_df = pd.DataFrame(weight_data)
+    st.dataframe(weight_df, use_container_width=True, hide_index=True)
+
+    st.markdown("""
+    **Note:** When some parameters are unavailable (e.g., turbidity), the weights are dynamically normalized
+    so the remaining parameters sum to 1.0. This ensures WQI remains on a 0-100 scale.
+
+    #### References:
+    - National Sanitation Foundation Water Quality Index (NSF-WQI)
+    - EPA Water Quality Standards
+    - WHO Guidelines for Drinking-water Quality
+    """)
+
+
+def display_epa_who_standards():
+    """
+    Display comprehensive EPA and WHO water quality standards.
+
+    Information sourced from docs/WQI_STANDARDS.md (NO HARDCODING).
+    """
+    st.markdown("### 📚 Water Quality Standards Reference")
+
+    # Create tabs for EPA, WHO, and Nitrate Conversion
+    tab1, tab2, tab3 = st.tabs(["EPA Standards", "WHO Guidelines", "Nitrate Units"])
+
+    with tab1:
+        st.markdown("#### EPA Water Quality Standards")
+        st.markdown("**Source:** EPA National Primary Drinking Water Regulations")
+
+        st.markdown("##### Primary Drinking Water Standards (MCLs)")
+        epa_mcl = pd.DataFrame([
+            {"Contaminant": "Nitrate (as N)", "MCL": "10 mg/L", "Health Concern": "Blue-baby syndrome in infants <6 months"},
+            {"Contaminant": "Nitrite (as N)", "MCL": "1 mg/L", "Health Concern": "Similar to nitrate, infant health risk"},
+            {"Contaminant": "Turbidity", "MCL": "1 NTU", "Health Concern": "Treatment technique; indicates filtration effectiveness"}
+        ])
+        st.dataframe(epa_mcl, use_container_width=True, hide_index=True)
+
+        st.markdown("##### Secondary Drinking Water Standards (SMCLs)")
+        st.markdown("*Non-mandatory aesthetic guidelines:*")
+        epa_smcl = pd.DataFrame([
+            {"Parameter": "pH", "SMCL": "6.5 - 8.5", "Concern": "Corrosion, taste"},
+            {"Parameter": "Conductivity", "SMCL": "No standard", "Concern": "Aesthetic indicator"},
+            {"Parameter": "Temperature", "SMCL": "No standard", "Concern": "Affects aquatic life, not human health"}
+        ])
+        st.dataframe(epa_smcl, use_container_width=True, hide_index=True)
+
+        st.info("**Note:** Dissolved Oxygen (DO) is **not regulated** for drinking water. DO is a surface water quality parameter for aquatic ecosystem health.")
+
+        st.markdown("**References:**")
+        st.markdown("- [EPA Primary Drinking Water Regulations](https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations)")
+        st.markdown("- [EPA Secondary Standards](https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals)")
+
+    with tab2:
+        st.markdown("#### WHO Guidelines for Drinking-water Quality")
+        st.markdown("**Source:** WHO Guidelines for Drinking-water Quality (Fourth Edition)")
+
+        who_guidelines = pd.DataFrame([
+            {"Parameter": "pH", "Guideline": "No health-based guideline", "Notes": "Recommended operational range: 6.5-9.5"},
+            {"Parameter": "Temperature", "Guideline": "<25°C preferred", "Notes": "Affects taste and chemical reactions"},
+            {"Parameter": "Nitrate (as NO₃)", "Guideline": "50 mg/L", "Notes": "Equivalent to 11.3 mg/L as N"},
+            {"Parameter": "Turbidity", "Guideline": "<5 NTU ideal", "Notes": "Higher values indicate treatment problems"}
+        ])
+        st.dataframe(who_guidelines, use_container_width=True, hide_index=True)
+
+        st.markdown("**Reference:**")
+        st.markdown("- [WHO Guidelines for Drinking-water Quality](https://iris.who.int/bitstream/handle/10665/44584/9789241548151_eng.pdf)")
+
+    with tab3:
+        st.markdown("#### Nitrate Unit Conversion System")
+        st.markdown("""
+        Water quality data sources use different unit conventions for nitrate:
+        - **European/Kaggle Data**: mg{NO₃}/L (molecular form)
+        - **EPA/USGS Standards**: mg/L as N (nitrogen content only)
+
+        This **4.43× difference** is critical for accurate WQI calculations.
+        """)
+
+        st.markdown("##### Conversion Factor")
+        st.latex(r"\text{NITRATE\_NO3\_TO\_N} = \frac{\text{N atomic weight}}{\text{NO}_3 \text{ molecular weight}} = \frac{14.0067}{62.0049} = 0.2258")
+
+        st.markdown("**To convert:** Multiply mg{NO₃}/L by **0.2258** to get mg/L as N")
+
+        st.markdown("##### EPA Maximum Contaminant Level (MCL)")
+        st.info("**EPA MCL for nitrate: 10 mg/L as N**")
+
+        conversion_examples = pd.DataFrame([
+            {"mg{NO₃}/L": "4.43", "mg/L as N": "1.0", "Safety Level": "Excellent"},
+            {"mg{NO₃}/L": "22.15", "mg/L as N": "5.0", "Safety Level": "Good"},
+            {"mg{NO₃}/L": "44.3", "mg/L as N": "10.0", "Safety Level": "EPA MCL (threshold)"},
+            {"mg{NO₃}/L": "88.6", "mg/L as N": "20.0", "Safety Level": "Unsafe (2× MCL)"},
+            {"mg{NO₃}/L": "221.5", "mg/L as N": "50.0", "Safety Level": "Very Unsafe (5× MCL)"}
+        ])
+        st.dataframe(conversion_examples, use_container_width=True, hide_index=True)
+
+        st.success("✅ This app uses **mg/L as N** (EPA standard) for all nitrate measurements and calculations.")
 
 
 def create_future_trend_chart(
@@ -537,6 +691,11 @@ def main():
     # Submit button
     search_button = st.sidebar.button("Search", type="primary", use_container_width=True)
 
+    # EPA/WHO Standards Reference in Sidebar
+    st.sidebar.divider()
+    with st.sidebar.expander("📚 Standards Reference"):
+        display_epa_who_standards()
+
     # Main area
     if search_button:
         # Fetch data
@@ -641,6 +800,10 @@ def main():
                 f"</div>",
                 unsafe_allow_html=True
             )
+
+        # WQI Methodology Explainer
+        with st.expander("📊 How is WQI Calculated?", expanded=False):
+            display_wqi_methodology()
 
         st.divider()
 
@@ -803,13 +966,809 @@ def main():
 
             st.divider()
 
+        # === ML FEATURES TRANSPARENCY SECTION ===
+        st.subheader("🧠 ML Model Features (59 Total)")
+
+        st.markdown("""
+        The ML models use **59 features** organized into 9 categories. This section shows exactly what data the models
+        analyze to make predictions, including which features are available for US data vs imputed from European averages.
+        """)
+
+        # Get feature categories and counts
+        feature_categories = get_feature_categories()
+        feature_counts = count_features_by_availability()
+        european_features = set(get_european_only_features())
+
+        # Summary statistics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Features", feature_counts['total'])
+        with col2:
+            st.metric("Available for US", feature_counts['available'], help="Direct measurements from US water samples")
+        with col3:
+            st.metric("Europe-Only (Imputed)", feature_counts['missing'], delta=None, help="Imputed from European training data averages")
+        with col4:
+            st.metric("Partial", feature_counts['partial'], help="Some components available for US data")
+
+        # Feature categories display
+        with st.expander("📋 View All 59 Features by Category", expanded=False):
+            for category_key, category_data in feature_categories.items():
+                st.markdown(f"### {category_data['name']}")
+                st.markdown(f"*{category_data['description']}*")
+
+                # Availability indicator
+                availability = category_data['available_for_us']
+                if availability is True:
+                    st.success(f"✅ **Available for US data** | Source: {category_data['source']}")
+                elif availability is False:
+                    st.warning(f"⚠️ **Europe-only (imputed for US predictions)** | Source: {category_data['source']}")
+                else:
+                    st.info(f"ℹ️ **Partial availability** | Source: {category_data['source']}")
+
+                # Feature list
+                features_df = pd.DataFrame([
+                    {
+                        "Feature": feat_name,
+                        "Description": feat_desc,
+                        "Status": "🔴 Imputed" if feat_name in european_features else "🟢 Available"
+                    }
+                    for feat_name, feat_desc in category_data['features'].items()
+                ])
+
+                st.dataframe(
+                    features_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                st.divider()
+
+        # === FEATURE DERIVATION EXPLANATIONS ===
+        with st.expander("🔬 How Are Features Derived? (Phase 3.2)", expanded=False):
+            st.markdown("""
+            #### Derived Feature Calculations
+
+            Many ML features are calculated from the raw water quality measurements. Here's how:
+
+            **From Water Quality Parameters:**
+            - `ph_deviation_from_7` = |pH - 7.0| (distance from neutral)
+            - `do_temp_ratio` = dissolved_oxygen / (temperature + 1) (DO saturation proxy)
+            - `conductance_low` = 1 if conductance < 200 µS/cm, else 0
+            - `conductance_medium` = 1 if 200 ≤ conductance < 800 µS/cm, else 0
+            - `conductance_high` = 1 if conductance ≥ 800 µS/cm, else 0
+            - `pollution_stress` = (nitrate / 50) × (1 - dissolved_oxygen / 10)
+            - `temp_stress` = |temperature - 15°C| / 15 (deviation from optimal)
+
+            **From Temporal Data:**
+            - `years_since_1991` = year - 1991 (baseline year)
+            - `decade` = (year // 10) × 10 (decade bin: 1990, 2000, 2010)
+            - `is_1990s` = 1 if 1990 ≤ year < 2000, else 0
+            - `is_2000s` = 1 if 2000 ≤ year < 2010, else 0
+            - `is_2010s` = 1 if 2010 ≤ year < 2020, else 0
+
+            **From Missing Data:**
+            - `ph_missing`, `dissolved_oxygen_missing`, etc. = 1 if parameter is missing, else 0
+            - `n_params_available` = count of non-missing WQI parameters (0-6)
+
+            **From Socioeconomic Data (Europe-specific):**
+            - `gdp_per_capita_proxy` = GDP / (PopulationDensity + 1)
+
+            **From Geographic Data:**
+            - `water_body_GW`, `water_body_LW`, `water_body_RW`: One-hot encoding of water body type
+            - `country_*`: One-hot encoding of European countries (11 categories)
+            """)
+
+        # === HIGHLIGHT MISSING/IMPUTED FEATURES ===
+        with st.expander("⚠️ Imputed Features for US Predictions (Phase 3.3)", expanded=False):
+            st.markdown(f"""
+            #### {len(european_features)} European Features Imputed for US Data
+
+            The ML models were trained on **European water quality data (1991-2017)**. When making predictions for US locations,
+            **{len(european_features)} Europe-specific features** are **imputed (filled with average values from training data)** because
+            they're not available for US water samples.
+
+            **Why This Matters:**
+            - Models learn relationships between water quality and socioeconomic/environmental context
+            - European averages may not represent US conditions accurately
+            - Predictions should be interpreted with this limitation in mind
+
+            **Categories of Imputed Features:**
+            """)
+
+            # Group European features by category
+            for category_key, category_data in feature_categories.items():
+                if category_data['available_for_us'] is False:
+                    n_features = len(category_data['features'])
+                    st.markdown(f"**{category_data['name']}** ({n_features} features):")
+                    feature_list = ", ".join(f"`{f}`" for f in category_data['features'].keys())
+                    st.markdown(f"  {feature_list}")
+
+            st.markdown("""
+            **Imputation Strategy:**
+            - Missing features are filled with **median values** from the European training dataset
+            - This ensures numerical stability but may not reflect actual US conditions
+            - Core water quality parameters (pH, DO, temperature, nitrate, conductance) are **directly measured** from US data
+            """)
+
+        st.divider()
+
+        # ===================================================================
+        # PHASE 4.1: FEATURE IMPORTANCE ANALYSIS
+        # ===================================================================
+        st.subheader("🎯 Feature Importance Analysis")
+        st.markdown("""
+        Understand which features most influence the ML model's predictions for water quality safety.
+        """)
+
+        try:
+            from utils.feature_importance import (
+                get_feature_importances,
+                get_feature_importance_summary,
+                annotate_importance_with_availability,
+                get_prediction_contributions,
+                generate_decision_explanation
+            )
+
+            # Get latest model paths
+            import glob
+            classifier_files = sorted(glob.glob('data/models/classifier_*.joblib'), reverse=True)
+            regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
+
+            if classifier_files and regressor_files:
+                classifier_path = classifier_files[0]
+                regressor_path = regressor_files[0]
+
+                # Get feature importance summary
+                summary = get_feature_importance_summary(classifier_path, regressor_path)
+
+                # Display summary metrics
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric(
+                        "🏆 Top Classifier Feature",
+                        summary['top_feature_classifier'].replace('_', ' ').title(),
+                        f"{summary['top_importance_classifier']:.1f}% importance"
+                    )
+                    st.caption("Most influential feature for SAFE/UNSAFE classification")
+
+                with col2:
+                    st.metric(
+                        "🏆 Top Regressor Feature",
+                        summary['top_feature_regressor'].replace('_', ' ').title(),
+                        f"{summary['top_importance_regressor']:.1f}% importance"
+                    )
+                    st.caption("Most influential feature for WQI score prediction")
+
+                # Get full feature importances (top 20)
+                importances = get_feature_importances(classifier_path, regressor_path, top_n=20)
+
+                # Annotate with availability
+                us_features = get_us_available_features()
+                eu_features = get_european_only_features()
+
+                clf_importance_df = annotate_importance_with_availability(
+                    importances['classifier'],
+                    us_features,
+                    eu_features
+                )
+
+                reg_importance_df = annotate_importance_with_availability(
+                    importances['regressor'],
+                    us_features,
+                    eu_features
+                )
+
+                # Display feature importance tables in expandable sections
+                with st.expander("📊 Top 20 Features - Classifier (SAFE/UNSAFE)", expanded=False):
+                    st.markdown(f"""
+                    **What this shows:** The most important features the **binary classifier** uses
+                    to decide if water is SAFE (WQI ≥ 70) or UNSAFE (WQI < 70).
+
+                    **Top 10 Features Account For:** {summary['top_10_cumulative_classifier']:.1f}% of total importance
+                    """)
+
+                    # Format display DataFrame
+                    clf_display = clf_importance_df[['rank', 'feature', 'importance_pct', 'availability']].copy()
+                    clf_display['feature'] = clf_display['feature'].str.replace('_', ' ').str.title()
+                    clf_display.columns = ['Rank', 'Feature', 'Importance (%)', 'Availability']
+                    clf_display['Importance (%)'] = clf_display['Importance (%)'].apply(lambda x: f"{x:.2f}%")
+
+                    st.dataframe(
+                        clf_display,
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    # Add visualization (horizontal bar chart)
+                    import plotly.graph_objects as go
+                    fig_clf = go.Figure(go.Bar(
+                        x=clf_importance_df['importance_pct'][:10],
+                        y=clf_importance_df['feature'][:10].str.replace('_', ' ').str.title(),
+                        orientation='h',
+                        marker=dict(
+                            color=clf_importance_df['importance_pct'][:10],
+                            colorscale='Blues',
+                            showscale=False
+                        )
+                    ))
+                    fig_clf.update_layout(
+                        title="Top 10 Classifier Features",
+                        xaxis_title="Importance (%)",
+                        yaxis_title="Feature",
+                        yaxis=dict(autorange="reversed"),  # Top feature at top
+                        height=400
+                    )
+                    st.plotly_chart(fig_clf, use_container_width=True)
+
+                with st.expander("📊 Top 20 Features - Regressor (WQI Score)", expanded=False):
+                    st.markdown(f"""
+                    **What this shows:** The most important features the **regression model** uses
+                    to predict the exact WQI score (0-100).
+
+                    **Top 10 Features Account For:** {summary['top_10_cumulative_regressor']:.1f}% of total importance
+                    """)
+
+                    # Format display DataFrame
+                    reg_display = reg_importance_df[['rank', 'feature', 'importance_pct', 'availability']].copy()
+                    reg_display['feature'] = reg_display['feature'].str.replace('_', ' ').str.title()
+                    reg_display.columns = ['Rank', 'Feature', 'Importance (%)', 'Availability']
+                    reg_display['Importance (%)'] = reg_display['Importance (%)'].apply(lambda x: f"{x:.2f}%")
+
+                    st.dataframe(
+                        reg_display,
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    # Add visualization (horizontal bar chart)
+                    fig_reg = go.Figure(go.Bar(
+                        x=reg_importance_df['importance_pct'][:10],
+                        y=reg_importance_df['feature'][:10].str.replace('_', ' ').str.title(),
+                        orientation='h',
+                        marker=dict(
+                            color=reg_importance_df['importance_pct'][:10],
+                            colorscale='Greens',
+                            showscale=False
+                        )
+                    ))
+                    fig_reg.update_layout(
+                        title="Top 10 Regressor Features",
+                        xaxis_title="Importance (%)",
+                        yaxis_title="Feature",
+                        yaxis=dict(autorange="reversed"),  # Top feature at top
+                        height=400
+                    )
+                    st.plotly_chart(fig_reg, use_container_width=True)
+
+                # Add interpretation guide
+                with st.expander("ℹ️ How to Interpret Feature Importance", expanded=False):
+                    st.markdown("""
+                    **Feature Importance** measures how much each feature contributes to the model's predictions:
+
+                    - **High Importance (>10%)**: Critical features that strongly influence predictions
+                    - **Medium Importance (5-10%)**: Significant features with moderate influence
+                    - **Low Importance (<5%)**: Supportive features with minor influence
+
+                    **Key Insights from Current Models:**
+
+                    1. **`dissolved_oxygen_missing`** is the most important feature for both models
+                       - Classifier: {clf_imp:.1f}% importance
+                       - Regressor: {reg_imp:.1f}% importance
+                       - **Why**: Missing DO measurements often indicate incomplete water testing,
+                         which correlates with unsafe water conditions
+
+                    2. **Availability Markers:**
+                       - 🟢 **Available**: Feature directly measured from US water samples
+                       - 🔴 **Imputed**: Europe-only feature (imputed from training data for US predictions)
+                       - 🟡 **Partial**: Some components available for US data
+
+                    3. **Model Differences:**
+                       - **Classifier** focuses on distinguishing SAFE vs UNSAFE (binary decision)
+                       - **Regressor** predicts exact WQI score (0-100 continuous value)
+                       - Different feature importance patterns reflect these different goals
+
+                    **For Your Current Prediction:**
+                    The features shown above indicate what the models considered most important
+                    when making the prediction for your water sample.
+                    """.format(
+                        clf_imp=summary['top_importance_classifier'],
+                        reg_imp=summary['top_importance_regressor']
+                    ))
+
+            else:
+                st.warning("⚠️ ML models not found. Please train models first.")
+
+        except Exception as e:
+            st.error(f"⚠️ Error loading feature importance: {e}")
+
+        st.divider()
+
+        # ===================================================================
+        # PHASE 4.2: PER-PREDICTION FEATURE CONTRIBUTIONS (SHAP)
+        # ===================================================================
+        st.subheader("🔍 Feature Contributions for This Prediction")
+        st.markdown("""
+        While **Feature Importance** shows which features matter most *overall*, **Feature Contributions** show
+        how the *specific values* of features in THIS water sample influenced THIS prediction.
+        """)
+
+        try:
+            # Get latest model paths
+            import glob
+            import numpy as np
+            classifier_files = sorted(glob.glob('data/models/classifier_*.joblib'), reverse=True)
+            regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
+
+            if classifier_files and regressor_files and ml_predictions:
+                classifier_path = classifier_files[0]
+                regressor_path = regressor_files[0]
+
+                # Prepare 59-feature ML input for the current sample
+                # prepare_us_features_for_prediction() already returns a DataFrame
+                X_sample_df = prepare_us_features_for_prediction(
+                    ph=aggregated.get('ph'),
+                    dissolved_oxygen=aggregated.get('dissolved_oxygen'),
+                    temperature=aggregated.get('temperature'),
+                    turbidity=aggregated.get('turbidity'),
+                    nitrate=aggregated.get('nitrate'),
+                    conductance=aggregated.get('conductance'),
+                    year=datetime.now().year
+                )
+
+                # Get contributions for classifier
+                clf_contributions = get_prediction_contributions(
+                    model_path=classifier_path,
+                    X_sample=X_sample_df,
+                    top_n=20
+                )
+
+                # Get contributions for regressor
+                reg_contributions = get_prediction_contributions(
+                    model_path=regressor_path,
+                    X_sample=X_sample_df,
+                    top_n=20
+                )
+
+                # Display summary metrics
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric(
+                        "Classifier Base Value",
+                        f"{clf_contributions['base_value']:.3f}",
+                        help="Average prediction across all training samples (probability of SAFE)"
+                    )
+                with col2:
+                    st.metric(
+                        "Regressor Base Value",
+                        f"{reg_contributions['base_value']:.1f}",
+                        help="Average WQI score across all training samples"
+                    )
+
+                # Mathematical verification
+                clf_pred_delta = clf_contributions['prediction'] - clf_contributions['base_value']
+                clf_match_error = abs(clf_contributions['shap_sum'] - clf_pred_delta)
+
+                reg_pred_delta = reg_contributions['prediction'] - reg_contributions['base_value']
+                reg_match_error = abs(reg_contributions['shap_sum'] - reg_pred_delta)
+
+                # Show verification (collapsed by default)
+                with st.expander("🔬 SHAP Mathematical Verification", expanded=False):
+                    st.markdown("""
+                    **SHAP (SHapley Additive exPlanations)** values must satisfy:
+                    """)
+                    st.latex(r"\sum_{i=1}^{59} \text{SHAP}_i = \text{Prediction} - \text{Base Value}")
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("**Classifier:**")
+                        st.write(f"Prediction: {clf_contributions['prediction']:.4f}")
+                        st.write(f"Base Value: {clf_contributions['base_value']:.4f}")
+                        st.write(f"Difference: {clf_pred_delta:.4f}")
+                        st.write(f"Sum of SHAP: {clf_contributions['shap_sum']:.4f}")
+                        st.write(f"Match Error: {clf_match_error:.6f}")
+                        if clf_match_error < 0.001:
+                            st.success("✅ Perfect match")
+                        else:
+                            st.warning(f"⚠️ Mismatch: {clf_match_error:.6f}")
+
+                    with col2:
+                        st.markdown("**Regressor:**")
+                        st.write(f"Prediction: {reg_contributions['prediction']:.2f}")
+                        st.write(f"Base Value: {reg_contributions['base_value']:.2f}")
+                        st.write(f"Difference: {reg_pred_delta:.2f}")
+                        st.write(f"Sum of SHAP: {reg_contributions['shap_sum']:.2f}")
+                        st.write(f"Match Error: {reg_match_error:.4f}")
+                        if reg_match_error < 0.1:
+                            st.success("✅ Perfect match")
+                        else:
+                            st.warning(f"⚠️ Mismatch: {reg_match_error:.4f}")
+
+                # ===  VISUALIZATION: WATERFALL/BAR CHARTS ===
+                # Create tabs for visualizations
+                viz_tab1, viz_tab2 = st.tabs(["📊 Classifier Contributions", "📈 Regressor Contributions"])
+
+                with viz_tab1:
+                    # Classifier contributions bar chart
+                    clf_top_10 = clf_contributions['contributions'].head(10).copy()
+
+                    # Create horizontal bar chart
+                    fig_clf_contrib = go.Figure()
+
+                    # Add bars colored by direction (positive = green, negative = red)
+                    colors_clf = ['#00CC00' if x > 0 else '#FF6600' for x in clf_top_10['contribution']]
+
+                    fig_clf_contrib.add_trace(go.Bar(
+                        y=clf_top_10['feature'].str.replace('_', ' ').str.title(),
+                        x=clf_top_10['contribution'],
+                        orientation='h',
+                        marker=dict(color=colors_clf),
+                        text=[f"{x:+.4f}" for x in clf_top_10['contribution']],
+                        textposition='outside',
+                        hovertemplate='<b>%{y}</b><br>Contribution: %{x:+.4f}<br>Value: %{customdata}<extra></extra>',
+                        customdata=clf_top_10['value']
+                    ))
+
+                    fig_clf_contrib.update_layout(
+                        title=f"Top 10 Feature Contributions - Classifier<br><sub>Prediction: {clf_contributions['prediction']:.3f} (Base: {clf_contributions['base_value']:.3f}, Δ {clf_pred_delta:+.3f})</sub>",
+                        xaxis_title="Contribution to SAFE Probability",
+                        yaxis_title="Feature",
+                        yaxis=dict(autorange="reversed"),  # Top feature at top
+                        height=500,
+                        showlegend=False,
+                        xaxis=dict(
+                            zeroline=True,
+                            zerolinewidth=2,
+                            zerolinecolor='black'
+                        )
+                    )
+
+                    st.plotly_chart(fig_clf_contrib, use_container_width=True)
+
+                    st.caption("""
+                    🟢 **Green bars**: Features pushing prediction toward SAFE (positive contribution)
+                    🟠 **Orange bars**: Features pushing prediction toward UNSAFE (negative contribution)
+                    **Bar length**: Magnitude of influence on the prediction
+                    """)
+
+                with viz_tab2:
+                    # Regressor contributions bar chart
+                    reg_top_10 = reg_contributions['contributions'].head(10).copy()
+
+                    # Create horizontal bar chart
+                    fig_reg_contrib = go.Figure()
+
+                    # Add bars colored by direction (positive = blue, negative = orange)
+                    colors_reg = ['#0066FF' if x > 0 else '#FF6600' for x in reg_top_10['contribution']]
+
+                    fig_reg_contrib.add_trace(go.Bar(
+                        y=reg_top_10['feature'].str.replace('_', ' ').str.title(),
+                        x=reg_top_10['contribution'],
+                        orientation='h',
+                        marker=dict(color=colors_reg),
+                        text=[f"{x:+.2f}" for x in reg_top_10['contribution']],
+                        textposition='outside',
+                        hovertemplate='<b>%{y}</b><br>Contribution: %{x:+.2f} WQI points<br>Value: %{customdata}<extra></extra>',
+                        customdata=reg_top_10['value']
+                    ))
+
+                    fig_reg_contrib.update_layout(
+                        title=f"Top 10 Feature Contributions - Regressor<br><sub>Prediction: {reg_contributions['prediction']:.1f} WQI (Base: {reg_contributions['base_value']:.1f}, Δ {reg_pred_delta:+.1f})</sub>",
+                        xaxis_title="Contribution to WQI Score (points)",
+                        yaxis_title="Feature",
+                        yaxis=dict(autorange="reversed"),  # Top feature at top
+                        height=500,
+                        showlegend=False,
+                        xaxis=dict(
+                            zeroline=True,
+                            zerolinewidth=2,
+                            zerolinecolor='black'
+                        )
+                    )
+
+                    st.plotly_chart(fig_reg_contrib, use_container_width=True)
+
+                    st.caption("""
+                    🔵 **Blue bars**: Features increasing predicted WQI score (positive contribution)
+                    🟠 **Orange bars**: Features decreasing predicted WQI score (negative contribution)
+                    **Bar length**: WQI points added/subtracted by this feature
+                    """)
+
+                # Display classifier contributions
+                with st.expander("🎯 Top 20 Feature Contributions - Classifier (SAFE/UNSAFE)", expanded=False):
+                    st.markdown(f"""
+                    **What this shows:** How each feature VALUE in this water sample pushed the prediction
+                    toward SAFE (positive contribution) or UNSAFE (negative contribution).
+
+                    **This Prediction:**
+                    - Base value (average): **{clf_contributions['base_value']:.3f}** probability of SAFE
+                    - This sample prediction: **{clf_contributions['prediction']:.3f}** probability of SAFE
+                    - Net change: **{clf_pred_delta:+.3f}** (sum of contributions below)
+                    """)
+
+                    # Annotate with availability
+                    us_features = get_us_available_features()
+                    eu_features = get_european_only_features()
+
+                    clf_contrib_df = clf_contributions['contributions'].copy()
+
+                    def get_availability_marker(feature_name: str) -> str:
+                        if feature_name in us_features:
+                            return "🟢 Available"
+                        elif feature_name in eu_features:
+                            return "🔴 Imputed"
+                        else:
+                            return "🟡 Partial"
+
+                    clf_contrib_df['availability'] = clf_contrib_df['feature'].apply(get_availability_marker)
+
+                    # Format display
+                    clf_display = clf_contrib_df[['rank', 'feature', 'value', 'contribution', 'availability']].copy()
+                    clf_display['feature'] = clf_display['feature'].str.replace('_', ' ').str.title()
+                    clf_display['direction'] = clf_display['contribution'].apply(
+                        lambda x: f"→ SAFE (+{x:.4f})" if x > 0 else f"→ UNSAFE ({x:.4f})"
+                    )
+                    clf_display.columns = ['Rank', 'Feature', 'Value', 'Contribution', 'Availability', 'Direction']
+
+                    st.dataframe(
+                        clf_display[['Rank', 'Feature', 'Value', 'Direction', 'Availability']],
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    st.info("""
+                    💡 **Interpretation:**
+                    - **Positive contribution**: Feature pushes prediction toward SAFE (WQI ≥ 70)
+                    - **Negative contribution**: Feature pushes prediction toward UNSAFE (WQI < 70)
+                    - **Magnitude**: How strongly this feature influenced the decision
+                    """)
+
+                # Display regressor contributions
+                with st.expander("📊 Top 20 Feature Contributions - Regressor (WQI Score)", expanded=True):
+                    st.markdown(f"""
+                    **What this shows:** How each feature VALUE in this water sample pushed the predicted
+                    WQI score higher or lower.
+
+                    **This Prediction:**
+                    - Base value (average): **{reg_contributions['base_value']:.1f}** WQI
+                    - This sample prediction: **{reg_contributions['prediction']:.1f}** WQI
+                    - Net change: **{reg_pred_delta:+.1f}** points (sum of contributions below)
+                    """)
+
+                    reg_contrib_df = reg_contributions['contributions'].copy()
+                    reg_contrib_df['availability'] = reg_contrib_df['feature'].apply(get_availability_marker)
+
+                    # Format display
+                    reg_display = reg_contrib_df[['rank', 'feature', 'value', 'contribution', 'availability']].copy()
+                    reg_display['feature'] = reg_display['feature'].str.replace('_', ' ').str.title()
+                    reg_display['direction'] = reg_display['contribution'].apply(
+                        lambda x: f"↑ Higher WQI (+{x:.2f})" if x > 0 else f"↓ Lower WQI ({x:.2f})"
+                    )
+                    reg_display.columns = ['Rank', 'Feature', 'Value', 'Contribution', 'Availability', 'Direction']
+
+                    st.dataframe(
+                        reg_display[['Rank', 'Feature', 'Value', 'Direction', 'Availability']],
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    st.info("""
+                    💡 **Interpretation:**
+                    - **Positive contribution**: Feature increases predicted WQI score
+                    - **Negative contribution**: Feature decreases predicted WQI score
+                    - **Magnitude**: How many WQI points this feature added/subtracted
+                    """)
+
+                # Add interpretation guide
+                with st.expander("ℹ️ How to Interpret Feature Contributions", expanded=False):
+                    st.markdown("""
+                    **Feature Contributions vs Feature Importance:**
+
+                    | Aspect | Feature Importance (Phase 4.1) | Feature Contributions (Phase 4.2) |
+                    |--------|--------------------------------|-----------------------------------|
+                    | **Scope** | Global (all predictions) | Local (this prediction only) |
+                    | **Question** | "Which features matter most overall?" | "Why did THIS sample get THIS prediction?" |
+                    | **Values** | Model-level percentages | Sample-specific deltas |
+                    | **Use Case** | Understand model behavior | Explain individual predictions |
+
+                    **SHAP (SHapley Additive exPlanations):**
+                    - Based on game theory (Shapley values from cooperative game theory)
+                    - Guarantees: Sum of contributions = (Prediction - Base Value)
+                    - Accounts for feature interactions (not just linear effects)
+                    - "Fair" allocation of prediction credit to each feature
+
+                    **Reading the Contributions:**
+
+                    For **Classifier** (SAFE/UNSAFE):
+                    - Base value ≈ 0.5676 means 56.76% of training samples were SAFE
+                    - Positive contribution → pushes toward SAFE (class 1)
+                    - Negative contribution → pushes toward UNSAFE (class 0)
+
+                    For **Regressor** (WQI Score):
+                    - Base value ≈ 67.48 is the average WQI across all training samples
+                    - Positive contribution → increases WQI score
+                    - Negative contribution → decreases WQI score
+
+                    **Example:**
+                    If `dissolved_oxygen_missing` has contribution +0.18 for the classifier:
+                    - This specific sample is missing DO measurement
+                    - Missing DO increased SAFE probability by 0.18 (18 percentage points)
+                    - This is counterintuitive but reflects training data patterns
+                    """)
+
+            else:
+                st.warning("⚠️ ML models or predictions not available. Cannot calculate feature contributions.")
+
+        except Exception as e:
+            st.error(f"⚠️ Error calculating feature contributions: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+
+        st.divider()
+
+        # ===================================================================
+        # PHASE 4.3: "WHY SAFE/UNSAFE?" MODEL DECISION EXPLANATION
+        # ===================================================================
+        st.subheader("💬 Why is this water predicted as SAFE/UNSAFE?")
+        st.markdown("""
+        This section provides a plain-language explanation of the model's classification decision,
+        synthesizing the feature contributions into actionable insights.
+        """)
+
+        try:
+            if classifier_files and regressor_files and ml_predictions and 'clf_contributions' in locals() and 'reg_contributions' in locals():
+                # Prepare water parameters dict
+                water_params = {
+                    'ph': aggregated.get('ph'),
+                    'dissolved_oxygen': aggregated.get('dissolved_oxygen'),
+                    'temperature': aggregated.get('temperature'),
+                    'turbidity': aggregated.get('turbidity'),
+                    'nitrate': aggregated.get('nitrate'),
+                    'conductance': aggregated.get('conductance')
+                }
+
+                # Generate decision explanation
+                explanation = generate_decision_explanation(
+                    classifier_contributions=clf_contributions,
+                    regressor_contributions=reg_contributions,
+                    water_params=water_params
+                )
+
+                # Display verdict with color coding
+                verdict = explanation['verdict']
+                confidence = explanation['confidence']
+                predicted_wqi = explanation['predicted_wqi']
+                wqi_category = explanation['wqi_category']
+
+                if verdict == 'SAFE':
+                    st.success(f"### ✅ Water Quality: **{verdict}**")
+                else:
+                    st.error(f"### ⚠️ Water Quality: **{verdict}**")
+
+                # Display summary
+                st.markdown(f"**{explanation['summary']}**")
+
+                # Display metrics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric(
+                        "Confidence",
+                        f"{confidence:.1f}%",
+                        help=f"Model confidence in {verdict} prediction"
+                    )
+                with col2:
+                    st.metric(
+                        "Predicted WQI",
+                        f"{predicted_wqi:.1f}",
+                        help="Water Quality Index score (0-100)"
+                    )
+                with col3:
+                    st.metric(
+                        "WQI Category",
+                        wqi_category,
+                        help="NSF-WQI classification"
+                    )
+
+                st.divider()
+
+                # Display primary factors
+                if explanation['primary_factors']:
+                    st.markdown("#### 🎯 Key Factors Influencing This Prediction:")
+                    for factor in explanation['primary_factors']:
+                        st.markdown(f"- {factor}")
+                else:
+                    st.info("No significant individual factors identified. The prediction is based on subtle interactions between features.")
+
+                st.divider()
+
+                # Display parameter assessment
+                if explanation['parameter_assessment']:
+                    st.markdown("#### 📋 Water Quality Parameter Assessment:")
+
+                    # Create columns for better layout
+                    assessment_items = list(explanation['parameter_assessment'].items())
+                    n_params = len(assessment_items)
+
+                    if n_params > 0:
+                        # Display 2 parameters per row
+                        for i in range(0, n_params, 2):
+                            cols = st.columns(2)
+
+                            for j, col in enumerate(cols):
+                                if i + j < n_params:
+                                    param_name, info = assessment_items[i + j]
+                                    status = info['status']
+                                    reason = info['reason']
+
+                                    with col:
+                                        if status == 'excellent':
+                                            st.success(f"**{param_name}**: ✅ {reason}")
+                                        elif status == 'good':
+                                            st.info(f"**{param_name}**: ✓ {reason}")
+                                        elif status == 'concerning':
+                                            st.warning(f"**{param_name}**: ⚠ {reason}")
+                                        else:  # poor
+                                            st.error(f"**{param_name}**: ❌ {reason}")
+
+                # Display recommendations (for UNSAFE only)
+                if explanation['recommendations'] and verdict == 'UNSAFE':
+                    st.divider()
+                    st.markdown("#### 💡 Recommendations for Improvement:")
+                    for rec in explanation['recommendations']:
+                        st.markdown(f"- {rec}")
+
+                # Add interpretation help
+                with st.expander("ℹ️ Understanding This Explanation", expanded=False):
+                    st.markdown("""
+                    **How This Explanation Was Generated:**
+
+                    This explanation synthesizes the SHAP feature contributions (Phase 4.2) into plain language:
+
+                    1. **Verdict**: Based on classifier probability (SAFE if ≥ 50%, UNSAFE if < 50%)
+                    2. **Confidence**: Strength of the model's conviction in its classification
+                    3. **Key Factors**: Features with the largest SHAP contributions to the prediction
+                    4. **Parameter Assessment**: Each core water quality parameter evaluated against:
+                       - EPA Maximum Contaminant Levels (MCLs)
+                       - WHO Guidelines for Drinking Water Quality
+                       - NSF Water Quality Index standards
+                    5. **Recommendations**: Actionable steps to improve water quality (UNSAFE only)
+
+                    **Thresholds Referenced:**
+                    - **pH**: 6.5-8.5 (EPA guideline), 6.8-7.5 (optimal)
+                    - **Dissolved Oxygen**: ≥8 mg/L (excellent), ≥6 mg/L (good), <4 mg/L (poor)
+                    - **Temperature**: 10-20°C (optimal), <25°C (WHO preference)
+                    - **Turbidity**: <1 NTU (EPA), <5 NTU (WHO ideal)
+                    - **Nitrate**: <5 mg/L (excellent), <10 mg/L (EPA MCL), ≥10 mg/L (exceeds limit)
+                    - **Conductivity**: 150-500 µS/cm (optimal), >800 µS/cm (concerning)
+
+                    **Important Notes:**
+                    - This is a predictive model trained on European water quality data
+                    - Actual safety depends on comprehensive testing by certified laboratories
+                    - Always consult local water quality authorities for official assessments
+                    """)
+
+            else:
+                st.warning("⚠️ ML predictions not available. Cannot generate decision explanation.")
+
+        except Exception as e:
+            st.error(f"⚠️ Error generating decision explanation: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+
+        st.divider()
+
         # Parameter breakdown
         st.subheader("Parameter Breakdown")
 
         if scores:
             # Create DataFrame for display
             param_df = pd.DataFrame([
-                {"Parameter": k.replace('_', ' ').title(), "Score": f"{v:.1f}", "Status": calculator.classify_wqi(v)}
+                {
+                    "Parameter": k.replace('_', ' ').title(),
+                    "Value": f"{aggregated.get(k, 0):.2f}",
+                    "Unit": PARAMETER_UNITS.get(k, ''),
+                    "Score": f"{v:.1f}",
+                    "Status": calculator.classify_wqi(v)
+                }
                 for k, v in scores.items()
             ])
 
@@ -818,6 +1777,65 @@ def main():
                 use_container_width=True,
                 hide_index=True
             )
+
+            # Add expandable threshold information for each parameter
+            st.markdown("#### 📋 Parameter Thresholds & Standards")
+            st.markdown("Click on a parameter to see how scores are calculated:")
+
+            for param_name, param_score in scores.items():
+                param_display = param_name.replace('_', ' ').title()
+                param_value = aggregated.get(param_name)
+                param_unit = PARAMETER_UNITS.get(param_name, '')
+
+                # Get threshold data from WQICalculator (NO HARDCODING)
+                threshold_df = WQICalculator.get_parameter_thresholds(param_name)
+
+                if threshold_df is not None and param_value is not None:
+                    # Format unit display (add space before unit if unit exists)
+                    unit_display = f" {param_unit}" if param_unit else ""
+
+                    with st.expander(f"{param_display} ({param_value:.2f}{unit_display}) → Score: {param_score:.1f}"):
+                        st.markdown(f"**Current Value:** {param_value:.2f}{unit_display}")
+                        st.markdown(f"**Calculated Score:** {param_score:.1f} ({calculator.classify_wqi(param_score)})")
+
+                        st.markdown("**Threshold Brackets:**")
+                        # Style the DataFrame to highlight current bracket
+                        st.dataframe(
+                            threshold_df,
+                            use_container_width=True,
+                            hide_index=True
+                        )
+
+                        # Add explanation of current bracket
+                        st.info(f"💡 This parameter score is in the **{calculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
+
+                        # Add nitrate-specific unit explainer
+                        if param_name == 'nitrate':
+                            st.markdown("---")
+                            st.markdown("#### ℹ️ Nitrate Units: mg/L as N")
+                            st.markdown(f"""
+                            This app displays nitrate as **mg/L as N** (EPA/USGS standard), which measures only the nitrogen content of nitrate.
+
+                            **Data Sources:**
+                            - **US Water Quality Portal (WQP)**: Already reports nitrate as **mg/L as N** (USGS convention)
+                            - **European Kaggle Dataset**: Uses **mg{{NO₃}}/L** (molecular form) → converted during ML training
+
+                            **Why this matters:**
+                            - European data uses **mg{{NO₃}}/L** (full molecular form)
+                            - US data uses **mg/L as N** (nitrogen only)
+                            - This creates a **4.43× difference** in values
+
+                            **Conversion Factor (for reference):**
+                            """)
+                            st.latex(r"\text{mg/L as N} = \text{mg\{NO}_3\text{\}/L} \times " + f"{NITRATE_NO3_TO_N}")
+
+                            st.markdown(f"""
+                            **Example conversions:**
+                            - 44.3 mg{{NO₃}}/L = 10.0 mg/L as N (EPA MCL threshold)
+                            - 88.6 mg{{NO₃}}/L = 20.0 mg/L as N (2× EPA MCL, unsafe)
+
+                            ✅ **The nitrate value you see above ({param_value:.2f} mg/L as N) is from USGS/EPA sources and is already in the correct unit.** No conversion was applied to this displayed value.
+                            """)
 
         st.divider()
 

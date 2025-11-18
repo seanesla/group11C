@@ -387,6 +387,101 @@ class WQICalculator:
         """
         return not pd.isna(wqi) and wqi >= 70
 
+    @staticmethod
+    def get_ph_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for pH parameter."""
+        return pd.DataFrame([
+            {"Range": "6.5 - 7.5", "Score": 100, "Quality": "Excellent", "Standard": "Ideal range (NSF-WQI)"},
+            {"Range": "6.0 - 6.5 or 7.5 - 8.0", "Score": 90, "Quality": "Good", "Standard": "Acceptable range"},
+            {"Range": "5.5 - 6.0 or 8.0 - 8.5", "Score": 70, "Quality": "Fair", "Standard": "WHO: 6.5-8.5"},
+            {"Range": "5.0 - 5.5 or 8.5 - 9.0", "Score": 50, "Quality": "Poor", "Standard": "Below recommended"},
+            {"Range": "< 5.0 or > 9.0", "Score": "0-40", "Quality": "Very Poor", "Standard": "Unsafe levels"}
+        ])
+
+    @staticmethod
+    def get_dissolved_oxygen_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for dissolved oxygen parameter."""
+        return pd.DataFrame([
+            {"Range": "≥ 9.0 mg/L", "Score": 100, "Quality": "Excellent", "Standard": "Highly oxygenated"},
+            {"Range": "7.0 - 9.0 mg/L", "Score": 85, "Quality": "Good", "Standard": "Supports aquatic life"},
+            {"Range": "5.0 - 7.0 mg/L", "Score": 60, "Quality": "Fair", "Standard": "Minimum for fish"},
+            {"Range": "3.0 - 5.0 mg/L", "Score": 35, "Quality": "Poor", "Standard": "Stressed ecosystem"},
+            {"Range": "1.0 - 3.0 mg/L", "Score": 15, "Quality": "Very Poor", "Standard": "Hypoxic conditions"},
+            {"Range": "< 1.0 mg/L", "Score": 5, "Quality": "Very Poor", "Standard": "Anoxic/dead zone"}
+        ])
+
+    @staticmethod
+    def get_temperature_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for temperature parameter."""
+        return pd.DataFrame([
+            {"Range": "15 - 25°C", "Score": 100, "Quality": "Excellent", "Standard": "Ideal (±5°C from 20°C)"},
+            {"Range": "10 - 15°C or 25 - 30°C", "Score": 80, "Quality": "Good", "Standard": "±10°C from ideal"},
+            {"Range": "5 - 10°C or 30 - 35°C", "Score": 60, "Quality": "Fair", "Standard": "±15°C from ideal"},
+            {"Range": "0 - 5°C or 35 - 40°C", "Score": 40, "Quality": "Poor", "Standard": "±20°C from ideal"},
+            {"Range": "< 0°C or > 40°C", "Score": "< 40", "Quality": "Very Poor", "Standard": "Extreme temperature"}
+        ])
+
+    @staticmethod
+    def get_turbidity_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for turbidity parameter."""
+        return pd.DataFrame([
+            {"Range": "≤ 5 NTU", "Score": 100, "Quality": "Excellent", "Standard": "EPA drinking water: < 5 NTU"},
+            {"Range": "5 - 25 NTU", "Score": 80, "Quality": "Good", "Standard": "Noticeable but acceptable"},
+            {"Range": "25 - 50 NTU", "Score": 60, "Quality": "Fair", "Standard": "Visible cloudiness"},
+            {"Range": "50 - 100 NTU", "Score": 40, "Quality": "Poor", "Standard": "Significant turbidity"},
+            {"Range": "> 100 NTU", "Score": "< 40", "Quality": "Very Poor", "Standard": "Heavily polluted"}
+        ])
+
+    @staticmethod
+    def get_nitrate_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for nitrate parameter."""
+        return pd.DataFrame([
+            {"Range": "≤ 1.0 mg/L as N", "Score": 100, "Quality": "Excellent", "Standard": "Pristine levels"},
+            {"Range": "1.0 - 5.0 mg/L as N", "Score": 85, "Quality": "Good", "Standard": "Natural background"},
+            {"Range": "5.0 - 10.0 mg/L as N", "Score": 70, "Quality": "Fair", "Standard": "EPA MCL: 10 mg/L as N"},
+            {"Range": "10.0 - 20.0 mg/L as N", "Score": 40, "Quality": "Poor", "Standard": "Above EPA MCL"},
+            {"Range": "20.0 - 50.0 mg/L as N", "Score": 15, "Quality": "Very Poor", "Standard": "Heavily contaminated"},
+            {"Range": "> 50.0 mg/L as N", "Score": 5, "Quality": "Very Poor", "Standard": "Dangerous levels"}
+        ])
+
+    @staticmethod
+    def get_conductance_thresholds() -> pd.DataFrame:
+        """Return threshold brackets for conductance parameter."""
+        return pd.DataFrame([
+            {"Range": "≤ 500 µS/cm", "Score": 100, "Quality": "Excellent", "Standard": "Freshwater quality"},
+            {"Range": "500 - 1000 µS/cm", "Score": 80, "Quality": "Good", "Standard": "Acceptable levels"},
+            {"Range": "1000 - 1500 µS/cm", "Score": 60, "Quality": "Fair", "Standard": "Moderately mineralized"},
+            {"Range": "1500 - 2000 µS/cm", "Score": 40, "Quality": "Poor", "Standard": "Highly mineralized"},
+            {"Range": "> 2000 µS/cm", "Score": "< 40", "Quality": "Very Poor", "Standard": "Brackish/saline water"}
+        ])
+
+    @staticmethod
+    def get_parameter_thresholds(parameter: str) -> Optional[pd.DataFrame]:
+        """
+        Get threshold brackets for a specific parameter.
+
+        Args:
+            parameter: Parameter name ('ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance')
+
+        Returns:
+            DataFrame with threshold information, or None if parameter not recognized
+        """
+        threshold_methods = {
+            'ph': WQICalculator.get_ph_thresholds,
+            'dissolved_oxygen': WQICalculator.get_dissolved_oxygen_thresholds,
+            'temperature': WQICalculator.get_temperature_thresholds,
+            'turbidity': WQICalculator.get_turbidity_thresholds,
+            'nitrate': WQICalculator.get_nitrate_thresholds,
+            'conductance': WQICalculator.get_conductance_thresholds
+        }
+
+        method = threshold_methods.get(parameter)
+        if method:
+            return method()
+        else:
+            logger.warning(f"No threshold data available for parameter: {parameter}")
+            return None
+
 
 if __name__ == "__main__":
     # Example usage and testing

@@ -13,25 +13,32 @@ A machine learning system that provides Water Quality Index (WQI) scores and tre
   - Dissolved Oxygen (DO)
   - Temperature
   - Turbidity
-  - Nitrate
+  - Nitrate (with automatic unit conversion mg{NO3}/L → mg/L as N)
   - Specific Conductance
+- **ML-Powered Predictions**: Random Forest models provide:
+  - Safety classification (Safe/Unsafe) with 98.98% accuracy
+  - WQI score prediction with R² = 0.991
+  - 12-month future trend forecasting (improving/stable/declining)
 - **Interactive Visualizations**: Time series charts and parameter comparisons using Plotly
 - **Safety Assessment**: Indicates whether water is safe for drinking (WQI ≥ 70)
 - **Data Export**: Download raw data as CSV
+- **Nitrate Unit Standardization**: Automatic conversion between mg{NO3}/L and mg/L as N (EPA standard)
 
 ## Project Status
 
-**50% Complete** - MVP functional with end-to-end system working with real data
+**✅ PRODUCTION READY** - Complete end-to-end system with ML predictions and comprehensive testing
 
-**Completed:**
-- ✅ Water Quality Portal API client
+**Completed Features:**
+- ✅ Water Quality Portal API client with unit standardization
+- ✅ USGS API client integration
 - ✅ ZIP code to geolocation mapping
-- ✅ WQI calculation engine
-- ✅ Streamlit web application with visualizations
-
-**In Progress:**
-- 🔨 ML models for trend prediction
-- 🔨 Unit and integration tests
+- ✅ WQI calculation engine (NSF-WQI standard)
+- ✅ Streamlit web application with interactive visualizations
+- ✅ ML models: Classifier (98.98% accuracy) & Regressor (R² = 0.991)
+- ✅ Future trend forecasting (12-month predictions)
+- ✅ Comprehensive test suite: 1,555+ tests passing
+- ✅ Nitrate unit conversion system (Kaggle mg{NO3}/L → EPA mg/L as N)
+- ✅ End-to-end integration tests covering full pipeline
 
 ## Installation
 

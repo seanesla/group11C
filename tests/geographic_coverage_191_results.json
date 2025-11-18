@@ -1,0 +1,5889 @@
+{
+  "timestamp": "2025-11-17T02:58:57.409537",
+  "total_locations": 191,
+  "date_range": {
+    "start": "2020-11-18T02:14:41.343169",
+    "end": "2025-11-17T02:14:41.343169"
+  },
+  "results": [
+    {
+      "index": 1,
+      "zip_code": "01230",
+      "description": "Great Barrington MA - rural Berkshires",
+      "geolocation": {
+        "latitude": 42.1959,
+        "longitude": -73.3607,
+        "place_name": "Great Barrington",
+        "state_code": "MA"
+      },
+      "wqp_data": {
+        "measurement_count": 21287,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.71,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.085,
+          "dissolved_oxygen": 8.54,
+          "temperature": 16.95,
+          "turbidity": 1.37,
+          "nitrate": 0.275,
+          "conductance": 44.3
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.59,
+        "regressor_wqi": 69.44300000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 2,
+      "zip_code": "05001",
+      "description": "White River Junction VT",
+      "geolocation": {
+        "latitude": 43.6722,
+        "longitude": -72.3813,
+        "place_name": "White River Junction",
+        "state_code": "VT"
+      },
+      "wqp_data": {
+        "measurement_count": 8460,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.21,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.605,
+          "dissolved_oxygen": 8.29,
+          "temperature": 18.12,
+          "turbidity": 0.865,
+          "nitrate": 0.192,
+          "conductance": 124.15
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5233333333333333,
+        "regressor_wqi": 70.8145
+      },
+      "errors": []
+    },
+    {
+      "index": 3,
+      "zip_code": "12134",
+      "description": "Averill Park NY",
+      "geolocation": {
+        "latitude": 43.2662,
+        "longitude": -74.2288,
+        "place_name": "Northville",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 606,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.91,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 6.37,
+          "temperature": 7.2,
+          "turbidity": 0.0,
+          "nitrate": 0.1205,
+          "conductance": 13.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 4,
+      "zip_code": "16650",
+      "description": "Huntingdon PA",
+      "geolocation": {
+        "latitude": 40.1192,
+        "longitude": -78.3129,
+        "place_name": "Hopewell",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 1282,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.44,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.47,
+          "dissolved_oxygen": 13.17,
+          "temperature": 11.350000000000001,
+          "turbidity": 4.76,
+          "nitrate": 1.1,
+          "conductance": 177.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 1,
+        "classifier_verdict": "SAFE",
+        "classifier_confidence": 0.57,
+        "regressor_wqi": 71.36790000000005
+      },
+      "errors": []
+    },
+    {
+      "index": 5,
+      "zip_code": "24701",
+      "description": "Bluefield WV",
+      "geolocation": {
+        "latitude": 37.2698,
+        "longitude": -81.2223,
+        "place_name": "Bluefield",
+        "state_code": "WV"
+      },
+      "wqp_data": {
+        "measurement_count": 3485,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.08,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.82,
+          "dissolved_oxygen": 9.754999999999999,
+          "temperature": 12.61,
+          "turbidity": 2.3,
+          "nitrate": 0.61,
+          "conductance": 178.4
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5333333333333333,
+        "regressor_wqi": 69.73899999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 6,
+      "zip_code": "26554",
+      "description": "Morgantown WV",
+      "geolocation": {
+        "latitude": 39.4941,
+        "longitude": -80.2213,
+        "place_name": "Fairmont",
+        "state_code": "WV"
+      },
+      "wqp_data": {
+        "measurement_count": 2056,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 98.25,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.7,
+          "dissolved_oxygen": 10.42,
+          "temperature": 16.3,
+          "turbidity": 0.79,
+          "nitrate": 0.28500000000000003,
+          "conductance": 426.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.51,
+        "regressor_wqi": 69.66239999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 7,
+      "zip_code": "31001",
+      "description": "Macon GA",
+      "geolocation": {
+        "latitude": 31.9648,
+        "longitude": -83.3068,
+        "place_name": "Abbeville",
+        "state_code": "GA"
+      },
+      "wqp_data": {
+        "measurement_count": 702,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.15,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.0,
+          "dissolved_oxygen": 6.85,
+          "temperature": 16.9,
+          "turbidity": 13.0,
+          "conductance": 103.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 8,
+      "zip_code": "35004",
+      "description": "Moody AL",
+      "geolocation": {
+        "latitude": 33.6035,
+        "longitude": -86.4668,
+        "place_name": "Moody",
+        "state_code": "AL"
+      },
+      "wqp_data": {
+        "measurement_count": 11904,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.95,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.2731,
+          "dissolved_oxygen": 7.51,
+          "temperature": 22.19,
+          "turbidity": 5.0,
+          "nitrate": 0.774,
+          "conductance": 147.2
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5533333333333333,
+        "regressor_wqi": 72.25860000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 9,
+      "zip_code": "38801",
+      "description": "Tupelo MS",
+      "geolocation": {
+        "latitude": 34.2538,
+        "longitude": -88.7209,
+        "place_name": "Tupelo",
+        "state_code": "MS"
+      },
+      "wqp_data": {
+        "measurement_count": 10308,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.24,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.56,
+          "dissolved_oxygen": 8.03,
+          "temperature": 25.82,
+          "turbidity": 12.1,
+          "nitrate": 0.51,
+          "conductance": 71.7
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5,
+        "regressor_wqi": 71.78940000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 10,
+      "zip_code": "41001",
+      "description": "Alexandria KY",
+      "geolocation": {
+        "latitude": 38.9406,
+        "longitude": -84.3943,
+        "place_name": "Alexandria",
+        "state_code": "KY"
+      },
+      "wqp_data": {
+        "measurement_count": 1396,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.71,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 9.364999999999998,
+          "temperature": 17.5,
+          "turbidity": 14.69,
+          "nitrate": 0.853,
+          "conductance": 385.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6,
+        "regressor_wqi": 68.65360000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 11,
+      "zip_code": "45601",
+      "description": "Chillicothe OH",
+      "geolocation": {
+        "latitude": 39.338,
+        "longitude": -82.9895,
+        "place_name": "Chillicothe",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 1078,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.49,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.01,
+          "dissolved_oxygen": 7.5,
+          "temperature": 22.2,
+          "turbidity": 0.92,
+          "nitrate": 0.238,
+          "conductance": 630.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6433333333333333,
+        "regressor_wqi": 63.89819999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 12,
+      "zip_code": "49001",
+      "description": "Kalamazoo MI",
+      "geolocation": {
+        "latitude": 42.2736,
+        "longitude": -85.5457,
+        "place_name": "Kalamazoo",
+        "state_code": "MI"
+      },
+      "wqp_data": {
+        "measurement_count": 86111,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.49,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 5.73,
+          "dissolved_oxygen": 7.4,
+          "temperature": 19.24,
+          "turbidity": 1.83,
+          "nitrate": 0.183,
+          "conductance": 559.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5833333333333334,
+        "regressor_wqi": 66.0856
+      },
+      "errors": []
+    },
+    {
+      "index": 13,
+      "zip_code": "50001",
+      "description": "Ackley IA",
+      "geolocation": {
+        "latitude": 41.3737,
+        "longitude": -93.3767,
+        "place_name": "Ackworth",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 20395,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 75.79,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 8.0,
+          "temperature": 58.0,
+          "turbidity": 10.0,
+          "nitrate": 1.0,
+          "conductance": 378.6
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7566666666666667,
+        "regressor_wqi": 68.04060000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 14,
+      "zip_code": "51001",
+      "description": "Akron IA",
+      "geolocation": {
+        "latitude": 42.8354,
+        "longitude": -96.5225,
+        "place_name": "Akron",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 2117,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.62,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.3,
+          "dissolved_oxygen": 10.09,
+          "temperature": 18.1,
+          "turbidity": 17.0,
+          "nitrate": 4.15,
+          "conductance": 847.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6,
+        "regressor_wqi": 62.766799999999996
+      },
+      "errors": []
+    },
+    {
+      "index": 15,
+      "zip_code": "52001",
+      "description": "Dubuque IA",
+      "geolocation": {
+        "latitude": 42.515,
+        "longitude": -90.6819,
+        "place_name": "Dubuque",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 17506,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 71.75,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.27,
+          "dissolved_oxygen": 9.795,
+          "temperature": 59.53,
+          "turbidity": 7.91,
+          "nitrate": 2.93,
+          "conductance": 651.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7333333333333333,
+        "regressor_wqi": 62.61119999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 16,
+      "zip_code": "54001",
+      "description": "Afton WI",
+      "geolocation": {
+        "latitude": 45.3486,
+        "longitude": -92.4014,
+        "place_name": "Amery",
+        "state_code": "WI"
+      },
+      "wqp_data": {
+        "measurement_count": 42722,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.21,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.67,
+          "dissolved_oxygen": 7.38,
+          "temperature": 45.2,
+          "turbidity": 3.1,
+          "nitrate": 0.2,
+          "conductance": 177.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6333333333333333,
+        "regressor_wqi": 70.1412
+      },
+      "errors": []
+    },
+    {
+      "index": 17,
+      "zip_code": "55001",
+      "description": "Afton MN",
+      "geolocation": {
+        "latitude": 44.8697,
+        "longitude": -92.8234,
+        "place_name": "Afton",
+        "state_code": "MN"
+      },
+      "wqp_data": {
+        "measurement_count": 190858,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.35,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.24,
+          "dissolved_oxygen": 7.39,
+          "temperature": 23.0,
+          "turbidity": 3.7,
+          "nitrate": 1.16,
+          "conductance": 625.7
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6166666666666667,
+        "regressor_wqi": 66.98449999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 18,
+      "zip_code": "56001",
+      "description": "Mankato MN",
+      "geolocation": {
+        "latitude": 44.1538,
+        "longitude": -93.996,
+        "place_name": "Mankato",
+        "state_code": "MN"
+      },
+      "wqp_data": {
+        "measurement_count": 9479,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.79,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.12,
+          "dissolved_oxygen": 8.265,
+          "temperature": 18.395,
+          "turbidity": 7.59,
+          "nitrate": 3.6,
+          "conductance": 495.2
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7266666666666667,
+        "regressor_wqi": 65.31439999999996
+      },
+      "errors": []
+    },
+    {
+      "index": 19,
+      "zip_code": "57001",
+      "description": "Alcester SD",
+      "geolocation": {
+        "latitude": 43.0047,
+        "longitude": -96.6332,
+        "place_name": "Alcester",
+        "state_code": "SD"
+      },
+      "wqp_data": {
+        "measurement_count": 1247,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.47,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.39,
+          "dissolved_oxygen": 10.57,
+          "temperature": 16.8,
+          "turbidity": 7.3,
+          "conductance": 1048.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 20,
+      "zip_code": "58001",
+      "description": "Abercrombie ND",
+      "geolocation": {
+        "latitude": 46.4479,
+        "longitude": -96.7278,
+        "place_name": "Abercrombie",
+        "state_code": "ND"
+      },
+      "wqp_data": {
+        "measurement_count": 5185,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 73.87,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.24,
+          "dissolved_oxygen": 8.33,
+          "temperature": 12.0,
+          "turbidity": 32.0,
+          "conductance": 1123.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 21,
+      "zip_code": "59001",
+      "description": "Absarokee MT",
+      "geolocation": {
+        "latitude": 45.5154,
+        "longitude": -109.4692,
+        "place_name": "Absarokee",
+        "state_code": "MT"
+      },
+      "wqp_data": {
+        "measurement_count": 4771,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.59,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.18,
+          "dissolved_oxygen": 9.48,
+          "temperature": 13.184999999999999,
+          "turbidity": 3.46,
+          "nitrate": 0.45,
+          "conductance": 291.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5666666666666667,
+        "regressor_wqi": 68.42140000000005
+      },
+      "errors": []
+    },
+    {
+      "index": 22,
+      "zip_code": "68001",
+      "description": "Abie NE",
+      "geolocation": {
+        "latitude": 41.3479,
+        "longitude": -96.9563,
+        "place_name": "Abie",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 7552,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 78.65,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 7.1,
+          "temperature": 22.9,
+          "turbidity": 17.0,
+          "nitrate": 16.0,
+          "conductance": 437.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7533333333333333,
+        "regressor_wqi": 66.02549999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 23,
+      "zip_code": "73001",
+      "description": "Albert OK",
+      "geolocation": {
+        "latitude": 35.2032,
+        "longitude": -98.3574,
+        "place_name": "Albert",
+        "state_code": "OK"
+      },
+      "wqp_data": {
+        "measurement_count": 4856,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.44,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.97,
+          "dissolved_oxygen": 8.76,
+          "temperature": 19.13,
+          "turbidity": 12.97,
+          "nitrate": 0.74,
+          "conductance": 607.6
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6533333333333333,
+        "regressor_wqi": 64.41949999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 24,
+      "zip_code": "74001",
+      "description": "Avant OK",
+      "geolocation": {
+        "latitude": 36.4901,
+        "longitude": -96.0616,
+        "place_name": "Avant",
+        "state_code": "OK"
+      },
+      "wqp_data": {
+        "measurement_count": 5908,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.67,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.79,
+          "dissolved_oxygen": 6.32,
+          "temperature": 19.128,
+          "turbidity": 9.9,
+          "nitrate": 0.041999999999999996,
+          "conductance": 270.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5166666666666667,
+        "regressor_wqi": 71.38290000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 25,
+      "zip_code": "75001",
+      "description": "Addison TX",
+      "geolocation": {
+        "latitude": 32.96,
+        "longitude": -96.8385,
+        "place_name": "Addison",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 30032,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.67,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 7.235,
+          "temperature": 22.8,
+          "turbidity": 12.0,
+          "nitrate": 0.604,
+          "conductance": 389.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6566666666666666,
+        "regressor_wqi": 68.25320000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 26,
+      "zip_code": "76001",
+      "description": "Arlington TX",
+      "geolocation": {
+        "latitude": 32.6289,
+        "longitude": -97.1517,
+        "place_name": "Arlington",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 5891,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.92,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 6.65,
+          "temperature": 22.5,
+          "turbidity": 24.0,
+          "nitrate": 0.949,
+          "conductance": 428.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6866666666666666,
+        "regressor_wqi": 68.22919999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 27,
+      "zip_code": "77001",
+      "description": "Houston TX",
+      "geolocation": {
+        "latitude": 29.8131,
+        "longitude": -95.3098,
+        "place_name": "Houston",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 6346,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 75.56,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.6,
+          "dissolved_oxygen": 5.6,
+          "temperature": 23.2,
+          "turbidity": 25.5,
+          "nitrate": 1.47,
+          "conductance": 1120.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6966666666666667,
+        "regressor_wqi": 63.824799999999975
+      },
+      "errors": []
+    },
+    {
+      "index": 28,
+      "zip_code": "78001",
+      "description": "Bandera TX",
+      "geolocation": {
+        "latitude": 28.2639,
+        "longitude": -99.2802,
+        "place_name": "Artesia Wells",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 13,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.06,
+        "classification": "Good",
+        "parameter_count": 2,
+        "parameters": {
+          "ph": 7.9,
+          "conductance": 3650.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 29,
+      "zip_code": "79001",
+      "description": "Abernathy TX",
+      "geolocation": {
+        "latitude": 35.2748,
+        "longitude": -102.6652,
+        "place_name": "Adrian",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 30,
+      "zip_code": "83001",
+      "description": "Afton WY",
+      "geolocation": {
+        "latitude": 43.4528,
+        "longitude": -110.7393,
+        "place_name": "Jackson",
+        "state_code": "WY"
+      },
+      "wqp_data": {
+        "measurement_count": 1899,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.03,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.9350000000000005,
+          "dissolved_oxygen": 8.38,
+          "temperature": 11.809000000000001,
+          "turbidity": 1.6,
+          "nitrate": 0.264,
+          "conductance": 207.85
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.65,
+        "regressor_wqi": 69.53590000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 31,
+      "zip_code": "84001",
+      "description": "Altamont UT",
+      "geolocation": {
+        "latitude": 40.3514,
+        "longitude": -110.2754,
+        "place_name": "Altamont",
+        "state_code": "UT"
+      },
+      "wqp_data": {
+        "measurement_count": 6026,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.32,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.39,
+          "dissolved_oxygen": 8.01,
+          "temperature": 11.41,
+          "turbidity": 3.6399999999999997,
+          "nitrate": 0.208,
+          "conductance": 608.7
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6133333333333333,
+        "regressor_wqi": 64.24149999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 32,
+      "zip_code": "85001",
+      "description": "Phoenix AZ",
+      "geolocation": {
+        "latitude": 33.4484,
+        "longitude": -112.074,
+        "place_name": "Phoenix",
+        "state_code": "AZ"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 33,
+      "zip_code": "86001",
+      "description": "Flagstaff AZ",
+      "geolocation": {
+        "latitude": 35.1859,
+        "longitude": -111.662,
+        "place_name": "Flagstaff",
+        "state_code": "AZ"
+      },
+      "wqp_data": {
+        "measurement_count": 5435,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.71,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.28,
+          "dissolved_oxygen": 8.49,
+          "temperature": 16.2,
+          "turbidity": 0.98,
+          "nitrate": 0.1,
+          "conductance": 293.1
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.58,
+        "regressor_wqi": 68.42360000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 34,
+      "zip_code": "87001",
+      "description": "Algodones NM",
+      "geolocation": {
+        "latitude": 35.389,
+        "longitude": -106.3517,
+        "place_name": "Algodones",
+        "state_code": "NM"
+      },
+      "wqp_data": {
+        "measurement_count": 10817,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.63,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.19,
+          "dissolved_oxygen": 8.74,
+          "temperature": 18.93,
+          "turbidity": 43.0,
+          "nitrate": 0.514,
+          "conductance": 418.21000000000004
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5966666666666667,
+        "regressor_wqi": 68.44910000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 35,
+      "zip_code": "88001",
+      "description": "Alamogordo NM",
+      "geolocation": {
+        "latitude": 32.2901,
+        "longitude": -106.7539,
+        "place_name": "Las Cruces",
+        "state_code": "NM"
+      },
+      "wqp_data": {
+        "measurement_count": 27,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.65,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 8.2,
+          "temperature": 15.1,
+          "nitrate": 3.69,
+          "conductance": 2195.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 36,
+      "zip_code": "89001",
+      "description": "Alamo NV",
+      "geolocation": {
+        "latitude": 37.3259,
+        "longitude": -115.308,
+        "place_name": "Alamo",
+        "state_code": "NV"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 37,
+      "zip_code": "06001",
+      "description": "Avon CT",
+      "geolocation": {
+        "latitude": 41.7905,
+        "longitude": -72.8653,
+        "place_name": "Avon",
+        "state_code": "CT"
+      },
+      "wqp_data": {
+        "measurement_count": 14191,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.95,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.30000019073486,
+          "dissolved_oxygen": 8.72,
+          "temperature": 20.2,
+          "turbidity": 2.02,
+          "nitrate": 0.752,
+          "conductance": 204.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.61,
+        "regressor_wqi": 71.25980000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 38,
+      "zip_code": "07001",
+      "description": "Avenel NJ",
+      "geolocation": {
+        "latitude": 40.5826,
+        "longitude": -74.2785,
+        "place_name": "Avenel",
+        "state_code": "NJ"
+      },
+      "wqp_data": {
+        "measurement_count": 30681,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.03,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.34,
+          "dissolved_oxygen": 7.26,
+          "temperature": 19.976,
+          "turbidity": 5.5,
+          "nitrate": 1.74,
+          "conductance": 358.15
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.66,
+        "regressor_wqi": 71.30960000000006
+      },
+      "errors": []
+    },
+    {
+      "index": 39,
+      "zip_code": "08001",
+      "description": "Alloway NJ",
+      "geolocation": {
+        "latitude": 39.5591,
+        "longitude": -75.3506,
+        "place_name": "Alloway",
+        "state_code": "NJ"
+      },
+      "wqp_data": {
+        "measurement_count": 23033,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.08,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.22,
+          "dissolved_oxygen": 9.02,
+          "temperature": 16.4,
+          "turbidity": 10.05,
+          "nitrate": 1.3975,
+          "conductance": 365.15
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6266666666666667,
+        "regressor_wqi": 70.73810000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 40,
+      "zip_code": "17001",
+      "description": "Camp Hill PA",
+      "geolocation": {
+        "latitude": 40.216,
+        "longitude": -76.925,
+        "place_name": "Camp Hill",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 10283,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.33,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.8,
+          "dissolved_oxygen": 12.22,
+          "temperature": 15.1,
+          "turbidity": 5.04,
+          "nitrate": 2.05,
+          "conductance": 302.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5766666666666667,
+        "regressor_wqi": 67.6995
+      },
+      "errors": []
+    },
+    {
+      "index": 41,
+      "zip_code": "18001",
+      "description": "Bethlehem PA",
+      "geolocation": {
+        "latitude": 40.6934,
+        "longitude": -75.4712,
+        "place_name": "Lehigh Valley",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 4808,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 92.7,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.66,
+          "dissolved_oxygen": 10.99,
+          "temperature": 14.0,
+          "turbidity": 1.67,
+          "nitrate": 1.5,
+          "conductance": 232.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5233333333333333,
+        "regressor_wqi": 69.08129999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 42,
+      "zip_code": "19001",
+      "description": "Abington PA",
+      "geolocation": {
+        "latitude": 40.1238,
+        "longitude": -75.1148,
+        "place_name": "Abington",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 13181,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.08,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.49,
+          "dissolved_oxygen": 9.28,
+          "temperature": 16.79,
+          "turbidity": 5.8,
+          "nitrate": 1.7,
+          "conductance": 313.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6433333333333333,
+        "regressor_wqi": 69.57750000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 43,
+      "zip_code": "21001",
+      "description": "Aberdeen MD",
+      "geolocation": {
+        "latitude": 39.5109,
+        "longitude": -76.1805,
+        "place_name": "Aberdeen",
+        "state_code": "MD"
+      },
+      "wqp_data": {
+        "measurement_count": 30694,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.49,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.68,
+          "dissolved_oxygen": 9.0,
+          "temperature": 16.7,
+          "turbidity": 6.7,
+          "nitrate": 0.7179,
+          "conductance": 881.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.62,
+        "regressor_wqi": 64.85449999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 44,
+      "zip_code": "22001",
+      "description": "Ashburn VA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 45,
+      "zip_code": "23001",
+      "description": "Aylett VA",
+      "geolocation": {
+        "latitude": 37.2882,
+        "longitude": -76.426,
+        "place_name": "Achilles",
+        "state_code": "VA"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 46,
+      "zip_code": "27001",
+      "description": "Advance NC",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 47,
+      "zip_code": "28001",
+      "description": "Albemarle NC",
+      "geolocation": {
+        "latitude": 35.3573,
+        "longitude": -80.2044,
+        "place_name": "Albemarle",
+        "state_code": "NC"
+      },
+      "wqp_data": {
+        "measurement_count": 3162,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 96.98,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.3,
+          "dissolved_oxygen": 9.3,
+          "temperature": 19.0,
+          "turbidity": 7.0,
+          "conductance": 104.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 48,
+      "zip_code": "29001",
+      "description": "Alcolu SC",
+      "geolocation": {
+        "latitude": 33.7684,
+        "longitude": -80.1788,
+        "place_name": "Alcolu",
+        "state_code": "SC"
+      },
+      "wqp_data": {
+        "measurement_count": 5859,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.41,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.78,
+          "dissolved_oxygen": 7.86,
+          "temperature": 18.84,
+          "turbidity": 5.96,
+          "nitrate": 0.34,
+          "conductance": 54.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 1,
+        "classifier_verdict": "SAFE",
+        "classifier_confidence": 0.5233333333333333,
+        "regressor_wqi": 72.60280000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 49,
+      "zip_code": "32001",
+      "description": "Amelia Island FL",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 50,
+      "zip_code": "33001",
+      "description": "Aventura FL",
+      "geolocation": {
+        "latitude": 24.8306,
+        "longitude": -80.8049,
+        "place_name": "Long Key",
+        "state_code": "FL"
+      },
+      "wqp_data": {
+        "measurement_count": 6838,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 63.96,
+        "classification": "Fair",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 6.411855,
+          "temperature": 27.4,
+          "turbidity": 1.1,
+          "conductance": 49142.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 51,
+      "zip_code": "34001",
+      "description": "Arcadia FL",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 52,
+      "zip_code": "37001",
+      "description": "Whitwell TN",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 53,
+      "zip_code": "42001",
+      "description": "Paducah KY",
+      "geolocation": {
+        "latitude": 37.0634,
+        "longitude": -88.6632,
+        "place_name": "Paducah",
+        "state_code": "KY"
+      },
+      "wqp_data": {
+        "measurement_count": 1998,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.29,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.8,
+          "dissolved_oxygen": 7.73,
+          "temperature": 18.11,
+          "turbidity": 14.65,
+          "nitrate": 1.18,
+          "conductance": 230.445
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6833333333333333,
+        "regressor_wqi": 68.6787
+      },
+      "errors": []
+    },
+    {
+      "index": 54,
+      "zip_code": "43001",
+      "description": "Alexandria OH",
+      "geolocation": {
+        "latitude": 40.106,
+        "longitude": -82.6077,
+        "place_name": "Alexandria",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 4744,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.45,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.89,
+          "dissolved_oxygen": 7.49,
+          "temperature": 20.5,
+          "turbidity": 7.55,
+          "conductance": 586.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 55,
+      "zip_code": "46001",
+      "description": "Anderson IN",
+      "geolocation": {
+        "latitude": 40.2561,
+        "longitude": -85.6681,
+        "place_name": "Alexandria",
+        "state_code": "IN"
+      },
+      "wqp_data": {
+        "measurement_count": 17032,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.44,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 9.0,
+          "temperature": 14.5,
+          "turbidity": 9.1,
+          "nitrate": 1.5,
+          "conductance": 654.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7033333333333334,
+        "regressor_wqi": 63.82749999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 56,
+      "zip_code": "47001",
+      "description": "Attica IN",
+      "geolocation": {
+        "latitude": 39.0719,
+        "longitude": -84.9452,
+        "place_name": "Aurora",
+        "state_code": "IN"
+      },
+      "wqp_data": {
+        "measurement_count": 2015,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.84,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.17,
+          "dissolved_oxygen": 9.88,
+          "temperature": 18.0865,
+          "turbidity": 12.75,
+          "nitrate": 1.4,
+          "conductance": 471.4
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5766666666666667,
+        "regressor_wqi": 65.4128
+      },
+      "errors": []
+    },
+    {
+      "index": 57,
+      "zip_code": "60001",
+      "description": "Aikin IL",
+      "geolocation": {
+        "latitude": 42.3248,
+        "longitude": -88.4525,
+        "place_name": "Alden",
+        "state_code": "IL"
+      },
+      "wqp_data": {
+        "measurement_count": 6530,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.78,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.29,
+          "dissolved_oxygen": 8.465,
+          "temperature": 25.8,
+          "turbidity": 7.915,
+          "nitrate": 0.708,
+          "conductance": 560.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.65,
+        "regressor_wqi": 64.12069999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 58,
+      "zip_code": "61001",
+      "description": "Abingdon IL",
+      "geolocation": {
+        "latitude": 42.4714,
+        "longitude": -90.1201,
+        "place_name": "Apple River",
+        "state_code": "IL"
+      },
+      "wqp_data": {
+        "measurement_count": 19079,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 70.93,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.13,
+          "dissolved_oxygen": 10.11,
+          "temperature": 50.05,
+          "turbidity": 12.0,
+          "nitrate": 6.205,
+          "conductance": 624.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6466666666666666,
+        "regressor_wqi": 61.5806
+      },
+      "errors": []
+    },
+    {
+      "index": 59,
+      "zip_code": "62001",
+      "description": "Alorton IL",
+      "geolocation": {
+        "latitude": 38.8822,
+        "longitude": -89.7441,
+        "place_name": "Alhambra",
+        "state_code": "IL"
+      },
+      "wqp_data": {
+        "measurement_count": 145,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.32,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 11.6,
+          "temperature": 11.1,
+          "turbidity": 17.0,
+          "nitrate": 0.9085000000000001,
+          "conductance": 540.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5166666666666667,
+        "regressor_wqi": 65.21029999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 60,
+      "zip_code": "63001",
+      "description": "Affton MO",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 61,
+      "zip_code": "64001",
+      "description": "Atchison KS",
+      "geolocation": {
+        "latitude": 39.1048,
+        "longitude": -93.5429,
+        "place_name": "Alma",
+        "state_code": "MO"
+      },
+      "wqp_data": {
+        "measurement_count": 558,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.27,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.69,
+          "dissolved_oxygen": 7.210000000000001,
+          "temperature": 25.058500000000002,
+          "turbidity": 19.0,
+          "nitrate": 0.00875,
+          "conductance": 656.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.53,
+        "regressor_wqi": 64.99529999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 62,
+      "zip_code": "65001",
+      "description": "Ashland MO",
+      "geolocation": {
+        "latitude": 38.2986,
+        "longitude": -92.0155,
+        "place_name": "Argyle",
+        "state_code": "MO"
+      },
+      "wqp_data": {
+        "measurement_count": 263,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.19,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.2,
+          "dissolved_oxygen": 8.38,
+          "temperature": 16.1,
+          "turbidity": 14.0,
+          "nitrate": 0.476,
+          "conductance": 578.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.61,
+        "regressor_wqi": 66.94529999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 63,
+      "zip_code": "66001",
+      "description": "Abilene KS",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 64,
+      "zip_code": "67001",
+      "description": "Andale KS",
+      "geolocation": {
+        "latitude": 37.7797,
+        "longitude": -97.6366,
+        "place_name": "Andale",
+        "state_code": "KS"
+      },
+      "wqp_data": {
+        "measurement_count": 1907,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.3,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.1,
+          "temperature": 17.6,
+          "turbidity": 18.0,
+          "nitrate": 0.6785000000000001,
+          "conductance": 775.5
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 65,
+      "zip_code": "70001",
+      "description": "Ama LA",
+      "geolocation": {
+        "latitude": 29.9871,
+        "longitude": -90.1695,
+        "place_name": "Metairie",
+        "state_code": "LA"
+      },
+      "wqp_data": {
+        "measurement_count": 13886,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.97,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.5,
+          "dissolved_oxygen": 7.5,
+          "temperature": 24.6,
+          "turbidity": 7.38,
+          "nitrate": 0.83,
+          "conductance": 1104.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.62,
+        "regressor_wqi": 65.377
+      },
+      "errors": []
+    },
+    {
+      "index": 66,
+      "zip_code": "71001",
+      "description": "Addis LA",
+      "geolocation": {
+        "latitude": 32.5556,
+        "longitude": -92.9245,
+        "place_name": "Arcadia",
+        "state_code": "LA"
+      },
+      "wqp_data": {
+        "measurement_count": 7,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.0,
+        "classification": "Good",
+        "parameter_count": 2,
+        "parameters": {
+          "temperature": 25.299999999999997,
+          "conductance": 516.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 67,
+      "zip_code": "72001",
+      "description": "Adona AR",
+      "geolocation": {
+        "latitude": 35.047,
+        "longitude": -92.9033,
+        "place_name": "Adona",
+        "state_code": "AR"
+      },
+      "wqp_data": {
+        "measurement_count": 4960,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.67,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.4,
+          "dissolved_oxygen": 8.42,
+          "temperature": 15.2,
+          "turbidity": 8.625,
+          "nitrate": 0.073,
+          "conductance": 24.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 1,
+        "classifier_verdict": "SAFE",
+        "classifier_confidence": 0.5033333333333333,
+        "regressor_wqi": 71.5265
+      },
+      "errors": []
+    },
+    {
+      "index": 68,
+      "zip_code": "80001",
+      "description": "Arvada CO",
+      "geolocation": {
+        "latitude": 39.8028,
+        "longitude": -105.0875,
+        "place_name": "Arvada",
+        "state_code": "CO"
+      },
+      "wqp_data": {
+        "measurement_count": 11698,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.89,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.93,
+          "dissolved_oxygen": 8.4,
+          "temperature": 13.6035,
+          "turbidity": 6.1,
+          "nitrate": 2.72,
+          "conductance": 875.85
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.74,
+        "regressor_wqi": 63.570899999999945
+      },
+      "errors": []
+    },
+    {
+      "index": 69,
+      "zip_code": "81001",
+      "description": "Alamosa CO",
+      "geolocation": {
+        "latitude": 38.2879,
+        "longitude": -104.5848,
+        "place_name": "Pueblo",
+        "state_code": "CO"
+      },
+      "wqp_data": {
+        "measurement_count": 8252,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.79,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.3,
+          "dissolved_oxygen": 8.38,
+          "temperature": 16.9,
+          "turbidity": 21.0,
+          "nitrate": 1.32,
+          "conductance": 424.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6866666666666666,
+        "regressor_wqi": 67.63999999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 70,
+      "zip_code": "82001",
+      "description": "Albin WY",
+      "geolocation": {
+        "latitude": 41.1437,
+        "longitude": -104.7962,
+        "place_name": "Cheyenne",
+        "state_code": "WY"
+      },
+      "wqp_data": {
+        "measurement_count": 46,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.91,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.68,
+          "dissolved_oxygen": 7.64,
+          "temperature": 18.5,
+          "nitrate": 6.93,
+          "conductance": 204.2
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 71,
+      "zip_code": "90001",
+      "description": "Los Angeles CA",
+      "geolocation": {
+        "latitude": 33.9731,
+        "longitude": -118.2479,
+        "place_name": "Los Angeles",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 326,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 73.41,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 7.93,
+          "temperature": 15.6,
+          "turbidity": 640.0,
+          "nitrate": 1.75,
+          "conductance": 679.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.73,
+        "regressor_wqi": 63.477699999999984
+      },
+      "errors": []
+    },
+    {
+      "index": 72,
+      "zip_code": "91001",
+      "description": "Altadena CA",
+      "geolocation": {
+        "latitude": 34.1912,
+        "longitude": -118.1392,
+        "place_name": "Altadena",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 411,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.13,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.0,
+          "temperature": 15.3,
+          "turbidity": 16.0,
+          "nitrate": 0.9245000000000001,
+          "conductance": 460.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 73,
+      "zip_code": "92001",
+      "description": "Bonsall CA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 74,
+      "zip_code": "93001",
+      "description": "Atascadero CA",
+      "geolocation": {
+        "latitude": 34.3308,
+        "longitude": -119.3584,
+        "place_name": "Ventura",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 845,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.68,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.6,
+          "dissolved_oxygen": 7.9,
+          "temperature": 22.0,
+          "turbidity": 5.76,
+          "nitrate": 5.08,
+          "conductance": 973.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7033333333333334,
+        "regressor_wqi": 64.09039999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 75,
+      "zip_code": "94001",
+      "description": "Brisbane CA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 76,
+      "zip_code": "95001",
+      "description": "Aptos CA",
+      "geolocation": {
+        "latitude": 36.979,
+        "longitude": -121.898,
+        "place_name": "Aptos",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 1113,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.11,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.18,
+          "dissolved_oxygen": 8.0,
+          "temperature": 17.5,
+          "turbidity": 1.6,
+          "nitrate": 3.0999999999999996,
+          "conductance": 799.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7433333333333333,
+        "regressor_wqi": 63.11879999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 77,
+      "zip_code": "96001",
+      "description": "Adin CA",
+      "geolocation": {
+        "latitude": 40.5605,
+        "longitude": -122.4116,
+        "place_name": "Redding",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 263,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.83,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.71,
+          "dissolved_oxygen": 8.665,
+          "temperature": 15.76,
+          "turbidity": 1.2000000000000002,
+          "nitrate": 1.45,
+          "conductance": 174.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.61,
+        "regressor_wqi": 70.18459999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 78,
+      "zip_code": "97001",
+      "description": "Antelope OR",
+      "geolocation": {
+        "latitude": 44.8892,
+        "longitude": -120.7914,
+        "place_name": "Antelope",
+        "state_code": "OR"
+      },
+      "wqp_data": {
+        "measurement_count": 16574,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.11,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.4,
+          "dissolved_oxygen": 11.0,
+          "temperature": 15.09,
+          "turbidity": 3.0,
+          "nitrate": 0.202
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 79,
+      "zip_code": "98001",
+      "description": "Auburn WA",
+      "geolocation": {
+        "latitude": 47.3099,
+        "longitude": -122.2653,
+        "place_name": "Auburn",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 22411,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.71,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.49,
+          "dissolved_oxygen": 10.56,
+          "temperature": 12.57,
+          "turbidity": 2.0,
+          "nitrate": 0.355,
+          "conductance": 45885.71647927933
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.52,
+        "regressor_wqi": 65.45209999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 80,
+      "zip_code": "99001",
+      "description": "Airway Heights WA",
+      "geolocation": {
+        "latitude": 47.6438,
+        "longitude": -117.5921,
+        "place_name": "Airway Heights",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 37,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.79,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 7.925,
+          "temperature": 3.5645,
+          "turbidity": 0.825,
+          "nitrate": 0.205
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 81,
+      "zip_code": "10001",
+      "description": "New York NY",
+      "geolocation": {
+        "latitude": 40.7484,
+        "longitude": -73.9967,
+        "place_name": "New York",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 45510,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.22,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.47,
+          "dissolved_oxygen": 6.8400001526,
+          "temperature": 20.06,
+          "turbidity": 4.4,
+          "nitrate": 6.849999905,
+          "conductance": 515.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7,
+        "regressor_wqi": 67.73149999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 82,
+      "zip_code": "11001",
+      "description": "Floral Park NY",
+      "geolocation": {
+        "latitude": 40.7236,
+        "longitude": -73.7058,
+        "place_name": "Floral Park",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 44079,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.7,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.51,
+          "dissolved_oxygen": 6.8000001907,
+          "temperature": 20.22,
+          "turbidity": 3.53,
+          "nitrate": 6.96499991415,
+          "conductance": 224.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.71,
+        "regressor_wqi": 70.32980000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 83,
+      "zip_code": "13001",
+      "description": "Pulaski NY",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 84,
+      "zip_code": "14001",
+      "description": "Akron NY",
+      "geolocation": {
+        "latitude": 43.0249,
+        "longitude": -78.5084,
+        "place_name": "Akron",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 1070,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 86.11,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.11,
+          "dissolved_oxygen": 8.844999999999999,
+          "temperature": 18.935,
+          "turbidity": 3.4,
+          "nitrate": 1.49,
+          "conductance": 648.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6866666666666666,
+        "regressor_wqi": 63.97269999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 85,
+      "zip_code": "15001",
+      "description": "Aliquippa PA",
+      "geolocation": {
+        "latitude": 40.5921,
+        "longitude": -80.3197,
+        "place_name": "Aliquippa",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 5366,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 98.25,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.77,
+          "dissolved_oxygen": 10.905000000000001,
+          "temperature": 16.4,
+          "turbidity": 5.0,
+          "nitrate": 0.83,
+          "conductance": 454.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 1,
+        "classifier_verdict": "SAFE",
+        "classifier_confidence": 0.5333333333333333,
+        "regressor_wqi": 68.6107
+      },
+      "errors": []
+    },
+    {
+      "index": 86,
+      "zip_code": "25001",
+      "description": "Appalachia VA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 87,
+      "zip_code": "30001",
+      "description": "Apalachee GA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 88,
+      "zip_code": "36001",
+      "description": "Autaugaville AL",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 89,
+      "zip_code": "39001",
+      "description": "Ackerman MS",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 90,
+      "zip_code": "40001",
+      "description": "Anchorage KY",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 91,
+      "zip_code": "44001",
+      "description": "Akron OH",
+      "geolocation": {
+        "latitude": 41.3617,
+        "longitude": -82.2538,
+        "place_name": "Amherst",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 4204,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.57,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.01,
+          "dissolved_oxygen": 8.16,
+          "temperature": 19.0,
+          "turbidity": 5.965,
+          "nitrate": 3.395,
+          "conductance": 576.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7233333333333334,
+        "regressor_wqi": 63.825199999999974
+      },
+      "errors": []
+    },
+    {
+      "index": 92,
+      "zip_code": "48001",
+      "description": "Bloomfield Hills MI",
+      "geolocation": {
+        "latitude": 42.6367,
+        "longitude": -82.5866,
+        "place_name": "Algonac",
+        "state_code": "MI"
+      },
+      "wqp_data": {
+        "measurement_count": 3479,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 79.21,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.4,
+          "dissolved_oxygen": 5.3,
+          "temperature": 20.8,
+          "turbidity": 2.8,
+          "nitrate": 5.33,
+          "conductance": 307.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7766666666666666,
+        "regressor_wqi": 66.83440000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 93,
+      "zip_code": "53001",
+      "description": "Allenton WI",
+      "geolocation": {
+        "latitude": 43.6151,
+        "longitude": -88.0254,
+        "place_name": "Adell",
+        "state_code": "WI"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 94,
+      "zip_code": "58002",
+      "description": "Absaraka ND",
+      "geolocation": {
+        "latitude": 46.9763,
+        "longitude": -97.4069,
+        "place_name": "Absaraka",
+        "state_code": "ND"
+      },
+      "wqp_data": {
+        "measurement_count": 926,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 73.87,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 8.58,
+          "temperature": 11.0,
+          "turbidity": 50.0,
+          "conductance": 1400.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 95,
+      "zip_code": "68002",
+      "description": "Arapahoe NE",
+      "geolocation": {
+        "latitude": 41.4417,
+        "longitude": -96.307,
+        "place_name": "Arlington",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 11112,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.57,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 7.5,
+          "temperature": 21.9,
+          "turbidity": 19.0,
+          "nitrate": 3.34,
+          "conductance": 516.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.73,
+        "regressor_wqi": 64.62109999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 96,
+      "zip_code": "69001",
+      "description": "Alliance NE",
+      "geolocation": {
+        "latitude": 40.2049,
+        "longitude": -100.6279,
+        "place_name": "Mc Cook",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 718,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.59,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 6.55,
+          "temperature": 20.55,
+          "turbidity": 5.0,
+          "nitrate": 1.37,
+          "conductance": 394.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7033333333333334,
+        "regressor_wqi": 67.8667
+      },
+      "errors": []
+    },
+    {
+      "index": 97,
+      "zip_code": "88002",
+      "description": "Anthony NM",
+      "geolocation": {
+        "latitude": 32.3839,
+        "longitude": -106.4937,
+        "place_name": "White Sands Missile Range",
+        "state_code": "NM"
+      },
+      "wqp_data": {
+        "measurement_count": 21,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 78.42,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 8.05,
+          "temperature": 27.2,
+          "nitrate": 4.135,
+          "conductance": 830.5
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 98,
+      "zip_code": "97002",
+      "description": "Aurora OR",
+      "geolocation": {
+        "latitude": 45.2284,
+        "longitude": -122.8039,
+        "place_name": "Aurora",
+        "state_code": "OR"
+      },
+      "wqp_data": {
+        "measurement_count": 50627,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.57,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.2,
+          "dissolved_oxygen": 7.01,
+          "temperature": 17.78,
+          "turbidity": 2.66,
+          "nitrate": 1.43,
+          "conductance": 153.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5833333333333334,
+        "regressor_wqi": 72.69250000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 99,
+      "zip_code": "02001",
+      "description": "Amherst MA",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 100,
+      "zip_code": "03001",
+      "description": "Atkinson NH",
+      "geolocation": null,
+      "wqp_data": null,
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": [
+        "Geolocation failed: ZIP not found"
+      ]
+    },
+    {
+      "index": 101,
+      "zip_code": "04001",
+      "description": "Acton ME",
+      "geolocation": {
+        "latitude": 43.5494,
+        "longitude": -70.9307,
+        "place_name": "Acton",
+        "state_code": "ME"
+      },
+      "wqp_data": {
+        "measurement_count": 9652,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.21,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.35,
+          "dissolved_oxygen": 7.625,
+          "temperature": 18.1,
+          "turbidity": 0.79,
+          "nitrate": 0.13,
+          "conductance": 95.8
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5266666666666666,
+        "regressor_wqi": 71.94260000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 102,
+      "zip_code": "12201",
+      "description": "Albany NY",
+      "geolocation": {
+        "latitude": 42.6526,
+        "longitude": -73.7562,
+        "place_name": "Albany",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 94,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.22,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.7,
+          "temperature": 14.5,
+          "turbidity": 3.7,
+          "nitrate": 0.754,
+          "conductance": 508.5
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 103,
+      "zip_code": "14201",
+      "description": "Buffalo NY",
+      "geolocation": {
+        "latitude": 42.8967,
+        "longitude": -78.8846,
+        "place_name": "Buffalo",
+        "state_code": "NY"
+      },
+      "wqp_data": {
+        "measurement_count": 1029,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.76,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.14,
+          "dissolved_oxygen": 9.08,
+          "temperature": 19.19,
+          "turbidity": 1.8,
+          "nitrate": 0.244,
+          "conductance": 341.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5233333333333333,
+        "regressor_wqi": 68.67460000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 104,
+      "zip_code": "19101",
+      "description": "Philadelphia PA",
+      "geolocation": {
+        "latitude": 40.0018,
+        "longitude": -75.1179,
+        "place_name": "Philadelphia",
+        "state_code": "PA"
+      },
+      "wqp_data": {
+        "measurement_count": 12195,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.08,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.47,
+          "dissolved_oxygen": 9.09,
+          "temperature": 17.3,
+          "turbidity": 5.4,
+          "nitrate": 1.7,
+          "conductance": 323.4
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6433333333333333,
+        "regressor_wqi": 69.92400000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 105,
+      "zip_code": "21201",
+      "description": "Baltimore MD",
+      "geolocation": {
+        "latitude": 39.2946,
+        "longitude": -76.6252,
+        "place_name": "Baltimore",
+        "state_code": "MD"
+      },
+      "wqp_data": {
+        "measurement_count": 48233,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.1,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.7,
+          "dissolved_oxygen": 7.8,
+          "temperature": 17.8,
+          "turbidity": 2.9,
+          "nitrate": 0.387,
+          "conductance": 13500.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6233333333333333,
+        "regressor_wqi": 64.50789999999996
+      },
+      "errors": []
+    },
+    {
+      "index": 106,
+      "zip_code": "23451",
+      "description": "Virginia Beach VA",
+      "geolocation": {
+        "latitude": 36.8585,
+        "longitude": -76.0019,
+        "place_name": "Virginia Beach",
+        "state_code": "VA"
+      },
+      "wqp_data": {
+        "measurement_count": 51014,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.1,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.81,
+          "dissolved_oxygen": 7.57,
+          "temperature": 19.0,
+          "turbidity": 4.36,
+          "nitrate": 0.004,
+          "conductance": 33447.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5633333333333334,
+        "regressor_wqi": 63.01089999999996
+      },
+      "errors": []
+    },
+    {
+      "index": 107,
+      "zip_code": "28201",
+      "description": "Charlotte NC",
+      "geolocation": {
+        "latitude": 35.26,
+        "longitude": -80.8042,
+        "place_name": "Charlotte",
+        "state_code": "NC"
+      },
+      "wqp_data": {
+        "measurement_count": 7640,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 92.17,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.33,
+          "dissolved_oxygen": 8.8,
+          "temperature": 18.9,
+          "turbidity": 6.7,
+          "conductance": 89.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 108,
+      "zip_code": "30301",
+      "description": "Atlanta GA",
+      "geolocation": {
+        "latitude": 33.8444,
+        "longitude": -84.4741,
+        "place_name": "Atlanta",
+        "state_code": "GA"
+      },
+      "wqp_data": {
+        "measurement_count": 18945,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.41,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.0,
+          "dissolved_oxygen": 8.35,
+          "temperature": 18.3,
+          "turbidity": 7.6,
+          "nitrate": 0.844,
+          "conductance": 91.85
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.53,
+        "regressor_wqi": 72.5227
+      },
+      "errors": []
+    },
+    {
+      "index": 109,
+      "zip_code": "32301",
+      "description": "Tallahassee FL",
+      "geolocation": {
+        "latitude": 30.4286,
+        "longitude": -84.2593,
+        "place_name": "Tallahassee",
+        "state_code": "FL"
+      },
+      "wqp_data": {
+        "measurement_count": 18891,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.21,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.73,
+          "dissolved_oxygen": 6.8,
+          "temperature": 21.0,
+          "turbidity": 2.4800000000000004,
+          "nitrate": 0.45,
+          "conductance": 149.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5066666666666667,
+        "regressor_wqi": 72.29030000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 110,
+      "zip_code": "33101",
+      "description": "Miami FL",
+      "geolocation": {
+        "latitude": 25.7791,
+        "longitude": -80.1978,
+        "place_name": "Miami",
+        "state_code": "FL"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 111,
+      "zip_code": "37201",
+      "description": "Nashville TN",
+      "geolocation": {
+        "latitude": 36.1657,
+        "longitude": -86.7781,
+        "place_name": "Nashville",
+        "state_code": "TN"
+      },
+      "wqp_data": {
+        "measurement_count": 6542,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 94.21,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.89,
+          "dissolved_oxygen": 8.76,
+          "temperature": 19.28,
+          "turbidity": 4.52,
+          "nitrate": 0.305,
+          "conductance": 213.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6133333333333333,
+        "regressor_wqi": 69.18270000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 112,
+      "zip_code": "43201",
+      "description": "Columbus OH",
+      "geolocation": {
+        "latitude": 39.9952,
+        "longitude": -83.0047,
+        "place_name": "Columbus",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 8452,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.68,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.9,
+          "dissolved_oxygen": 7.24,
+          "temperature": 20.8,
+          "turbidity": 6.95,
+          "nitrate": 5.63,
+          "conductance": 624.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7466666666666667,
+        "regressor_wqi": 62.73079999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 113,
+      "zip_code": "44101",
+      "description": "Cleveland OH",
+      "geolocation": {
+        "latitude": 41.5234,
+        "longitude": -81.5996,
+        "place_name": "Cleveland",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 6332,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.57,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.06,
+          "dissolved_oxygen": 8.36,
+          "temperature": 20.3,
+          "turbidity": 10.0,
+          "nitrate": 1.8450000000000002,
+          "conductance": 679.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7066666666666667,
+        "regressor_wqi": 63.64969999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 114,
+      "zip_code": "45201",
+      "description": "Cincinnati OH",
+      "geolocation": {
+        "latitude": 39.1668,
+        "longitude": -84.5382,
+        "place_name": "Cincinnati",
+        "state_code": "OH"
+      },
+      "wqp_data": {
+        "measurement_count": 2065,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.95,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.07,
+          "dissolved_oxygen": 8.455,
+          "temperature": 21.015,
+          "turbidity": 18.6,
+          "nitrate": 0.853,
+          "conductance": 614.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6633333333333333,
+        "regressor_wqi": 63.81269999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 115,
+      "zip_code": "46201",
+      "description": "Indianapolis IN",
+      "geolocation": {
+        "latitude": 39.775,
+        "longitude": -86.1093,
+        "place_name": "Indianapolis",
+        "state_code": "IN"
+      },
+      "wqp_data": {
+        "measurement_count": 43533,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.94,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.91,
+          "dissolved_oxygen": 9.07,
+          "temperature": 14.7,
+          "turbidity": 8.5,
+          "nitrate": 1.47,
+          "conductance": 743.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7166666666666667,
+        "regressor_wqi": 64.41969999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 116,
+      "zip_code": "48201",
+      "description": "Detroit MI",
+      "geolocation": {
+        "latitude": 42.3474,
+        "longitude": -83.0604,
+        "place_name": "Detroit",
+        "state_code": "MI"
+      },
+      "wqp_data": {
+        "measurement_count": 9248,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.59,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.11,
+          "dissolved_oxygen": 6.72,
+          "temperature": 18.4,
+          "turbidity": 3.8499999999999996,
+          "nitrate": 2.77,
+          "conductance": 254.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.76,
+        "regressor_wqi": 67.65650000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 117,
+      "zip_code": "53201",
+      "description": "Milwaukee WI",
+      "geolocation": {
+        "latitude": 43.0389,
+        "longitude": -87.9065,
+        "place_name": "Milwaukee",
+        "state_code": "WI"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 118,
+      "zip_code": "55401",
+      "description": "Minneapolis MN",
+      "geolocation": {
+        "latitude": 44.9835,
+        "longitude": -93.2683,
+        "place_name": "Minneapolis",
+        "state_code": "MN"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 119,
+      "zip_code": "60601",
+      "description": "Chicago IL",
+      "geolocation": {
+        "latitude": 41.8858,
+        "longitude": -87.6181,
+        "place_name": "Chicago",
+        "state_code": "IL"
+      },
+      "wqp_data": {
+        "measurement_count": 4382,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.11,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 9.73,
+          "temperature": 15.9,
+          "turbidity": 6.84,
+          "nitrate": 4.82,
+          "conductance": 539.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7066666666666667,
+        "regressor_wqi": 64.06709999999995
+      },
+      "errors": []
+    },
+    {
+      "index": 120,
+      "zip_code": "63101",
+      "description": "St Louis MO",
+      "geolocation": {
+        "latitude": 38.6346,
+        "longitude": -90.1913,
+        "place_name": "Saint Louis",
+        "state_code": "MO"
+      },
+      "wqp_data": {
+        "measurement_count": 2936,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.44,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.71,
+          "dissolved_oxygen": 8.6,
+          "temperature": 18.4,
+          "turbidity": 8.0,
+          "nitrate": 0.4155,
+          "conductance": 678.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5866666666666667,
+        "regressor_wqi": 65.38709999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 121,
+      "zip_code": "64101",
+      "description": "Kansas City MO",
+      "geolocation": {
+        "latitude": 39.1024,
+        "longitude": -94.5986,
+        "place_name": "Kansas City",
+        "state_code": "MO"
+      },
+      "wqp_data": {
+        "measurement_count": 5278,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.44,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.82,
+          "dissolved_oxygen": 8.5,
+          "temperature": 22.6,
+          "turbidity": 13.0,
+          "nitrate": 0.499,
+          "conductance": 648.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6466666666666666,
+        "regressor_wqi": 64.36959999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 122,
+      "zip_code": "66101",
+      "description": "Kansas City KS",
+      "geolocation": {
+        "latitude": 39.1157,
+        "longitude": -94.6271,
+        "place_name": "Kansas City",
+        "state_code": "KS"
+      },
+      "wqp_data": {
+        "measurement_count": 5274,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.44,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.81,
+          "dissolved_oxygen": 8.48,
+          "temperature": 22.6,
+          "turbidity": 13.0,
+          "nitrate": 0.5,
+          "conductance": 648.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6466666666666666,
+        "regressor_wqi": 64.36599999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 123,
+      "zip_code": "68101",
+      "description": "Omaha NE",
+      "geolocation": {
+        "latitude": 41.2586,
+        "longitude": -95.9378,
+        "place_name": "Omaha",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 6826,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.57,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.3,
+          "dissolved_oxygen": 8.5,
+          "temperature": 19.2,
+          "turbidity": 22.0,
+          "nitrate": 1.78,
+          "conductance": 648.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6966666666666667,
+        "regressor_wqi": 63.66259999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 124,
+      "zip_code": "70112",
+      "description": "New Orleans LA",
+      "geolocation": {
+        "latitude": 29.9605,
+        "longitude": -90.0753,
+        "place_name": "New Orleans",
+        "state_code": "LA"
+      },
+      "wqp_data": {
+        "measurement_count": 14486,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.97,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.5,
+          "dissolved_oxygen": 7.55,
+          "temperature": 24.7,
+          "turbidity": 7.61,
+          "nitrate": 0.83,
+          "conductance": 1114.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.62,
+        "regressor_wqi": 65.25759999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 125,
+      "zip_code": "73101",
+      "description": "Oklahoma City OK",
+      "geolocation": {
+        "latitude": 35.4916,
+        "longitude": -97.5628,
+        "place_name": "Oklahoma City",
+        "state_code": "OK"
+      },
+      "wqp_data": {
+        "measurement_count": 12411,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.29,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.68,
+          "dissolved_oxygen": 7.91,
+          "temperature": 22.42,
+          "turbidity": 14.350000000000001,
+          "nitrate": 2.295,
+          "conductance": 432.78
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6766666666666666,
+        "regressor_wqi": 69.66859999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 126,
+      "zip_code": "75201",
+      "description": "Dallas TX",
+      "geolocation": {
+        "latitude": 32.7904,
+        "longitude": -96.8044,
+        "place_name": "Dallas",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 23089,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.67,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 7.1,
+          "temperature": 23.0,
+          "turbidity": 12.0,
+          "nitrate": 0.734,
+          "conductance": 392.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.66,
+        "regressor_wqi": 68.32550000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 127,
+      "zip_code": "77002",
+      "description": "Houston TX",
+      "geolocation": {
+        "latitude": 29.7594,
+        "longitude": -95.3594,
+        "place_name": "Houston",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 6383,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 78.1,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.6,
+          "dissolved_oxygen": 5.625,
+          "temperature": 23.4,
+          "turbidity": 25.0,
+          "nitrate": 1.49,
+          "conductance": 1280.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6966666666666667,
+        "regressor_wqi": 63.71179999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 128,
+      "zip_code": "78201",
+      "description": "San Antonio TX",
+      "geolocation": {
+        "latitude": 29.4711,
+        "longitude": -98.5356,
+        "place_name": "San Antonio",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 3305,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.86,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.7,
+          "dissolved_oxygen": 5.574999999999999,
+          "temperature": 22.0,
+          "turbidity": 1.6,
+          "nitrate": 2.92,
+          "conductance": 573.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7066666666666667,
+        "regressor_wqi": 65.29699999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 129,
+      "zip_code": "79901",
+      "description": "El Paso TX",
+      "geolocation": {
+        "latitude": 31.7584,
+        "longitude": -106.4783,
+        "place_name": "El Paso",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 259,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 70.0,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.2,
+          "temperature": 25.4,
+          "turbidity": 140.0,
+          "nitrate": 1.355,
+          "conductance": 960.5
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 130,
+      "zip_code": "80201",
+      "description": "Denver CO",
+      "geolocation": {
+        "latitude": 39.7263,
+        "longitude": -104.8568,
+        "place_name": "Denver",
+        "state_code": "CO"
+      },
+      "wqp_data": {
+        "measurement_count": 8982,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.35,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.02,
+          "dissolved_oxygen": 8.3,
+          "temperature": 15.8,
+          "turbidity": 6.1,
+          "nitrate": 2.48,
+          "conductance": 1030.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.73,
+        "regressor_wqi": 62.71659999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 131,
+      "zip_code": "85701",
+      "description": "Tucson AZ",
+      "geolocation": {
+        "latitude": 32.2139,
+        "longitude": -110.9694,
+        "place_name": "Tucson",
+        "state_code": "AZ"
+      },
+      "wqp_data": {
+        "measurement_count": 1146,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 70.16,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.6,
+          "dissolved_oxygen": 6.85,
+          "temperature": 24.4,
+          "turbidity": 2.51,
+          "nitrate": 1400.0,
+          "conductance": 878.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7133333333333334,
+        "regressor_wqi": 60.65720000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 132,
+      "zip_code": "87101",
+      "description": "Albuquerque NM",
+      "geolocation": {
+        "latitude": 35.1996,
+        "longitude": -106.6448,
+        "place_name": "Albuquerque",
+        "state_code": "NM"
+      },
+      "wqp_data": {
+        "measurement_count": 14043,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.63,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.13,
+          "dissolved_oxygen": 8.6,
+          "temperature": 21.21499965667725,
+          "turbidity": 44.9,
+          "nitrate": 0.79,
+          "conductance": 410.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6466666666666666,
+        "regressor_wqi": 68.3096
+      },
+      "errors": []
+    },
+    {
+      "index": 133,
+      "zip_code": "89101",
+      "description": "Las Vegas NV",
+      "geolocation": {
+        "latitude": 36.1721,
+        "longitude": -115.1224,
+        "place_name": "Las Vegas",
+        "state_code": "NV"
+      },
+      "wqp_data": {
+        "measurement_count": 110,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.37,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 8.2,
+          "temperature": 10.55,
+          "nitrate": 0.97,
+          "conductance": 632.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 134,
+      "zip_code": "90012",
+      "description": "Los Angeles CA",
+      "geolocation": {
+        "latitude": 34.0614,
+        "longitude": -118.2385,
+        "place_name": "Los Angeles",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 340,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 73.41,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.2,
+          "dissolved_oxygen": 7.93,
+          "temperature": 15.6,
+          "turbidity": 640.0,
+          "nitrate": 1.51,
+          "conductance": 664.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7166666666666667,
+        "regressor_wqi": 63.712099999999985
+      },
+      "errors": []
+    },
+    {
+      "index": 135,
+      "zip_code": "92101",
+      "description": "San Diego CA",
+      "geolocation": {
+        "latitude": 32.7185,
+        "longitude": -117.1593,
+        "place_name": "San Diego",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 58,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.35,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.03,
+          "dissolved_oxygen": 7.9,
+          "temperature": 23.0,
+          "turbidity": 22.4,
+          "nitrate": 1.05,
+          "conductance": 1380.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6633333333333333,
+        "regressor_wqi": 62.27289999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 136,
+      "zip_code": "94102",
+      "description": "San Francisco CA",
+      "geolocation": {
+        "latitude": 37.7813,
+        "longitude": -122.4167,
+        "place_name": "San Francisco",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 7162,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 96.83,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.47,
+          "dissolved_oxygen": 9.66,
+          "temperature": 11.8,
+          "turbidity": 1.275,
+          "nitrate": 0.2045,
+          "conductance": 238.75
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.51,
+        "regressor_wqi": 70.38930000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 137,
+      "zip_code": "95814",
+      "description": "Sacramento CA",
+      "geolocation": {
+        "latitude": 38.5804,
+        "longitude": -121.4922,
+        "place_name": "Sacramento",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 2708,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.67,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.9,
+          "dissolved_oxygen": 8.05,
+          "temperature": 15.6,
+          "turbidity": 9.8,
+          "nitrate": 0.2555,
+          "conductance": 261.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6433333333333333,
+        "regressor_wqi": 68.71100000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 138,
+      "zip_code": "97201",
+      "description": "Portland OR",
+      "geolocation": {
+        "latitude": 45.5078,
+        "longitude": -122.6897,
+        "place_name": "Portland",
+        "state_code": "OR"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 139,
+      "zip_code": "98101",
+      "description": "Seattle WA",
+      "geolocation": {
+        "latitude": 47.6114,
+        "longitude": -122.3305,
+        "place_name": "Seattle",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 33311,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.89,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.365,
+          "dissolved_oxygen": 10.3,
+          "temperature": 18.19,
+          "turbidity": 4.25,
+          "nitrate": 0.554,
+          "conductance": 45843.46200099103
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5066666666666667,
+        "regressor_wqi": 65.59029999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 140,
+      "zip_code": "99201",
+      "description": "Spokane WA",
+      "geolocation": {
+        "latitude": 47.6665,
+        "longitude": -117.4365,
+        "place_name": "Spokane",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 31,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.79,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 7.68,
+          "temperature": 4.415,
+          "turbidity": 1.48,
+          "nitrate": 0.205
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 141,
+      "zip_code": "50401",
+      "description": "Mason City IA",
+      "geolocation": {
+        "latitude": 43.1499,
+        "longitude": -93.1954,
+        "place_name": "Mason City",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 940,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.79,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.26,
+          "dissolved_oxygen": 8.65,
+          "temperature": 22.3545,
+          "turbidity": 8.3,
+          "nitrate": 4.987500000000001,
+          "conductance": 438.8
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7133333333333334,
+        "regressor_wqi": 66.92399999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 142,
+      "zip_code": "51301",
+      "description": "Spencer IA",
+      "geolocation": {
+        "latitude": 43.1451,
+        "longitude": -95.1457,
+        "place_name": "Spencer",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 2654,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.71,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.39,
+          "dissolved_oxygen": 8.56,
+          "temperature": 23.2,
+          "turbidity": 3.3,
+          "nitrate": 0.669,
+          "conductance": 419.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.64,
+        "regressor_wqi": 68.21470000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 143,
+      "zip_code": "52301",
+      "description": "Burlington IA",
+      "geolocation": {
+        "latitude": 41.7863,
+        "longitude": -92.072,
+        "place_name": "Marengo",
+        "state_code": "IA"
+      },
+      "wqp_data": {
+        "measurement_count": 1446,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.05,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 8.0,
+          "temperature": 14.1,
+          "turbidity": 3.4,
+          "nitrate": 5.015000000000001,
+          "conductance": 550.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.76,
+        "regressor_wqi": 63.348899999999965
+      },
+      "errors": []
+    },
+    {
+      "index": 144,
+      "zip_code": "56201",
+      "description": "Fairmont MN",
+      "geolocation": {
+        "latitude": 45.1393,
+        "longitude": -95.0523,
+        "place_name": "Willmar",
+        "state_code": "MN"
+      },
+      "wqp_data": {
+        "measurement_count": 4083,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 75.53,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.22,
+          "dissolved_oxygen": 8.41,
+          "temperature": 21.11,
+          "turbidity": 178.0,
+          "conductance": 496.85
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 145,
+      "zip_code": "57401",
+      "description": "Aberdeen SD",
+      "geolocation": {
+        "latitude": 45.4661,
+        "longitude": -98.4856,
+        "place_name": "Aberdeen",
+        "state_code": "SD"
+      },
+      "wqp_data": {
+        "measurement_count": 843,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.78,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 8.4,
+          "dissolved_oxygen": 8.8,
+          "temperature": 20.2095,
+          "conductance": 1379.7
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 146,
+      "zip_code": "58401",
+      "description": "Jamestown ND",
+      "geolocation": {
+        "latitude": 46.921,
+        "longitude": -98.7455,
+        "place_name": "Jamestown",
+        "state_code": "ND"
+      },
+      "wqp_data": {
+        "measurement_count": 4335,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.56,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.39,
+          "dissolved_oxygen": 7.3,
+          "temperature": 13.0,
+          "turbidity": 19.3,
+          "nitrate": 0.246,
+          "conductance": 1275.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6866666666666666,
+        "regressor_wqi": 63.045599999999986
+      },
+      "errors": []
+    },
+    {
+      "index": 147,
+      "zip_code": "59401",
+      "description": "Great Falls MT",
+      "geolocation": {
+        "latitude": 47.5098,
+        "longitude": -111.2734,
+        "place_name": "Great Falls",
+        "state_code": "MT"
+      },
+      "wqp_data": {
+        "measurement_count": 735,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.71,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.27,
+          "dissolved_oxygen": 8.54,
+          "temperature": 17.0,
+          "turbidity": 3.7483333334999998,
+          "nitrate": 0.036500000000000005,
+          "conductance": 387.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5733333333333334,
+        "regressor_wqi": 68.17420000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 148,
+      "zip_code": "67601",
+      "description": "Hays KS",
+      "geolocation": {
+        "latitude": 38.8782,
+        "longitude": -99.3348,
+        "place_name": "Hays",
+        "state_code": "KS"
+      },
+      "wqp_data": {
+        "measurement_count": 3,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.52,
+        "classification": "Good",
+        "parameter_count": 3,
+        "parameters": {
+          "ph": 7.88,
+          "turbidity": 8.6,
+          "nitrate": 1.84
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 149,
+      "zip_code": "68301",
+      "description": "Beatrice NE",
+      "geolocation": {
+        "latitude": 40.4576,
+        "longitude": -96.5396,
+        "place_name": "Adams",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 3531,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.79,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 7.7,
+          "temperature": 21.9,
+          "turbidity": 15.0,
+          "nitrate": 1.2135,
+          "conductance": 397.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6666666666666666,
+        "regressor_wqi": 68.07839999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 150,
+      "zip_code": "69101",
+      "description": "North Platte NE",
+      "geolocation": {
+        "latitude": 41.1326,
+        "longitude": -100.7746,
+        "place_name": "North Platte",
+        "state_code": "NE"
+      },
+      "wqp_data": {
+        "measurement_count": 1362,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.3,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.5,
+          "dissolved_oxygen": 8.9,
+          "temperature": 21.6,
+          "turbidity": 11.0,
+          "conductance": 736.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 151,
+      "zip_code": "79601",
+      "description": "Abilene TX",
+      "geolocation": {
+        "latitude": 32.4682,
+        "longitude": -99.7182,
+        "place_name": "Abilene",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 1237,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.0,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.2,
+          "temperature": 17.4,
+          "turbidity": 22.0,
+          "nitrate": 4.83,
+          "conductance": 1425.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 152,
+      "zip_code": "83201",
+      "description": "Pocatello ID",
+      "geolocation": {
+        "latitude": 42.8876,
+        "longitude": -112.4381,
+        "place_name": "Pocatello",
+        "state_code": "ID"
+      },
+      "wqp_data": {
+        "measurement_count": 1983,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.4,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.24,
+          "dissolved_oxygen": 8.83,
+          "temperature": 12.74,
+          "turbidity": 8.0,
+          "nitrate": 1.63,
+          "conductance": 543.1
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7233333333333334,
+        "regressor_wqi": 64.91939999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 153,
+      "zip_code": "84601",
+      "description": "Provo UT",
+      "geolocation": {
+        "latitude": 40.2319,
+        "longitude": -111.6755,
+        "place_name": "Provo",
+        "state_code": "UT"
+      },
+      "wqp_data": {
+        "measurement_count": 80815,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 79.13,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.42,
+          "dissolved_oxygen": 8.38,
+          "temperature": 16.77,
+          "turbidity": 24.4,
+          "nitrate": 2.79,
+          "conductance": 1930.0825
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7166666666666667,
+        "regressor_wqi": 62.085999999999984
+      },
+      "errors": []
+    },
+    {
+      "index": 154,
+      "zip_code": "02601",
+      "description": "Hyannis MA",
+      "geolocation": {
+        "latitude": 41.6601,
+        "longitude": -70.2967,
+        "place_name": "Hyannis",
+        "state_code": "MA"
+      },
+      "wqp_data": {
+        "measurement_count": 14068,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.84,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 5.305,
+          "dissolved_oxygen": 7.18,
+          "temperature": 17.1,
+          "turbidity": 1.64,
+          "nitrate": 3.59,
+          "conductance": 134.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6833333333333333,
+        "regressor_wqi": 69.34389999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 155,
+      "zip_code": "02840",
+      "description": "Newport RI",
+      "geolocation": {
+        "latitude": 41.4876,
+        "longitude": -71.3271,
+        "place_name": "Newport",
+        "state_code": "RI"
+      },
+      "wqp_data": {
+        "measurement_count": 2855,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 76.03,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 5.7,
+          "dissolved_oxygen": 5.74,
+          "temperature": 13.6,
+          "turbidity": 1.65,
+          "nitrate": 5.59,
+          "conductance": 430.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7466666666666667,
+        "regressor_wqi": 67.85119999999995
+      },
+      "errors": []
+    },
+    {
+      "index": 156,
+      "zip_code": "04101",
+      "description": "Portland ME",
+      "geolocation": {
+        "latitude": 43.6606,
+        "longitude": -70.2589,
+        "place_name": "Portland",
+        "state_code": "ME"
+      },
+      "wqp_data": {
+        "measurement_count": 2697,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.95,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.28,
+          "dissolved_oxygen": 8.45,
+          "temperature": 17.2,
+          "turbidity": 2.23,
+          "nitrate": 0.145,
+          "conductance": 416.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5233333333333333,
+        "regressor_wqi": 70.5039
+      },
+      "errors": []
+    },
+    {
+      "index": 157,
+      "zip_code": "08401",
+      "description": "Atlantic City NJ",
+      "geolocation": {
+        "latitude": 39.3664,
+        "longitude": -74.4317,
+        "place_name": "Atlantic City",
+        "state_code": "NJ"
+      },
+      "wqp_data": {
+        "measurement_count": 7708,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.57,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.9049999713897705,
+          "dissolved_oxygen": 8.23,
+          "temperature": 16.100000190734853,
+          "turbidity": 4.900000047683715,
+          "nitrate": 1.12,
+          "conductance": 256.4
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6033333333333334,
+        "regressor_wqi": 71.4661
+      },
+      "errors": []
+    },
+    {
+      "index": 158,
+      "zip_code": "19971",
+      "description": "Rehoboth Beach DE",
+      "geolocation": {
+        "latitude": 38.7209,
+        "longitude": -75.076,
+        "place_name": "Rehoboth Beach",
+        "state_code": "DE"
+      },
+      "wqp_data": {
+        "measurement_count": 11727,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.68,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.66,
+          "dissolved_oxygen": 8.975000000000001,
+          "temperature": 18.6,
+          "turbidity": 8.0,
+          "nitrate": 9.254999999999999,
+          "conductance": 544.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.66,
+        "regressor_wqi": 65.79169999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 159,
+      "zip_code": "21842",
+      "description": "Ocean City MD",
+      "geolocation": {
+        "latitude": 38.3365,
+        "longitude": -75.0849,
+        "place_name": "Ocean City",
+        "state_code": "MD"
+      },
+      "wqp_data": {
+        "measurement_count": 7815,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.29,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 8.515,
+          "temperature": 23.994999999999997,
+          "turbidity": 8.0,
+          "nitrate": 2.34,
+          "conductance": 318.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7133333333333334,
+        "regressor_wqi": 68.0872
+      },
+      "errors": []
+    },
+    {
+      "index": 160,
+      "zip_code": "27954",
+      "description": "Nags Head NC",
+      "geolocation": {
+        "latitude": 35.8948,
+        "longitude": -75.6714,
+        "place_name": "Manteo",
+        "state_code": "NC"
+      },
+      "wqp_data": {
+        "measurement_count": 1136,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.72,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.7,
+          "dissolved_oxygen": 9.4,
+          "temperature": 18.45,
+          "turbidity": 4.0,
+          "conductance": 7474.5
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 161,
+      "zip_code": "29401",
+      "description": "Charleston SC",
+      "geolocation": {
+        "latitude": 32.7795,
+        "longitude": -79.9371,
+        "place_name": "Charleston",
+        "state_code": "SC"
+      },
+      "wqp_data": {
+        "measurement_count": 6151,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.59,
+        "classification": "Good",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 7.57,
+          "dissolved_oxygen": 7.03,
+          "temperature": 21.42,
+          "turbidity": 6.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 162,
+      "zip_code": "31401",
+      "description": "Savannah GA",
+      "geolocation": {
+        "latitude": 32.0749,
+        "longitude": -81.0883,
+        "place_name": "Savannah",
+        "state_code": "GA"
+      },
+      "wqp_data": {
+        "measurement_count": 7453,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.15,
+        "classification": "Good",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.49,
+          "dissolved_oxygen": 6.01,
+          "temperature": 22.0,
+          "turbidity": 9.1,
+          "conductance": 94.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 163,
+      "zip_code": "32501",
+      "description": "Pensacola FL",
+      "geolocation": {
+        "latitude": 30.4223,
+        "longitude": -87.2248,
+        "place_name": "Pensacola",
+        "state_code": "FL"
+      },
+      "wqp_data": {
+        "measurement_count": 34277,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.57,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.87,
+          "dissolved_oxygen": 7.04,
+          "temperature": 23.2,
+          "turbidity": 2.7,
+          "nitrate": 3.9395000000000002,
+          "conductance": 251.6
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.67,
+        "regressor_wqi": 71.95490000000001
+      },
+      "errors": []
+    },
+    {
+      "index": 164,
+      "zip_code": "33139",
+      "description": "Miami Beach FL",
+      "geolocation": {
+        "latitude": 25.7873,
+        "longitude": -80.1564,
+        "place_name": "Miami Beach",
+        "state_code": "FL"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 165,
+      "zip_code": "39501",
+      "description": "Gulfport MS",
+      "geolocation": {
+        "latitude": 30.3826,
+        "longitude": -89.0976,
+        "place_name": "Gulfport",
+        "state_code": "MS"
+      },
+      "wqp_data": {
+        "measurement_count": 35185,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.56,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.84,
+          "dissolved_oxygen": 8.21,
+          "temperature": 24.79,
+          "turbidity": 14.0,
+          "nitrate": 0.014,
+          "conductance": 24258.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5666666666666667,
+        "regressor_wqi": 62.68689999999995
+      },
+      "errors": []
+    },
+    {
+      "index": 166,
+      "zip_code": "70501",
+      "description": "Lafayette LA",
+      "geolocation": {
+        "latitude": 30.2361,
+        "longitude": -92.0083,
+        "place_name": "Lafayette",
+        "state_code": "LA"
+      },
+      "wqp_data": {
+        "measurement_count": 2948,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 77.38,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.35,
+          "dissolved_oxygen": 4.49,
+          "temperature": 21.3,
+          "turbidity": 43.1,
+          "nitrate": 0.852,
+          "conductance": 320.9
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.8033333333333333,
+        "regressor_wqi": 70.61390000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 167,
+      "zip_code": "77550",
+      "description": "Galveston TX",
+      "geolocation": {
+        "latitude": 29.2983,
+        "longitude": -94.793,
+        "place_name": "Galveston",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 2931,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 64.72,
+        "classification": "Fair",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 5.6,
+          "temperature": 25.0,
+          "turbidity": 8.9,
+          "conductance": 31800.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 168,
+      "zip_code": "92054",
+      "description": "Oceanside CA",
+      "geolocation": {
+        "latitude": 33.2072,
+        "longitude": -117.3573,
+        "place_name": "Oceanside",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 497,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.62,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.85,
+          "dissolved_oxygen": 8.725000000000001,
+          "temperature": 17.895,
+          "turbidity": 12.1,
+          "nitrate": 1.6,
+          "conductance": 1875.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.71,
+        "regressor_wqi": 62.679699999999954
+      },
+      "errors": []
+    },
+    {
+      "index": 169,
+      "zip_code": "93401",
+      "description": "San Luis Obispo CA",
+      "geolocation": {
+        "latitude": 35.2635,
+        "longitude": -120.6509,
+        "place_name": "San Luis Obispo",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 581,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 82.3,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.985,
+          "dissolved_oxygen": 8.3,
+          "temperature": 19.1,
+          "turbidity": 39.7,
+          "nitrate": 1.915,
+          "conductance": 1370.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6866666666666666,
+        "regressor_wqi": 62.42929999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 170,
+      "zip_code": "97367",
+      "description": "Newport OR",
+      "geolocation": {
+        "latitude": 44.9089,
+        "longitude": -123.9888,
+        "place_name": "Lincoln City",
+        "state_code": "OR"
+      },
+      "wqp_data": {
+        "measurement_count": 107549,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 100.0,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.17,
+          "dissolved_oxygen": 9.383646,
+          "temperature": 19.603,
+          "turbidity": 1.45,
+          "conductance": 77.9
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 171,
+      "zip_code": "98362",
+      "description": "Port Angeles WA",
+      "geolocation": {
+        "latitude": 48.1065,
+        "longitude": -123.4384,
+        "place_name": "Port Angeles",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 51598,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 83.17,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.88,
+          "dissolved_oxygen": 10.4,
+          "temperature": 15.36,
+          "turbidity": 0.88,
+          "nitrate": 392.5173,
+          "conductance": 148.7
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6033333333333334,
+        "regressor_wqi": 67.50659999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 172,
+      "zip_code": "26201",
+      "description": "Buckhannon WV",
+      "geolocation": {
+        "latitude": 38.9755,
+        "longitude": -80.2407,
+        "place_name": "Buckhannon",
+        "state_code": "WV"
+      },
+      "wqp_data": {
+        "measurement_count": 703,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 96.83,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.91,
+          "dissolved_oxygen": 10.41,
+          "temperature": 11.204999999999998,
+          "turbidity": 3.3,
+          "nitrate": 0.179,
+          "conductance": 32.04
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 1,
+        "classifier_verdict": "SAFE",
+        "classifier_confidence": 0.56,
+        "regressor_wqi": 73.10130000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 173,
+      "zip_code": "28901",
+      "description": "Andrews NC",
+      "geolocation": {
+        "latitude": 35.1959,
+        "longitude": -83.8228,
+        "place_name": "Andrews",
+        "state_code": "NC"
+      },
+      "wqp_data": {
+        "measurement_count": 15552,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 93.57,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 6.6,
+          "dissolved_oxygen": 7.5,
+          "temperature": 18.7,
+          "turbidity": 2.1,
+          "nitrate": 4.48,
+          "conductance": 23.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.59,
+        "regressor_wqi": 72.48410000000004
+      },
+      "errors": []
+    },
+    {
+      "index": 174,
+      "zip_code": "37601",
+      "description": "Johnson City TN",
+      "geolocation": {
+        "latitude": 36.3339,
+        "longitude": -82.3408,
+        "place_name": "Johnson City",
+        "state_code": "TN"
+      },
+      "wqp_data": {
+        "measurement_count": 8201,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 95.08,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.99,
+          "dissolved_oxygen": 9.48,
+          "temperature": 14.4,
+          "turbidity": 3.11,
+          "nitrate": 0.4615,
+          "conductance": 382.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5666666666666667,
+        "regressor_wqi": 68.32200000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 175,
+      "zip_code": "59701",
+      "description": "Butte MT",
+      "geolocation": {
+        "latitude": 45.9979,
+        "longitude": -112.5988,
+        "place_name": "Butte",
+        "state_code": "MT"
+      },
+      "wqp_data": {
+        "measurement_count": 3235,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.59,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 10.5,
+          "temperature": 10.3,
+          "turbidity": 3.1,
+          "nitrate": 0.056,
+          "conductance": 334.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5766666666666667,
+        "regressor_wqi": 68.71290000000003
+      },
+      "errors": []
+    },
+    {
+      "index": 176,
+      "zip_code": "80424",
+      "description": "Breckenridge CO",
+      "geolocation": {
+        "latitude": 39.4753,
+        "longitude": -106.0225,
+        "place_name": "Breckenridge",
+        "state_code": "CO"
+      },
+      "wqp_data": {
+        "measurement_count": 3818,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.86,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.74,
+          "dissolved_oxygen": 8.59,
+          "temperature": 8.06,
+          "turbidity": 1.05,
+          "nitrate": 0.27,
+          "conductance": 177.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5666666666666667,
+        "regressor_wqi": 70.21980000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 177,
+      "zip_code": "81301",
+      "description": "Durango CO",
+      "geolocation": {
+        "latitude": 37.2874,
+        "longitude": -107.8617,
+        "place_name": "Durango",
+        "state_code": "CO"
+      },
+      "wqp_data": {
+        "measurement_count": 20894,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.17,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.26,
+          "dissolved_oxygen": 8.5084375,
+          "temperature": 15.283,
+          "turbidity": 11.122083,
+          "nitrate": 0.278,
+          "conductance": 0.558
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5766666666666667,
+        "regressor_wqi": 69.4163
+      },
+      "errors": []
+    },
+    {
+      "index": 178,
+      "zip_code": "82901",
+      "description": "Rock Springs WY",
+      "geolocation": {
+        "latitude": 41.606,
+        "longitude": -109.23,
+        "place_name": "Rock Springs",
+        "state_code": "WY"
+      },
+      "wqp_data": {
+        "measurement_count": 275,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 79.6,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.4,
+          "dissolved_oxygen": 8.975000000000001,
+          "temperature": 9.795,
+          "turbidity": 9.5,
+          "nitrate": 0.318,
+          "conductance": 576.5
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6333333333333333,
+        "regressor_wqi": 64.02819999999997
+      },
+      "errors": []
+    },
+    {
+      "index": 179,
+      "zip_code": "83440",
+      "description": "Jackson WY",
+      "geolocation": {
+        "latitude": 43.81,
+        "longitude": -111.789,
+        "place_name": "Rexburg",
+        "state_code": "ID"
+      },
+      "wqp_data": {
+        "measurement_count": 747,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 87.54,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.1,
+          "dissolved_oxygen": 7.27,
+          "temperature": 12.5,
+          "turbidity": 3.0,
+          "nitrate": 0.429,
+          "conductance": 196.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6466666666666666,
+        "regressor_wqi": 69.66710000000002
+      },
+      "errors": []
+    },
+    {
+      "index": 180,
+      "zip_code": "86301",
+      "description": "Prescott AZ",
+      "geolocation": {
+        "latitude": 34.5917,
+        "longitude": -112.4265,
+        "place_name": "Prescott",
+        "state_code": "AZ"
+      },
+      "wqp_data": {
+        "measurement_count": 2688,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 88.49,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.61,
+          "dissolved_oxygen": 8.504999999999999,
+          "temperature": 11.0075,
+          "turbidity": 6.32,
+          "nitrate": 0.434,
+          "conductance": 426.55
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5766666666666667,
+        "regressor_wqi": 70.1322
+      },
+      "errors": []
+    },
+    {
+      "index": 181,
+      "zip_code": "87501",
+      "description": "Santa Fe NM",
+      "geolocation": {
+        "latitude": 35.6975,
+        "longitude": -105.9821,
+        "place_name": "Santa Fe",
+        "state_code": "NM"
+      },
+      "wqp_data": {
+        "measurement_count": 6299,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 89.05,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.089146,
+          "dissolved_oxygen": 9.76,
+          "temperature": 12.0,
+          "turbidity": 13.445,
+          "nitrate": 0.873,
+          "conductance": 284.4
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5866666666666667,
+        "regressor_wqi": 68.91410000000005
+      },
+      "errors": []
+    },
+    {
+      "index": 182,
+      "zip_code": "88901",
+      "description": "Las Cruces NM",
+      "geolocation": {
+        "latitude": 36.3225,
+        "longitude": -114.8197,
+        "place_name": "The Lakes",
+        "state_code": "NV"
+      },
+      "wqp_data": {
+        "measurement_count": 28,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.32,
+        "classification": "Excellent",
+        "parameter_count": 4,
+        "parameters": {
+          "ph": 8.45,
+          "temperature": 20.2,
+          "nitrate": 0.487,
+          "conductance": 110.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 183,
+      "zip_code": "92201",
+      "description": "Indio CA",
+      "geolocation": {
+        "latitude": 33.7207,
+        "longitude": -116.2168,
+        "place_name": "Indio",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 1989,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 81.9,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 6.2,
+          "temperature": 27.5,
+          "turbidity": 2.295,
+          "nitrate": 4.1,
+          "conductance": 488.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7966666666666666,
+        "regressor_wqi": 64.93209999999998
+      },
+      "errors": []
+    },
+    {
+      "index": 184,
+      "zip_code": "93001",
+      "description": "Ventura CA",
+      "geolocation": {
+        "latitude": 34.3308,
+        "longitude": -119.3584,
+        "place_name": "Ventura",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 845,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 84.68,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.6,
+          "dissolved_oxygen": 7.9,
+          "temperature": 22.0,
+          "turbidity": 5.76,
+          "nitrate": 5.08,
+          "conductance": 973.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.7033333333333334,
+        "regressor_wqi": 64.09039999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 185,
+      "zip_code": "78040",
+      "description": "Laredo TX",
+      "geolocation": {
+        "latitude": 27.5155,
+        "longitude": -99.4986,
+        "place_name": "Laredo",
+        "state_code": "TX"
+      },
+      "wqp_data": {
+        "measurement_count": 3,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 80.34,
+        "classification": "Good",
+        "parameter_count": 3,
+        "parameters": {
+          "ph": 7.92,
+          "turbidity": 21.7,
+          "nitrate": 5.13
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 186,
+      "zip_code": "98001",
+      "description": "Blaine WA",
+      "geolocation": {
+        "latitude": 47.3099,
+        "longitude": -122.2653,
+        "place_name": "Auburn",
+        "state_code": "WA"
+      },
+      "wqp_data": {
+        "measurement_count": 22411,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 85.71,
+        "classification": "Good",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.49,
+          "dissolved_oxygen": 10.56,
+          "temperature": 12.57,
+          "turbidity": 2.0,
+          "nitrate": 0.355,
+          "conductance": 45885.71647927933
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.52,
+        "regressor_wqi": 65.45209999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 187,
+      "zip_code": "26101",
+      "description": "Parkersburg WV",
+      "geolocation": {
+        "latitude": 39.2644,
+        "longitude": -81.5354,
+        "place_name": "Parkersburg",
+        "state_code": "WV"
+      },
+      "wqp_data": {
+        "measurement_count": 896,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.09,
+        "classification": "Excellent",
+        "parameter_count": 5,
+        "parameters": {
+          "ph": 7.79,
+          "dissolved_oxygen": 8.85,
+          "temperature": 19.3,
+          "turbidity": 12.0,
+          "conductance": 421.0
+        }
+      },
+      "ml_predictions": null,
+      "errors": []
+    },
+    {
+      "index": 188,
+      "zip_code": "46401",
+      "description": "Gary IN",
+      "geolocation": {
+        "latitude": 41.5907,
+        "longitude": -87.3199,
+        "place_name": "Gary",
+        "state_code": "IN"
+      },
+      "wqp_data": {
+        "measurement_count": 11878,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.11,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.94,
+          "dissolved_oxygen": 9.46,
+          "temperature": 18.5,
+          "turbidity": 9.0,
+          "nitrate": 4.779999999999999,
+          "conductance": 609.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.6766666666666666,
+        "regressor_wqi": 63.564599999999984
+      },
+      "errors": []
+    },
+    {
+      "index": 189,
+      "zip_code": "89701",
+      "description": "Carson City NV",
+      "geolocation": {
+        "latitude": 39.1507,
+        "longitude": -119.7459,
+        "place_name": "Carson City",
+        "state_code": "NV"
+      },
+      "wqp_data": {
+        "measurement_count": 3768,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 90.32,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 8.0,
+          "dissolved_oxygen": 81.19999999999999,
+          "temperature": 10.0,
+          "turbidity": 3.1,
+          "nitrate": 5.3,
+          "conductance": 93.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.5833333333333334,
+        "regressor_wqi": 68.0121
+      },
+      "errors": []
+    },
+    {
+      "index": 190,
+      "zip_code": "96001",
+      "description": "Redding CA",
+      "geolocation": {
+        "latitude": 40.5605,
+        "longitude": -122.4116,
+        "place_name": "Redding",
+        "state_code": "CA"
+      },
+      "wqp_data": {
+        "measurement_count": 263,
+        "has_data": true
+      },
+      "wqi": {
+        "score": 91.83,
+        "classification": "Excellent",
+        "parameter_count": 6,
+        "parameters": {
+          "ph": 7.71,
+          "dissolved_oxygen": 8.665,
+          "temperature": 15.76,
+          "turbidity": 1.2000000000000002,
+          "nitrate": 1.45,
+          "conductance": 174.0
+        }
+      },
+      "ml_predictions": {
+        "classifier_prediction": 0,
+        "classifier_verdict": "UNSAFE",
+        "classifier_confidence": 0.61,
+        "regressor_wqi": 70.18459999999999
+      },
+      "errors": []
+    },
+    {
+      "index": 191,
+      "zip_code": "20001",
+      "description": "Washington DC",
+      "geolocation": {
+        "latitude": 38.9122,
+        "longitude": -77.0177,
+        "place_name": "Washington",
+        "state_code": "DC"
+      },
+      "wqp_data": {
+        "measurement_count": 0,
+        "has_data": false
+      },
+      "wqi": null,
+      "ml_predictions": null,
+      "errors": []
+    }
+  ]
+}

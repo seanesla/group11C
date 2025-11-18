@@ -61,14 +61,17 @@ def prepare_us_features_for_prediction(
     # === BUILD CORE FEATURES IN EXACT ORDER EXPECTED BY MODEL ===
     features = {}
 
-    # 1. Raw WQI parameters
-    features['conductance'] = conductance
-    features['dissolved_oxygen'] = dissolved_oxygen
-    features['nitrate'] = nitrate
-    features['ph'] = ph
-    features['temperature'] = temperature
+    # 1. Year (identifier - needed by model)
+    features['year'] = year
 
-    # 2. Temporal features
+    # 2. Raw WQI parameters
+    features['ph'] = ph
+    features['dissolved_oxygen'] = dissolved_oxygen
+    features['temperature'] = temperature
+    features['nitrate'] = nitrate
+    features['conductance'] = conductance
+
+    # 3. Temporal features
     features['years_since_1991'] = year - 1991
     features['decade'] = (year // 10) * 10
     features['is_1990s'] = float(1990 <= year < 2000)
@@ -117,8 +120,10 @@ def prepare_us_features_for_prediction(
     # Convert to DataFrame with explicit column order
     # CRITICAL: Column order must match training data EXACTLY
     column_order = [
+        # Year (identifier)
+        'year',
         # Raw WQI parameters
-        'conductance', 'dissolved_oxygen', 'nitrate', 'ph', 'temperature',
+        'ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance',
         # Temporal features
         'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s',
         # Water quality derived
@@ -134,7 +139,7 @@ def prepare_us_features_for_prediction(
 
     df = pd.DataFrame([features], columns=column_order)
 
-    # Verify feature count (should be ~27-30 features)
+    # Verify feature count (should be 25 features to match model)
     expected_count = len(column_order)
     if len(df.columns) != expected_count:
         raise ValueError(f"Expected {expected_count} features, got {len(df.columns)}")

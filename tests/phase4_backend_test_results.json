@@ -1,0 +1,623 @@
+{
+  "phase_4_2": {
+    "classifier": {
+      "passed": 0,
+      "failed": 50,
+      "errors": [
+        {
+          "sample": "Excellent #1: Pristine mountain stream",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #2: Perfect conditions",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #3: Cool pristine water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #4: High oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #5: Low nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #6: Optimal pH",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #7: Very low turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #8: Clean river",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #9: Spring water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #10: Perfect balance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #1: Slightly acidic",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #2: Slightly alkaline",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #3: Moderate turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #4: Higher nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #5: Warm water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #6: High conductance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #7: Borderline excellent",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #8: Urban runoff",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #9: Agricultural area",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #10: Moderate quality",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #1: Low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #2: High nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #3: Acidic",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #4: High turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #5: Warm polluted",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #6: Multiple issues",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #7: Borderline poor",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #8: Industrial runoff",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #9: Stagnant water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #10: Contaminated",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #1: Very low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #2: EPA MCL nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #3: Very alkaline",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #4: Multiple failures",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #5: High conductance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #6: Sewage contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #7: Agricultural pollution",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #8: Hot stagnant",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #9: Heavy metals suspected",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #10: Extreme pollution",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #1: Critically low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #2: Extreme pH",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #3: High nitrate contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #4: All parameters failed",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #5: Extreme contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #6: Toxic conditions",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #7: Industrial waste",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #8: Severely polluted",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #9: Dangerous water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #10: Uninhabitable",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        }
+      ]
+    },
+    "regressor": {
+      "passed": 0,
+      "failed": 50,
+      "errors": [
+        {
+          "sample": "Excellent #1: Pristine mountain stream",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #2: Perfect conditions",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #3: Cool pristine water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #4: High oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #5: Low nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #6: Optimal pH",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #7: Very low turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #8: Clean river",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #9: Spring water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Excellent #10: Perfect balance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #1: Slightly acidic",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #2: Slightly alkaline",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #3: Moderate turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #4: Higher nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #5: Warm water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #6: High conductance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #7: Borderline excellent",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #8: Urban runoff",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #9: Agricultural area",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Good #10: Moderate quality",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #1: Low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #2: High nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #3: Acidic",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #4: High turbidity",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #5: Warm polluted",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #6: Multiple issues",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #7: Borderline poor",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #8: Industrial runoff",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #9: Stagnant water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Fair #10: Contaminated",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #1: Very low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #2: EPA MCL nitrate",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #3: Very alkaline",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #4: Multiple failures",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #5: High conductance",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #6: Sewage contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #7: Agricultural pollution",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #8: Hot stagnant",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #9: Heavy metals suspected",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Poor #10: Extreme pollution",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #1: Critically low oxygen",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #2: Extreme pH",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #3: High nitrate contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #4: All parameters failed",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #5: Extreme contamination",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #6: Toxic conditions",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #7: Industrial waste",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #8: Severely polluted",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #9: Dangerous water",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        },
+        {
+          "sample": "Very Poor #10: Uninhabitable",
+          "error": "Missing keys: ['top_features', 'all_features']"
+        }
+      ]
+    }
+  },
+  "phase_4_3": {
+    "passed": 0,
+    "failed": 50,
+    "errors": [
+      {
+        "sample": "Excellent #1: Pristine mountain stream",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #2: Perfect conditions",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #3: Cool pristine water",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #4: High oxygen",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #5: Low nitrate",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #6: Optimal pH",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #7: Very low turbidity",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #8: Clean river",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #9: Spring water",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Excellent #10: Perfect balance",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #1: Slightly acidic",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #2: Slightly alkaline",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #3: Moderate turbidity",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #4: Higher nitrate",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #5: Warm water",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #6: High conductance",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #7: Borderline excellent",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #8: Urban runoff",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #9: Agricultural area",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Good #10: Moderate quality",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #1: Low oxygen",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #2: High nitrate",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #3: Acidic",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #4: High turbidity",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #5: Warm polluted",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #6: Multiple issues",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #7: Borderline poor",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #8: Industrial runoff",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #9: Stagnant water",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Fair #10: Contaminated",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #1: Very low oxygen",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #2: EPA MCL nitrate",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #3: Very alkaline",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #4: Multiple failures",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #5: High conductance",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #6: Sewage contamination",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #7: Agricultural pollution",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #8: Hot stagnant",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #9: Heavy metals suspected",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Poor #10: Extreme pollution",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #1: Critically low oxygen",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #2: Extreme pH",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #3: High nitrate contamination",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #4: All parameters failed",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #5: Extreme contamination",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #6: Toxic conditions",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #7: Industrial waste",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #8: Severely polluted",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #9: Dangerous water",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      },
+      {
+        "sample": "Very Poor #10: Uninhabitable",
+        "error": "generate_decision_explanation() got an unexpected keyword argument 'classifier_path'"
+      }
+    ]
+  },
+  "all_passed": false
+}

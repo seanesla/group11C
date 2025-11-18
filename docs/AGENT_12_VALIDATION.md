@@ -240,6 +240,22 @@ Top 10 most predictive features:
 - US model (128 samples): MAE = 1.98 on US data
 - **128 right-distribution samples >> 2,939 wrong-distribution samples**
 
+### Statistical Power Analysis (Added November 17, 2025)
+**Effect Size (Cohen's d)**: 0.203 (SMALL effect)
+- Mean error difference: 0.57 WQI points
+- Pooled standard deviation: 2.79
+
+**Statistical Power**:
+- Current (n=128): **62.7% power**
+- Required for 80% power: **192 samples**
+- **Conclusion**: Study is **UNDERPOWERED** (below 80% threshold)
+
+**Implications**:
+- Results are **directionally valid** (US-only model IS better)
+- **Magnitude is uncertain** (could be 10-20% improvement, not precisely 15.6%)
+- Results may not replicate on new data with high confidence
+- Recommend collecting 64+ additional samples (to reach 192 total) for definitive conclusions
+
 ---
 
 ## What Went Wrong with Calibration?

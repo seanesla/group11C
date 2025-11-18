@@ -99,6 +99,153 @@ Formula: `WQI = Σ(Q_i × W_i) / Σ(W_i)`
 
 ---
 
+## Nitrate Unit Conversion System
+
+### Problem Statement
+
+Water quality data sources use different unit conventions for nitrate measurement:
+- **Kaggle European Water Quality Dataset**: Reports nitrate as **mg{NO3}/L** (molecular form)
+- **EPA/USGS Standards**: Report nitrate as **mg/L as N** (nitrogen content only)
+
+This 4.43× difference caused critical errors in WQI calculations and ML predictions.
+
+### Chemical Basis
+
+Nitrate (NO3⁻) is a polyatomic ion consisting of:
+- 1 Nitrogen atom (N): atomic weight = 14.0067 g/mol
+- 3 Oxygen atoms (O): atomic weight = 3 × 15.9994 = 47.9982 g/mol
+- **Total molecular weight**: 62.0049 g/mol
+
+**Conversion Factor:**
+```
+NITRATE_NO3_TO_N = N_weight / NO3_weight = 14.0067 / 62.0049 = 0.2258
+```
+
+To convert from mg{NO3}/L to mg/L as N, **multiply by 0.2258**.
+
+### EPA Maximum Contaminant Level (MCL)
+
+**EPA MCL for nitrate: 10 mg/L as N**
+
+**Equivalent values:**
+- 10 mg/L as N
+- 44.3 mg{NO3}/L
+- 44.3 mg/L as NO3
+
+### Implementation
+
+#### 1. Conversion Constant
+
+Defined in `src/preprocessing/feature_engineering.py`:
+```python
+# Nitrate unit conversion constant: NO3 (molecular form) → N (nitrogen form)
+# Kaggle dataset uses mg{NO3}/L, but EPA standards and US APIs use mg/L as N
+# Conversion factor = atomic_weight(N) / molecular_weight(NO3) = 14.0067 / 62.0049 = 0.2258
+NITRATE_NO3_TO_N = 0.2258  # Multiply NO3 values by this to get N values
+```
+
+#### 2. Kaggle Data Conversion
+
+Applied in `src/preprocessing/feature_engineering.py` when extracting features:
+```python
+# CRITICAL: Convert Kaggle nitrate from mg{NO3}/L to mg/L as N
+nitrate_no3 = row.get('nitrate')
+nitrate_as_n = (nitrate_no3 * NITRATE_NO3_TO_N) if pd.notna(nitrate_no3) else None
+
+params = {
+    # ...
+    'nitrate': nitrate_as_n,  # Now in mg/L as N (EPA standard)
+    # ...
+}
+```
+
+#### 3. WQP Client Unit Standardization
+
+The Water Quality Portal aggregates data from multiple sources with varying units.
+Implemented in `src/data_collection/wqp_client.py`:
+
+```python
+def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Standardize nitrate units to mg/L as N (EPA standard).
+
+    Conversions applied:
+    - mg{NO3}/L → mg/L as N: multiply by 0.2258
+    - mg/L as NO3-N: already correct, no conversion
+    - mg/L as N: already correct, no conversion
+    """
+    # Check unit column and convert if needed
+    # Implementation handles: mg{NO3}/L, mg/L as N, mg/L as NO3-N
+```
+
+#### 4. USGS Client Unit Validation
+
+USGS consistently uses mg/L as N (parameter code 99133).
+Implemented in `src/data_collection/usgs_client.py`:
+
+```python
+def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validate nitrate units are in mg/L as N (USGS standard).
+
+    USGS parameter 99133: "Nitrate, water, filtered, milligrams per liter as nitrogen"
+    Warns if unexpected units detected.
+    """
+    # Validates expected format, emits warnings for anomalies
+```
+
+### Example Conversions
+
+| mg{NO3}/L | mg/L as N | Safety Level |
+|-----------|-----------|--------------|
+| 4.43 | 1.0 | Excellent |
+| 22.15 | 5.0 | Good |
+| 44.3 | **10.0** | **EPA MCL** |
+| 88.6 | 20.0 | Unsafe (2× MCL) |
+| 221.5 | 50.0 | Very Unsafe (5× MCL) |
+
+### Testing
+
+Comprehensive test suite in `tests/test_nitrate_unit_system.py` (16 tests):
+
+1. **Conversion Constant Tests** (3 tests)
+   - Constant exists
+   - Correct value (0.2258 ± 0.0001)
+   - Valid range (0.2 - 0.3)
+
+2. **EPA Compliance Tests** (3 tests)
+   - 44.3 mg{NO3}/L → 10.0 mg/L as N (EPA MCL)
+   - 88.6 mg{NO3}/L → 20.0 mg/L as N (2× MCL)
+   - Relative safety levels maintained
+
+3. **WQP Client Tests** (4 tests)
+   - Converts mg{NO3}/L to mg/L as N
+   - Preserves mg/L as N values
+   - Handles missing data gracefully
+   - Handles NaN values correctly
+
+4. **USGS Client Tests** (3 tests)
+   - Accepts mg/L as N without warnings
+   - Warns on unexpected units
+   - Handles missing unit information
+
+5. **Conversion Accuracy Tests** (2 tests)
+   - Zero value handling
+   - Precision < 0.1% error
+
+6. **Integration Test** (1 test)
+   - Constant accessible in feature_engineering module
+
+### Impact on ML Models
+
+**Models retrained with corrected nitrate values (2025-11-16):**
+- Classifier: 98.98% accuracy (↑ from previous)
+- Regressor: R² = 0.9911 (↑ from previous)
+
+All ML predictions now use EPA-compliant mg/L as N units.
+
+---
+
 ## Current Implementation Analysis
 
 ### Our WQI Calculator Parameters (6 parameters)

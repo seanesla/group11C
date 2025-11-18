@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 import time
 import logging
+import warnings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -249,6 +250,9 @@ class USGSClient:
             df = pd.DataFrame(records)
             logger.info(f"Retrieved {len(df)} measurements from {len(site_codes)} sites")
 
+            # Validate nitrate units (should be mg/L as N for USGS)
+            df = self._standardize_nitrate_unit(df)
+
             return df
 
         except Exception as e:
@@ -299,6 +303,57 @@ class USGSClient:
         )
 
         return data_df
+
+    def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Validate nitrate units are in mg/L as N (USGS standard).
+
+        USGS NWIS consistently reports nitrate as mg/L as N (parameter code 99133).
+        This method validates units match expectations and warns if anomalies detected.
+
+        EPA MCL for nitrate: 10 mg/L as N
+        USGS parameter 99133: "Nitrate, water, filtered, milligrams per liter as nitrogen"
+
+        Args:
+            df: DataFrame with water quality data
+
+        Returns:
+            DataFrame with validated nitrate units
+        """
+        if df is None or df.empty or 'nitrate' not in df.columns:
+            return df
+
+        # Check if we have unit information
+        if 'nitrate_unit' not in df.columns:
+            logger.debug("No unit information for nitrate - USGS standard is mg/L as N")
+            return df
+
+        # Verify all nitrate values use expected USGS units (mg/L as N)
+        for idx, row in df.iterrows():
+            if pd.notna(row.get('nitrate')) and pd.notna(row.get('nitrate_unit')):
+                unit = str(row['nitrate_unit']).lower()
+
+                # Expected: mg/L as N or variations
+                if 'as n' in unit or 'as nitrogen' in unit:
+                    logger.debug(f"Nitrate in expected USGS format (mg/L as N): {row['nitrate']:.2f}")
+
+                # Unexpected: mg{NO3}/L would require conversion
+                elif 'no3' in unit and 'as n' not in unit:
+                    warnings.warn(
+                        f"Unexpected USGS nitrate unit '{row['nitrate_unit']}' at index {idx}. "
+                        f"USGS parameter 99133 should be mg/L as N. Value may be incorrect: {row['nitrate']:.2f}",
+                        UserWarning
+                    )
+
+                # Unknown unit
+                else:
+                    warnings.warn(
+                        f"Unknown nitrate unit '{row['nitrate_unit']}' at index {idx}. "
+                        f"Expected mg/L as N for USGS data. Please verify correctness.",
+                        UserWarning
+                    )
+
+        return df
 
 
 if __name__ == "__main__":

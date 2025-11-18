@@ -99,3 +99,6 @@ If you're uncertain about:
 - Screenshot capture
 - Puppeteer-based reliable automation
 - use .gitignore
+
+- For large context analysis, use `gemini -p` CLI
+  -Core Strategy: Use Gemini CLI (1M+ token context) for reading/analyzing large codebases, Claude Code for editing/implementing Syntax: gemini -p "@src/ @tests/ Analyze architecture" - use @ to include files/directories When to Use: Analyzing >100KB files, entire codebases, checking if features are implemented, understanding project-wide patterns Key Advantage: Gemini consumes ~1% context per query vs Claude's ~10%; instant codebase understanding without file-by-file analysis. Limitations: Gemini is lazy for detailed planning (300 lines vs Claude's 1500); adds excessive code comments; free tier rate limited. gemini might also say wrong stuff because of its knowledge cutoff date, which might result in outdated perspectives. gemini is also not as good at coding as you.

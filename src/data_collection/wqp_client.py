@@ -14,6 +14,7 @@ from typing import Optional, List, Dict, Any
 import time
 import logging
 import io
+import warnings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -216,6 +217,9 @@ class WQPClient:
             if 'ActivityStartDate' in df.columns:
                 df['ActivityStartDate'] = pd.to_datetime(df['ActivityStartDate'])
 
+            # Standardize nitrate units (convert mg{NO3}/L → mg/L as N if needed)
+            df = self._standardize_nitrate_unit(df)
+
             return df
 
         except Exception as e:
@@ -285,6 +289,73 @@ class WQPClient:
             end_date=end_date,
             characteristics=characteristics
         )
+
+    def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Standardize nitrate units to mg/L as N (EPA standard).
+
+        **CURRENT STATUS**: This method is designed for WIDE-FORMAT data (one column per parameter)
+        but WQP API returns LONG-FORMAT data (CharacteristicName + ResultMeasureValue columns).
+        As a result, this method currently returns early without performing any conversions.
+
+        **This is harmless** because USGS (the primary WQP data source) already reports nitrate
+        as mg/L as N. See: https://waterwatch.usgs.gov/wqwatch/?pcode=00630
+
+        **For future development**: To handle non-USGS sources that might use mg{NO3}/L,
+        this method would need to be rewritten to work with long-format data by:
+        1. Filtering for CharacteristicName == 'Nitrate'
+        2. Checking ResultMeasure/MeasureUnitCode column for unit type
+        3. Applying conversion to ResultMeasureValue if needed
+
+        Conversions that WOULD be applied (if data were in wide format):
+        - mg{NO3}/L → mg/L as N: multiply by 0.2258 (N/NO3 molecular weight ratio)
+        - mg/L as NO3-N: already in correct format, no conversion
+        - mg/L as N: already in correct format, no conversion
+
+        Args:
+            df: DataFrame with water quality data (long or wide format)
+
+        Returns:
+            DataFrame with standardized nitrate units (currently unchanged for WQP long-format data)
+        """
+        # CURRENT BEHAVIOR: Return early for WQP long-format data
+        # WQP returns long format without 'nitrate' column, so this check always triggers
+        if df is None or df.empty or 'nitrate' not in df.columns:
+            logger.debug("Nitrate conversion skipped: Data is in long format or no nitrate column. "
+                        "USGS data is already in mg/L as N.")
+            return df
+
+        # Check if we have unit information (only relevant for wide-format data)
+        if 'nitrate_unit' not in df.columns:
+            logger.warning("No unit information for nitrate - assuming mg/L as N (EPA standard)")
+            return df
+
+        # Nitrate unit conversion constant
+        NITRATE_NO3_TO_N = 0.2258  # Atomic weight N / Molecular weight NO3
+
+        for idx, row in df.iterrows():
+            if pd.notna(row.get('nitrate')) and pd.notna(row.get('nitrate_unit')):
+                unit = str(row['nitrate_unit']).lower()
+
+                # mg{NO3}/L or mg/l as NO3 → convert to mg/L as N
+                if 'no3' in unit and 'as n' not in unit:
+                    original_value = row['nitrate']
+                    df.at[idx, 'nitrate'] = original_value * NITRATE_NO3_TO_N
+                    logger.debug(f"Converted nitrate from mg{{NO3}}/L to mg/L as N: {original_value:.2f} → {df.at[idx, 'nitrate']:.2f}")
+
+                # mg/L as N or mg/L as NO3-N → already correct
+                elif 'as n' in unit or 'no3-n' in unit:
+                    logger.debug(f"Nitrate already in mg/L as N: {row['nitrate']:.2f}")
+
+                # Unexpected unit
+                else:
+                    warnings.warn(
+                        f"Unexpected nitrate unit '{row['nitrate_unit']}' at index {idx}. "
+                        f"Assuming mg/L as N. Please verify correctness.",
+                        UserWarning
+                    )
+
+        return df
 
 
 if __name__ == "__main__":

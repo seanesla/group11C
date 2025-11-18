@@ -30,6 +30,7 @@ from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.isotonic import IsotonicRegression
 from scipy import stats
+from statsmodels.stats.power import TTestPower
 import joblib
 import matplotlib.pyplot as plt
 
@@ -721,6 +722,155 @@ def bootstrap_confidence_intervals(
     }
 
 
+def calculate_power_analysis(
+    effect_size: float,
+    n_samples: int,
+    alpha: float = 0.05
+) -> Dict[str, Any]:
+    """
+    Calculate statistical power for paired t-test.
+
+    Args:
+        effect_size: Cohen's d (standardized mean difference)
+        n_samples: Number of paired samples
+        alpha: Significance level (default: 0.05)
+
+    Returns:
+        Dictionary with achieved_power and required_n_for_80_power
+
+    Note:
+        - Power <50%: Very low, high risk of missing true effects (Type II error)
+        - Power 50-80%: Underpowered, results may not replicate
+        - Power ≥80%: Adequate for reliable conclusions (standard threshold)
+    """
+    logger.debug(f"Calculating power analysis for effect_size={effect_size:.3f}, n={n_samples}")
+
+    power_calc = TTestPower()
+
+    # Calculate achieved power with current sample size
+    achieved_power = power_calc.solve_power(
+        effect_size=effect_size,
+        nobs=n_samples,
+        alpha=alpha,
+        alternative='two-sided'
+    )
+
+    # Calculate required n for 80% power (standard threshold)
+    required_n = power_calc.solve_power(
+        effect_size=effect_size,
+        power=0.80,
+        alpha=alpha,
+        alternative='two-sided'
+    )
+
+    logger.info(f"\n{'='*80}")
+    logger.info(f"STATISTICAL POWER ANALYSIS")
+    logger.info(f"{'='*80}")
+    logger.info(f"Effect size (Cohen's d): {effect_size:.3f}")
+    logger.info(f"Current sample size: {n_samples}")
+    logger.info(f"Achieved statistical power: {achieved_power:.1%}")
+    logger.info(f"Required n for 80% power: {int(np.ceil(required_n))}")
+
+    if achieved_power < 0.50:
+        logger.warning(f"⚠️ VERY LOW POWER ({achieved_power:.1%}) - High risk of Type II error!")
+        logger.warning(f"   Results may be unreliable. Need ~{int(np.ceil(required_n))} samples.")
+    elif achieved_power < 0.80:
+        logger.warning(f"⚠️ UNDERPOWERED ({achieved_power:.1%}) - Below 80% threshold")
+        logger.warning(f"   Results may not replicate. Recommend {int(np.ceil(required_n))} samples.")
+    else:
+        logger.info(f"✓ Adequate power ({achieved_power:.1%}) for reliable conclusions")
+
+    return {
+        'achieved_power': achieved_power,
+        'required_n_for_80_power': int(np.ceil(required_n)),
+        'effect_size': effect_size,
+        'current_n': n_samples,
+        'alpha': alpha
+    }
+
+
+def calculate_effect_sizes(
+    y_true: npt.NDArray[np.float64],
+    pred1: npt.NDArray[np.float64],
+    pred2: npt.NDArray[np.float64]
+) -> Dict[str, Any]:
+    """
+    Calculate Cohen's d and other effect size metrics.
+
+    Args:
+        y_true: Ground truth WQI values
+        pred1: First model predictions (US-only)
+        pred2: Second model predictions (Calibrated)
+
+    Returns:
+        Dictionary with cohens_d, interpretation, mean_difference, pooled_std
+
+    Note:
+        Cohen's d interpretation (conventional guidelines):
+        - |d| < 0.2: Negligible effect
+        - 0.2 ≤ |d| < 0.5: Small effect
+        - 0.5 ≤ |d| < 0.8: Medium effect
+        - |d| ≥ 0.8: Large effect
+    """
+    logger.debug("Calculating Cohen's d effect size")
+
+    errors1 = np.abs(y_true - pred1)
+    errors2 = np.abs(y_true - pred2)
+    error_diff = errors2 - errors1  # Positive = model 1 better
+
+    # Cohen's d (standardized mean difference)
+    mean_diff = np.mean(error_diff)
+    pooled_std = np.sqrt((np.var(errors1) + np.var(errors2)) / 2)
+
+    # Avoid division by zero
+    if pooled_std < 1e-10:
+        logger.warning("Pooled std is near zero, using std of error differences")
+        pooled_std = np.std(error_diff)
+        if pooled_std < 1e-10:
+            logger.error("Both pooled std and error diff std are zero, cannot calculate Cohen's d")
+            cohens_d = np.nan
+        else:
+            cohens_d = mean_diff / pooled_std
+    else:
+        cohens_d = mean_diff / pooled_std
+
+    # Interpretation based on absolute value
+    abs_d = abs(cohens_d)
+    if abs_d < 0.2:
+        interpretation = "negligible"
+    elif abs_d < 0.5:
+        interpretation = "small"
+    elif abs_d < 0.8:
+        interpretation = "medium"
+    else:
+        interpretation = "large"
+
+    logger.info(f"\n{'='*80}")
+    logger.info(f"EFFECT SIZE ANALYSIS")
+    logger.info(f"{'='*80}")
+    logger.info(f"Cohen's d: {cohens_d:.3f} ({interpretation.upper()} effect)")
+    logger.info(f"Mean error difference: {mean_diff:.2f} WQI points")
+    logger.info(f"Pooled standard deviation: {pooled_std:.2f}")
+
+    if interpretation == "negligible":
+        logger.warning(f"⚠️ NEGLIGIBLE effect size - improvement may not be practically meaningful")
+    elif interpretation == "small":
+        logger.info(f"ℹ️  Small effect size - improvement is modest but detectable")
+    elif interpretation == "medium":
+        logger.info(f"✓ Medium effect size - improvement is practically meaningful")
+    else:
+        logger.info(f"✓✓ Large effect size - improvement is highly meaningful")
+
+    return {
+        'cohens_d': cohens_d,
+        'interpretation': interpretation,
+        'mean_difference': mean_diff,
+        'pooled_std': pooled_std,
+        'errors_model1': errors1,
+        'errors_model2': errors2
+    }
+
+
 def generate_comparison_report(
     us_results: Dict[str, Any],
     cal_results: Dict[str, Any],
@@ -863,6 +1013,16 @@ def main() -> None:
 
     # Bootstrap CIs
     bootstrap = bootstrap_confidence_intervals(y, us_results['cv_predictions'], cal_results['cv_predictions'], n_bootstrap=1000)
+
+    # Effect size analysis (Cohen's d)
+    effect_sizes = calculate_effect_sizes(y, us_results['cv_predictions'], cal_results['cv_predictions'])
+
+    # Statistical power analysis
+    power_analysis = calculate_power_analysis(
+        effect_size=effect_sizes['cohens_d'],
+        n_samples=len(y),
+        alpha=0.05
+    )
 
     # Final report
     generate_comparison_report(us_results, cal_results, stat_tests, bootstrap)

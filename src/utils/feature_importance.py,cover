@@ -1,0 +1,674 @@
+> """
+> Feature Importance Extraction and Analysis
+  
+> Utilities for extracting and analyzing feature importances from trained
+> ML models (Random Forest classifier and regressor).
+> """
+  
+! import pandas as pd
+! import numpy as np
+! from typing import Dict, List, Tuple, Optional
+! import joblib
+! from pathlib import Path
+! import logging
+  
+! logger = logging.getLogger(__name__)
+  
+  
+! def get_feature_importances(
+!     classifier_path: str,
+!     regressor_path: str,
+!     top_n: int = 20
+! ) -> Dict[str, pd.DataFrame]:
+!     """
+!     Extract feature importances from classifier and regressor models.
+  
+!     Args:
+!         classifier_path: Path to trained classifier (.joblib file)
+!         regressor_path: Path to trained regressor (.joblib file)
+!         top_n: Number of top features to return (default: 20)
+  
+!     Returns:
+!         Dictionary with 'classifier' and 'regressor' DataFrames containing:
+!         - feature: Feature name
+!         - importance: Importance score (0-1)
+!         - importance_pct: Importance as percentage
+!         - rank: Feature rank (1 = most important)
+!     """
+      # Load models
+!     clf_model = joblib.load(classifier_path)
+!     reg_model = joblib.load(regressor_path)
+  
+      # Get feature names (same for both models)
+!     feature_names = clf_model['feature_names']
+  
+      # Extract importances
+!     clf_importances = clf_model['model'].feature_importances_
+!     reg_importances = reg_model['model'].feature_importances_
+  
+      # Create DataFrames
+!     clf_df = pd.DataFrame({
+!         'feature': feature_names,
+!         'importance': clf_importances,
+!         'importance_pct': clf_importances * 100
+!     }).sort_values('importance', ascending=False).reset_index(drop=True)
+!     clf_df['rank'] = range(1, len(clf_df) + 1)
+  
+!     reg_df = pd.DataFrame({
+!         'feature': feature_names,
+!         'importance': reg_importances,
+!         'importance_pct': reg_importances * 100
+!     }).sort_values('importance', ascending=False).reset_index(drop=True)
+!     reg_df['rank'] = range(1, len(reg_df) + 1)
+  
+!     return {
+!         'classifier': clf_df.head(top_n),
+!         'regressor': reg_df.head(top_n)
+!     }
+  
+  
+! def get_feature_importance_summary(
+!     classifier_path: str,
+!     regressor_path: str
+! ) -> Dict[str, any]:
+!     """
+!     Get high-level summary statistics about feature importances.
+  
+!     Args:
+!         classifier_path: Path to trained classifier (.joblib file)
+!         regressor_path: Path to trained regressor (.joblib file)
+  
+!     Returns:
+!         Dictionary with summary statistics:
+!         - top_feature_classifier: Most important feature for classifier
+!         - top_feature_regressor: Most important feature for regressor
+!         - top_importance_classifier: Importance % of top classifier feature
+!         - top_importance_regressor: Importance % of top regressor feature
+!         - top_10_cumulative_classifier: Cumulative importance of top 10 (%)
+!         - top_10_cumulative_regressor: Cumulative importance of top 10 (%)
+!     """
+!     importances = get_feature_importances(classifier_path, regressor_path, top_n=10)
+  
+!     clf_df = importances['classifier']
+!     reg_df = importances['regressor']
+  
+!     return {
+!         'top_feature_classifier': clf_df.iloc[0]['feature'],
+!         'top_feature_regressor': reg_df.iloc[0]['feature'],
+!         'top_importance_classifier': clf_df.iloc[0]['importance_pct'],
+!         'top_importance_regressor': reg_df.iloc[0]['importance_pct'],
+!         'top_10_cumulative_classifier': clf_df['importance_pct'].sum(),
+!         'top_10_cumulative_regressor': reg_df['importance_pct'].sum()
+!     }
+  
+  
+! def annotate_importance_with_availability(
+!     importance_df: pd.DataFrame,
+!     us_available_features: List[str],
+!     european_only_features: List[str]
+! ) -> pd.DataFrame:
+!     """
+!     Add US data availability annotations to feature importance DataFrame.
+  
+!     Args:
+!         importance_df: DataFrame from get_feature_importances()
+!         us_available_features: List of features available for US data
+!         european_only_features: List of Europe-only features (will be imputed)
+  
+!     Returns:
+!         DataFrame with added 'availability' column:
+!         - '🟢 Available': Feature available for US predictions
+!         - '🔴 Imputed': Feature only available for Europe (imputed for US)
+!         - '🟡 Partial': Feature partially available
+!     """
+!     df = importance_df.copy()
+  
+!     def get_availability(feature_name: str) -> str:
+!         if feature_name in us_available_features:
+!             return '🟢 Available'
+!         elif feature_name in european_only_features:
+!             return '🔴 Imputed'
+!         else:
+!             return '🟡 Partial'
+  
+!     df['availability'] = df['feature'].apply(get_availability)
+  
+!     return df
+  
+  
+! def compare_feature_importance(
+!     feature_name: str,
+!     classifier_path: str,
+!     regressor_path: str
+! ) -> Dict[str, float]:
+!     """
+!     Compare importance of a specific feature between classifier and regressor.
+  
+!     Args:
+!         feature_name: Name of feature to compare
+!         classifier_path: Path to trained classifier (.joblib file)
+!         regressor_path: Path to trained regressor (.joblib file)
+  
+!     Returns:
+!         Dictionary with:
+!         - classifier_importance: Importance % for classifier
+!         - regressor_importance: Importance % for regressor
+!         - classifier_rank: Rank in classifier (1 = most important)
+!         - regressor_rank: Rank in regressor
+!     """
+!     importances = get_feature_importances(
+!         classifier_path,
+!         regressor_path,
+!         top_n=59  # Get all features
+!     )
+  
+!     clf_df = importances['classifier']
+!     reg_df = importances['regressor']
+  
+!     clf_row = clf_df[clf_df['feature'] == feature_name]
+!     reg_row = reg_df[reg_df['feature'] == feature_name]
+  
+!     if clf_row.empty or reg_row.empty:
+!         raise ValueError(f"Feature '{feature_name}' not found in model")
+  
+!     return {
+!         'classifier_importance': clf_row.iloc[0]['importance_pct'],
+!         'regressor_importance': reg_row.iloc[0]['importance_pct'],
+!         'classifier_rank': int(clf_row.iloc[0]['rank']),
+!         'regressor_rank': int(reg_row.iloc[0]['rank'])
+!     }
+  
+  
+! def get_prediction_contributions(
+!     model_path: str,
+!     X_sample: pd.DataFrame,
+!     top_n: int = 20
+! ) -> Dict[str, any]:
+!     """
+!     Calculate SHAP feature contributions for a single prediction.
+  
+!     This shows how specific feature VALUES for this water sample contribute
+!     to the prediction (unlike global feature importance which shows overall
+!     feature importance across all predictions).
+  
+!     Args:
+!         model_path: Path to trained model (.joblib file)
+!         X_sample: Single-row DataFrame with 59 ML features (raw, unscaled)
+!         top_n: Number of top contributing features to return (default: 20)
+  
+!     Returns:
+!         Dictionary with:
+!         - contributions: DataFrame with feature, value, contribution, abs_contribution
+!         - base_value: Model's base prediction (average over training data)
+!         - prediction: Final prediction for this sample
+!         - shap_sum: Sum of SHAP values (should equal prediction - base_value)
+  
+!     Note:
+!         SHAP values show the contribution of each feature to pushing the
+!         prediction away from the base value (average prediction).
+!         - Positive SHAP: feature pushes prediction higher (toward SAFE for classifier)
+!         - Negative SHAP: feature pushes prediction lower (toward UNSAFE for classifier)
+!     """
+!     import shap
+  
+      # Load model
+!     model_dict = joblib.load(model_path)
+!     sklearn_model = model_dict['model']
+!     feature_names = model_dict['feature_names']
+!     scaler = model_dict['scaler']
+!     imputer = model_dict['imputer']
+  
+      # Determine if this is a classifier or regressor from the sklearn model
+!     from sklearn.base import is_classifier, is_regressor
+!     if is_classifier(sklearn_model):
+!         model_type = 'classifier'
+!     elif is_regressor(sklearn_model):
+!         model_type = 'regressor'
+!     else:
+!         raise ValueError(f"Model is neither classifier nor regressor: {type(sklearn_model)}")
+  
+      # Verify X_sample has correct features
+!     if not all(f in X_sample.columns for f in feature_names):
+!         missing = [f for f in feature_names if f not in X_sample.columns]
+!         raise ValueError(f"Missing features in X_sample: {missing}")
+  
+      # Ensure features are in correct order
+!     X_ordered = X_sample[feature_names].copy()
+  
+      # Apply preprocessing (imputation + scaling)
+!     X_imputed = pd.DataFrame(
+!         imputer.transform(X_ordered),
+!         columns=feature_names,
+!         index=X_ordered.index
+!     )
+!     X_scaled = pd.DataFrame(
+!         scaler.transform(X_imputed),
+!         columns=feature_names,
+!         index=X_imputed.index
+!     )
+  
+      # Create SHAP TreeExplainer
+!     explainer = shap.TreeExplainer(sklearn_model)
+  
+      # Calculate SHAP values for single sample
+!     shap_values = explainer.shap_values(X_scaled)
+  
+      # Handle different output formats based on SHAP version and model type
+!     if model_type == 'classifier':
+          # For binary classification in SHAP 0.50.0:
+          # shap_values shape is (n_samples, n_features, n_classes) = (1, 59, 2)
+          # We want contributions to class 1 (SAFE)
+!         if shap_values.ndim == 3:
+              # Shape: (n_samples, n_features, n_classes)
+              # Extract class 1 (SAFE) for the single sample
+!             shap_values_sample = shap_values[0, :, 1]  # Shape: (59,)
+!         elif shap_values.ndim == 2:
+              # Shape: (n_samples, n_features) - older SHAP format
+!             shap_values_sample = shap_values[0]  # Shape: (59,)
+!         else:
+!             raise ValueError(f"Unexpected SHAP values shape: {shap_values.shape}, ndim: {shap_values.ndim}")
+!     else:  # regressor
+          # For regressor, shap_values shape is (n_samples, n_features) = (1, 59)
+!         if shap_values.ndim == 2:
+!             shap_values_sample = shap_values[0]  # Shape: (59,)
+!         elif shap_values.ndim == 1:
+!             shap_values_sample = shap_values  # Already (59,)
+!         else:
+!             raise ValueError(f"Unexpected SHAP values shape: {shap_values.shape}")
+  
+      # Ensure we have a 1D array
+!     if shap_values_sample.ndim != 1:
+!         raise ValueError(f"Expected 1D SHAP values array, got shape {shap_values_sample.shape}")
+  
+      # Verify lengths match
+!     if len(shap_values_sample) != len(feature_names):
+!         raise ValueError(
+!             f"SHAP values length ({len(shap_values_sample)}) does not match "
+!             f"feature names length ({len(feature_names)})"
+!         )
+  
+      # Get base value (expected value)
+!     if model_type == 'classifier':
+          # For binary classification, expected_value is array [class_0_base, class_1_base]
+          # We want class 1 (SAFE)
+!         if isinstance(explainer.expected_value, (list, np.ndarray)):
+!             base_value = explainer.expected_value[1]  # Class 1 (SAFE)
+!         else:
+!             base_value = explainer.expected_value
+!     else:
+          # For regressor, expected_value is a scalar or single-element array
+!         if isinstance(explainer.expected_value, (list, np.ndarray)):
+!             base_value = explainer.expected_value if np.isscalar(explainer.expected_value) else explainer.expected_value[0]
+!         else:
+!             base_value = explainer.expected_value
+  
+      # Get actual prediction
+!     if model_type == 'classifier':
+          # Predict probability of class 1 (SAFE)
+!         prediction = sklearn_model.predict_proba(X_scaled)[0][1]
+!     else:
+!         prediction = sklearn_model.predict(X_scaled)[0]
+  
+      # Create contributions DataFrame
+!     contributions_df = pd.DataFrame({
+!         'feature': feature_names,
+!         'value': X_ordered.iloc[0].values,  # Original values (before scaling)
+!         'contribution': shap_values_sample,
+!         'abs_contribution': np.abs(shap_values_sample)
+!     })
+  
+      # Sort by absolute contribution (most impactful first)
+!     contributions_df = contributions_df.sort_values('abs_contribution', ascending=False).reset_index(drop=True)
+!     contributions_df['rank'] = range(1, len(contributions_df) + 1)
+  
+!     return {
+!         'contributions': contributions_df.head(top_n),
+!         'base_value': float(base_value),
+!         'prediction': float(prediction),
+!         'shap_sum': float(shap_values_sample.sum()),
+!         'model_type': model_type
+!     }
+  
+  
+! def generate_decision_explanation(
+!     classifier_contributions: Dict[str, any],
+!     regressor_contributions: Dict[str, any],
+!     water_params: Dict[str, float]
+! ) -> Dict[str, any]:
+!     """
+!     Generate plain-language explanation of model's classification decision.
+  
+!     Args:
+!         classifier_contributions: Output from get_prediction_contributions() for classifier
+!         regressor_contributions: Output from get_prediction_contributions() for regressor
+!         water_params: Dictionary of actual water quality parameters:
+!             {ph, dissolved_oxygen, temperature, turbidity, nitrate, conductance}
+  
+!     Returns:
+!         Dictionary with:
+!         - verdict: 'SAFE' or 'UNSAFE'
+!         - confidence: Percentage confidence (0-100)
+!         - predicted_wqi: WQI score from regressor
+!         - wqi_category: 'Excellent'/'Good'/'Medium'/'Bad'/'Very Bad'
+!         - primary_factors: List of main contributing factors (positive or negative)
+!         - parameter_assessment: Assessment of each core parameter
+!         - summary: 1-2 sentence overall explanation
+!         - recommendations: List of improvement suggestions (for UNSAFE only)
+!     """
+      # Extract classifier prediction
+!     clf_pred = classifier_contributions['prediction']
+!     verdict = 'SAFE' if clf_pred >= 0.5 else 'UNSAFE'
+!     confidence = clf_pred * 100 if verdict == 'SAFE' else (1 - clf_pred) * 100
+  
+      # Extract regressor prediction (WQI)
+!     predicted_wqi = regressor_contributions['prediction']
+  
+      # Determine WQI category
+!     if predicted_wqi >= 90:
+!         wqi_category = 'Excellent'
+!     elif predicted_wqi >= 70:
+!         wqi_category = 'Good'
+!     elif predicted_wqi >= 50:
+!         wqi_category = 'Medium'
+!     elif predicted_wqi >= 25:
+!         wqi_category = 'Bad'
+!     else:
+!         wqi_category = 'Very Bad'
+  
+      # Get top contributing features from classifier
+!     clf_contribs = classifier_contributions['contributions'].head(10)
+  
+      # Identify primary factors (features with significant contributions)
+      # For SAFE: positive contributions (pushing toward SAFE)
+      # For UNSAFE: negative contributions (pushing toward UNSAFE)
+!     primary_factors = []
+  
+!     for _, row in clf_contribs.iterrows():
+!         feature = row['feature']
+!         contribution = row['contribution']
+!         value = row['value']
+  
+          # Skip if contribution is negligible
+!         if abs(contribution) < 0.01:
+!             continue
+  
+          # For SAFE prediction, focus on positive contributions
+          # For UNSAFE prediction, focus on negative contributions
+!         if (verdict == 'SAFE' and contribution > 0) or (verdict == 'UNSAFE' and contribution < 0):
+!             impact_desc = _describe_feature_impact(feature, value, contribution, verdict)
+!             if impact_desc:
+!                 primary_factors.append(impact_desc)
+  
+          # Limit to top 5 primary factors
+!         if len(primary_factors) >= 5:
+!             break
+  
+      # Assess core water quality parameters
+!     parameter_assessment = _assess_water_parameters(water_params)
+  
+      # Generate summary
+!     if verdict == 'SAFE':
+!         summary = (
+!             f"Water quality is predicted as SAFE with {confidence:.0f}% confidence. "
+!             f"The predicted WQI score is {predicted_wqi:.1f} ({wqi_category}), "
+!             f"which meets safety standards for drinking water."
+!         )
+!     else:
+!         summary = (
+!             f"Water quality is predicted as UNSAFE with {confidence:.0f}% confidence. "
+!             f"The predicted WQI score is {predicted_wqi:.1f} ({wqi_category}), "
+!             f"which falls below the safety threshold (WQI ≥ 70)."
+!         )
+  
+      # Generate recommendations (for UNSAFE only)
+!     recommendations = []
+!     if verdict == 'UNSAFE':
+!         recommendations = _generate_recommendations(parameter_assessment, water_params)
+  
+!     return {
+!         'verdict': verdict,
+!         'confidence': confidence,
+!         'predicted_wqi': predicted_wqi,
+!         'wqi_category': wqi_category,
+!         'primary_factors': primary_factors,
+!         'parameter_assessment': parameter_assessment,
+!         'summary': summary,
+!         'recommendations': recommendations
+!     }
+  
+  
+! def _describe_feature_impact(feature: str, value: float, contribution: float, verdict: str) -> Optional[str]:
+!     """
+!     Convert a feature contribution into plain-language description.
+  
+!     Args:
+!         feature: Feature name (e.g., 'dissolved_oxygen', 'ph_deviation_from_7')
+!         value: Feature value
+!         contribution: SHAP contribution value
+!         verdict: 'SAFE' or 'UNSAFE'
+  
+!     Returns:
+!         Plain-language description or None if not a relevant feature
+!     """
+      # Core water quality parameters
+!     if feature == 'dissolved_oxygen':
+!         if contribution > 0:
+!             return f"✓ Dissolved oxygen ({value:.1f} mg/L) is at a healthy level"
+!         else:
+!             return f"⚠ Dissolved oxygen ({value:.1f} mg/L) is below optimal levels"
+  
+!     elif feature == 'ph':
+!         if 6.5 <= value <= 8.5:
+!             return f"✓ pH ({value:.1f}) is within ideal range (6.5-8.5)"
+!         elif contribution < 0:
+!             if value < 6.5:
+!                 return f"⚠ pH ({value:.1f}) is too acidic (ideal: 6.5-8.5)"
+!             else:
+!                 return f"⚠ pH ({value:.1f}) is too alkaline (ideal: 6.5-8.5)"
+  
+!     elif feature == 'temperature':
+!         if contribution > 0 and 10 <= value <= 20:
+!             return f"✓ Temperature ({value:.1f}°C) is in optimal range"
+!         elif contribution < 0 and value > 25:
+!             return f"⚠ Temperature ({value:.1f}°C) is elevated (ideal: <25°C)"
+  
+!     elif feature == 'nitrate':
+!         if contribution > 0 and value < 5:
+!             return f"✓ Nitrate ({value:.1f} mg/L) is low (EPA MCL: 10 mg/L)"
+!         elif contribution < 0 and value >= 10:
+!             return f"⚠ Nitrate ({value:.1f} mg/L) exceeds EPA MCL (10 mg/L)"
+!         elif contribution < 0:
+!             return f"⚠ Nitrate ({value:.1f} mg/L) is elevated"
+  
+!     elif feature == 'turbidity':
+!         if contribution > 0 and value < 1:
+!             return f"✓ Turbidity ({value:.1f} NTU) is very low (EPA standard: <1 NTU)"
+!         elif contribution < 0 and value > 5:
+!             return f"⚠ Turbidity ({value:.1f} NTU) is high (WHO ideal: <5 NTU)"
+  
+!     elif feature == 'conductance':
+!         if contribution > 0 and 150 <= value <= 500:
+!             return f"✓ Conductivity ({value:.0f} µS/cm) indicates moderate mineral content"
+!         elif contribution < 0 and value > 800:
+!             return f"⚠ Conductivity ({value:.0f} µS/cm) is very high (high mineral/salt content)"
+  
+      # Derived features
+!     elif feature == 'ph_deviation_from_7':
+!         if contribution < 0 and value > 2:
+!             return f"⚠ pH deviation from neutral (±{value:.1f}) is significant"
+  
+!     elif feature == 'do_temp_ratio':
+!         if contribution > 0:
+!             return f"✓ Dissolved oxygen relative to temperature is favorable"
+!         elif contribution < 0:
+!             return f"⚠ Dissolved oxygen is low relative to water temperature"
+  
+!     elif feature == 'pollution_stress':
+!         if contribution < 0:
+!             return f"⚠ Combined nitrate and oxygen stress indicates contamination"
+  
+!     elif feature == 'n_params_available':
+!         if contribution > 0 and value >= 5:
+!             return f"✓ Comprehensive parameter coverage ({int(value)} of 6 parameters available)"
+  
+      # Return None for features that don't need explanation
+!     return None
+  
+  
+! def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, str]]:
+!     """
+!     Assess each core water quality parameter against standards.
+  
+!     Args:
+!         params: Dictionary of water quality parameters
+  
+!     Returns:
+!         Dictionary mapping parameter names to assessment dicts:
+!         {'status': 'excellent'|'good'|'concerning'|'poor', 'reason': str}
+!     """
+!     assessment = {}
+  
+      # pH assessment
+!     ph = params.get('ph', np.nan)
+!     if not np.isnan(ph):
+!         if 6.8 <= ph <= 7.5:
+!             assessment['pH'] = {'status': 'excellent', 'reason': 'Neutral range (ideal for drinking water)'}
+!         elif 6.5 <= ph <= 8.5:
+!             assessment['pH'] = {'status': 'good', 'reason': 'Within EPA guidelines (6.5-8.5)'}
+!         elif 6.0 <= ph < 6.5 or 8.5 < ph <= 9.0:
+!             assessment['pH'] = {'status': 'concerning', 'reason': 'Outside ideal range, may cause corrosion or taste issues'}
+!         else:
+!             assessment['pH'] = {'status': 'poor', 'reason': 'Far from neutral, significant water quality concern'}
+  
+      # Dissolved Oxygen assessment
+!     do = params.get('dissolved_oxygen', np.nan)
+!     if not np.isnan(do):
+!         if do >= 8:
+!             assessment['Dissolved Oxygen'] = {'status': 'excellent', 'reason': 'High oxygen content (>8 mg/L)'}
+!         elif do >= 6:
+!             assessment['Dissolved Oxygen'] = {'status': 'good', 'reason': 'Adequate oxygen levels (6-8 mg/L)'}
+!         elif do >= 4:
+!             assessment['Dissolved Oxygen'] = {'status': 'concerning', 'reason': 'Low oxygen levels (4-6 mg/L)'}
+!         else:
+!             assessment['Dissolved Oxygen'] = {'status': 'poor', 'reason': 'Very low oxygen (<4 mg/L), indicates contamination'}
+  
+      # Temperature assessment
+!     temp = params.get('temperature', np.nan)
+!     if not np.isnan(temp):
+!         if 10 <= temp <= 20:
+!             assessment['Temperature'] = {'status': 'excellent', 'reason': 'Optimal range (10-20°C)'}
+!         elif 5 <= temp < 10 or 20 < temp <= 25:
+!             assessment['Temperature'] = {'status': 'good', 'reason': 'Acceptable temperature'}
+!         elif temp > 25:
+!             assessment['Temperature'] = {'status': 'concerning', 'reason': f'{temp:.1f}°C exceeds WHO preference (<25°C)'}
+!         else:
+!             assessment['Temperature'] = {'status': 'concerning', 'reason': 'Very cold water'}
+  
+      # Turbidity assessment
+!     turbidity = params.get('turbidity', np.nan)
+!     if not np.isnan(turbidity):
+!         if turbidity < 1:
+!             assessment['Turbidity'] = {'status': 'excellent', 'reason': 'Meets EPA standard (<1 NTU)'}
+!         elif turbidity < 5:
+!             assessment['Turbidity'] = {'status': 'good', 'reason': 'Below WHO ideal (<5 NTU)'}
+!         elif turbidity < 10:
+!             assessment['Turbidity'] = {'status': 'concerning', 'reason': 'Elevated turbidity (5-10 NTU)'}
+!         else:
+!             assessment['Turbidity'] = {'status': 'poor', 'reason': f'{turbidity:.1f} NTU indicates filtration problems'}
+  
+      # Nitrate assessment
+!     nitrate = params.get('nitrate', np.nan)
+!     if not np.isnan(nitrate):
+!         if nitrate < 5:
+!             assessment['Nitrate'] = {'status': 'excellent', 'reason': 'Low nitrate (<5 mg/L)'}
+!         elif nitrate < 10:
+!             assessment['Nitrate'] = {'status': 'good', 'reason': 'Below EPA MCL (10 mg/L)'}
+!         elif nitrate == 10:
+!             assessment['Nitrate'] = {'status': 'concerning', 'reason': 'At EPA MCL (10 mg/L), maximum safe level'}
+!         else:
+!             assessment['Nitrate'] = {'status': 'poor', 'reason': f'{nitrate:.1f} mg/L exceeds EPA MCL (10 mg/L)'}
+  
+      # Conductance assessment
+!     conductance = params.get('conductance', np.nan)
+!     if not np.isnan(conductance):
+!         if 150 <= conductance <= 500:
+!             assessment['Conductivity'] = {'status': 'excellent', 'reason': 'Moderate mineral content'}
+!         elif 50 <= conductance < 150 or 500 < conductance <= 800:
+!             assessment['Conductivity'] = {'status': 'good', 'reason': 'Acceptable mineral/salt content'}
+!         elif conductance > 800:
+!             assessment['Conductivity'] = {'status': 'concerning', 'reason': f'{conductance:.0f} µS/cm indicates high mineral/salt content'}
+!         else:
+!             assessment['Conductivity'] = {'status': 'concerning', 'reason': 'Very low mineral content'}
+  
+!     return assessment
+  
+  
+! def _generate_recommendations(
+!     assessment: Dict[str, Dict[str, str]],
+!     params: Dict[str, float]
+! ) -> List[str]:
+!     """
+!     Generate actionable recommendations for improving water quality.
+  
+!     Args:
+!         assessment: Parameter assessment from _assess_water_parameters()
+!         params: Actual water quality parameters
+  
+!     Returns:
+!         List of recommendation strings
+!     """
+!     recommendations = []
+  
+      # Check each parameter for issues
+!     for param, info in assessment.items():
+!         if info['status'] == 'poor':
+!             if param == 'pH':
+!                 ph = params.get('ph', 7.0)
+!                 if ph < 6.5:
+!                     recommendations.append(
+!                         "Address acidic pH: Consider alkaline treatment or identify source of acidification"
+!                     )
+!                 else:
+!                     recommendations.append(
+!                         "Address alkaline pH: Verify treatment processes, check for chemical contamination"
+!                     )
+  
+!             elif param == 'Dissolved Oxygen':
+!                 recommendations.append(
+!                     "Increase dissolved oxygen: Aerate water source, reduce organic contamination, "
+!                     "improve water circulation"
+!                 )
+  
+!             elif param == 'Nitrate':
+!                 recommendations.append(
+!                     "Reduce nitrate contamination: Investigate agricultural runoff, septic system leakage, "
+!                     "or industrial sources. Consider reverse osmosis or ion exchange treatment."
+!                 )
+  
+!             elif param == 'Turbidity':
+!                 recommendations.append(
+!                     "Improve water clarity: Enhance filtration, allow settling time, "
+!                     "investigate sediment or particulate sources"
+!                 )
+  
+!         elif info['status'] == 'concerning':
+!             if param == 'Temperature' and params.get('temperature', 0) > 25:
+!                 recommendations.append(
+!                     "Cool water temperature: Shield water source from sunlight, "
+!                     "consider cooling systems if necessary"
+!                 )
+  
+!             elif param == 'Conductivity' and params.get('conductance', 0) > 800:
+!                 recommendations.append(
+!                     "Reduce mineral/salt content: Consider reverse osmosis, "
+!                     "investigate source water salinity"
+!                 )
+  
+      # If no specific recommendations, provide general guidance
+!     if not recommendations:
+!         recommendations.append(
+!             "Multiple parameters below optimal: Consider comprehensive water treatment system "
+!             "(filtration, aeration, pH adjustment) or consult water quality specialist"
+!         )
+  
+!     return recommendations
