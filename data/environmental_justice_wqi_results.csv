@@ -1,0 +1,7 @@
+scenario,component,lead_ppb,predicted_wqi,predicted_class,false_negative
+"Flint Scenario 1: High Lead, Good Other Parameters",WQI Calculator,100,93.57,Excellent,True
+"Flint Scenario 2: Extreme Lead, Perfect Other Parameters",WQI Calculator,150,100.0,Excellent,True
+Flint Scenario 3: Moderate Lead with Corrosion Indicators,WQI Calculator,25,87.06,Good,True
+Jackson Scenario 1: Lead + Turbidity (Treatment Plant Failure),WQI Calculator,35,85.95,Good,True
+Jackson Scenario 2: Lead with Normal Appearance,WQI Calculator,20,91.03,Excellent,True
+Jackson Scenario 3: Chronic Infrastructure Decay,WQI Calculator,18,86.27,Good,True

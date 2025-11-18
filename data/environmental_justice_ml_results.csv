@@ -1,0 +1,13 @@
+scenario,component,lead_ppb,predicted_safe,safe_probability,false_negative,predicted_wqi
+"Flint Scenario 1: High Lead, Good Other Parameters",ML Classifier,100,True,0.68,True,
+"Flint Scenario 1: High Lead, Good Other Parameters",ML Regressor,100,,,True,92.89142857142858
+"Flint Scenario 2: Extreme Lead, Perfect Other Parameters",ML Classifier,150,True,0.65,True,
+"Flint Scenario 2: Extreme Lead, Perfect Other Parameters",ML Regressor,150,,,True,92.89142857142858
+Flint Scenario 3: Moderate Lead with Corrosion Indicators,ML Classifier,25,True,0.58,True,
+Flint Scenario 3: Moderate Lead with Corrosion Indicators,ML Regressor,25,,,True,86.10555555555555
+Jackson Scenario 1: Lead + Turbidity (Treatment Plant Failure),ML Classifier,35,True,0.54,True,
+Jackson Scenario 1: Lead + Turbidity (Treatment Plant Failure),ML Regressor,35,,,True,90.60259259259257
+Jackson Scenario 2: Lead with Normal Appearance,ML Classifier,20,True,0.61,True,
+Jackson Scenario 2: Lead with Normal Appearance,ML Regressor,20,,,True,93.23499999999999
+Jackson Scenario 3: Chronic Infrastructure Decay,ML Classifier,18,True,0.53,True,
+Jackson Scenario 3: Chronic Infrastructure Decay,ML Regressor,18,,,True,90.60259259259257

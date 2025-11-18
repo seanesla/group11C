@@ -807,6 +807,67 @@ def main():
 
         st.divider()
 
+        # CRITICAL ENVIRONMENTAL JUSTICE WARNING
+        st.error("""
+**CRITICAL LIMITATION: Lead and Heavy Metal Detection**
+
+This system does NOT test for lead, arsenic, mercury, or other heavy metals.
+
+**Why this matters:**
+- Lead causes permanent brain damage in children
+- EPA action level: 15 ppb (no safe level exists - EPA MCLG = 0 ppb)
+- NSF-WQI does NOT include lead as a parameter
+- Clear-looking water can have dangerous lead levels
+
+**High-risk homes:**
+- Built before 1986 (lead pipes/solder)
+- Recent pipe work or corrosion
+- Low pH (<6.5) or corrosive water
+- Areas with aging infrastructure (Flint, Jackson, etc.)
+
+**Action: Get FREE lead testing:**
+- Contact your local water utility
+- EPA Safe Drinking Water Hotline: 1-800-426-4791
+- Home test kits (EPA-certified): $15-30
+- Request EPA Lead and Copper Rule testing
+        """)
+
+        # DATA COVERAGE INDICATOR
+        st.info("""
+**Data Coverage:**
+
+✅ **Tested:** pH, Dissolved Oxygen, Temperature, Turbidity, Nitrate, Conductance (6/9 NSF-WQI parameters)
+
+❌ **NOT tested:** Lead, Heavy Metals, Bacteria (E. coli, fecal coliform), Pesticides, PFAS ("forever chemicals"), Pharmaceuticals
+
+**For comprehensive safety:** Always get certified laboratory testing, especially for:
+- Lead (if home built before 1986)
+- Bacteria (if using well water or after infrastructure work)
+- Nitrate (if in agricultural area)
+        """)
+
+        # COMPREHENSIVE SAFETY WARNING
+        st.warning("""
+**This is NOT a comprehensive water safety test.**
+
+This tool analyzes 6 water quality parameters for general environmental assessment. It cannot detect:
+- **Lead, arsenic, mercury** (heavy metals causing neurological damage)
+- **Bacteria** (E. coli, fecal coliform causing gastrointestinal illness)
+- **Pesticides, herbicides** (agricultural runoff)
+- **PFAS** ("forever chemicals" linked to cancer)
+- **Pharmaceutical residues**
+
+**For drinking water safety decisions:**
+- Contact your local water utility for Consumer Confidence Report (CCR)
+- Request EPA-certified laboratory testing
+- If concerned about lead: Test immediately if home built before 1986
+- Never use this tool as replacement for certified water quality testing
+
+**Emergency:** If water is discolored, has strong odor, or you suspect contamination, contact your water utility immediately and use bottled water until cleared by authorities.
+        """)
+
+        st.divider()
+
         # ML Predictions Section
         if ml_predictions:
             st.subheader("ML Model Predictions")
