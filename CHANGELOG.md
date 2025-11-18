@@ -5,6 +5,55 @@ All notable changes to the Environmental & Water Quality Prediction project will
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-11-17
+
+### Added
+
+#### Environmental Justice & Ethics
+- **Comprehensive Environmental Justice Analysis** (docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md):
+  - 16-page detailed analysis of system limitations with lead contamination
+  - Flint, MI water crisis analysis (2014-2019): 53% Black, 41% poverty, lead 18-150 ppb
+  - Jackson, MS water crisis (2021-2023): 83% Black, 25% poverty, infrastructure failure
+  - Complete testing of ALL 3 production components (WQI Calculator, ML Classifier, ML Regressor)
+  - Results: 100% false negative rate across all components on lead-contaminated water
+  - 14 authoritative citations (EPA, CDC, Virginia Tech, ProPublica, WHO)
+  - Honest limitations section and ethical recommendations
+
+- **Homepage Environmental Justice Warnings** (streamlit_app/app.py):
+  - **st.error (Red Alert)**: "CRITICAL LIMITATION: Lead and Heavy Metal Detection"
+    - EPA Safe Drinking Water Hotline: 1-800-426-4791
+    - High-risk homes identification (pre-1986 construction, Flint/Jackson areas)
+  - **st.info (Blue Alert)**: "Data Coverage" indicator
+    - ✅ Tested: 6/9 NSF-WQI parameters (pH, DO, temperature, turbidity, nitrate, conductance)
+    - ❌ NOT tested: Lead, heavy metals, bacteria, pesticides, PFAS, pharmaceuticals
+  - **st.warning (Yellow Alert)**: "This is NOT a comprehensive water safety test"
+    - Never use as replacement for certified water quality testing
+    - Emergency contact information for contamination concerns
+
+#### Testing & Validation
+- **Complete System Testing Scripts**:
+  - scripts/test_environmental_justice.py: WQI-only testing (6 contaminated scenarios)
+  - scripts/test_environmental_justice_COMPLETE.py: Full system testing (WQI + ML Classifier + ML Regressor)
+  - Test data: data/environmental_justice_results.csv (WQI only)
+  - Test data: data/environmental_justice_wqi_results.csv, data/environmental_justice_ml_results.csv (complete)
+
+### Fixed
+
+#### Critical UI Bug
+- **Environmental Justice Warnings Visibility** (commit e8bfa4f):
+  - **BUG**: Warnings were hidden inside `if search_button:` block, only visible AFTER user searched
+  - **FIX**: Moved warnings to homepage `else:` block (lines 1963-2022)
+  - **IMPACT**: Users now see critical limitations BEFORE using the system (informed consent)
+  - **VERIFICATION**: Playwright browser snapshot confirms all 3 warnings visible on page load
+  - **WHY IT MATTERED**: Environmental justice requires proactive disclosure, not hiding limitations
+  - **LESSON**: Always verify user-facing changes in browser, not just code
+
+### Context
+
+This release addresses critical ethical and environmental justice concerns raised during production hardening review. The NSF-WQI methodology excludes lead as a parameter, creating a systematic limitation where the system cannot detect lead contamination that disproportionately affects marginalized communities (Flint: 53% Black, Jackson: 83% Black). The complete system testing revealed 100% false negative rates across all three production components (WQI Calculator, ML Classifier, ML Regressor) on lead-contaminated water scenarios.
+
+The homepage warnings ensure users understand these limitations before using the system, preventing false sense of security from high WQI scores on potentially lead-contaminated water. This work directly addresses Agent 4 (Ethics) review score of 65/100, implementing comprehensive disclosure and documentation of system limitations.
+
 ## [1.0.0] - 2025-11-16
 
 ### Added
