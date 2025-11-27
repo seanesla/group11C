@@ -1,6 +1,6 @@
 # Environmental & Water Quality Prediction
 
-**Group 11C**: Joseann Boneo, Sean Esla, Zizwe Mtonga, Lademi Aromolaran
+**Group 11C**: Joseann Boneo, Sean Esla, Lademi Aromolaran
 
 A machine learning–assisted system that provides Water Quality Index (WQI) scores and trend insights based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal/USGS and calculates NSF-style quality assessments. Training data comes from a public Kaggle water-quality dataset (global/non‑US); core chemical features are universal, but predictions remain **experimental**.
 
@@ -144,6 +144,22 @@ poetry run mypy src/
 # Linting
 poetry run flake8 src/
 ```
+
+### Advanced: US Calibration Pipeline
+
+To evaluate and tighten model behavior on real US water samples:
+
+1. Harvest US samples (WQP/USGS → aggregated WQI rows):
+   ```bash
+   poetry run python scripts/build_us_training_samples.py
+   ```
+2. Train a US domain calibrator paired with the latest regressor:
+   ```bash
+   poetry run python scripts/train_us_calibration_from_samples.py
+   ```
+   This writes `calibrator_us_*.joblib` next to `regressor_*.joblib`, and all
+   future `load_latest_models()` calls will auto-attach the calibration for US
+   predictions.
 
 ## Documentation
 
