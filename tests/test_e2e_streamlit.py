@@ -58,6 +58,7 @@ API_TIMEOUT = 60  # seconds for WQP API calls
 # FIXTURES
 # =============================================================================
 
+@pytest.mark.integration
 @pytest.fixture(scope="session")
 def streamlit_server():
     """
@@ -146,6 +147,7 @@ def wqi_calculator():
 # TEST CLASS 1: FULL PIPELINE INTEGRATION (40 tests)
 # =============================================================================
 
+@pytest.mark.integration
 class TestFullPipelineIntegration:
     """Test complete ZIP → WQI → ML → trend pipeline."""
 
