@@ -848,13 +848,13 @@ def main():
         with col3:
             calculator = WQICalculator()
             is_safe = calculator.is_safe(wqi)
-            safety_icon = "" if is_safe else ""
-            safety_text = "Safe for drinking" if is_safe else "May be unsafe"
+            safety_text = "WQI ≥ 70 (core parameters only)" if is_safe else "WQI < 70 (core parameters only)"
             safety_color = "#00CC00" if is_safe else "#FF6600"
 
             st.markdown(
                 f"<div style='padding: 20px; border-radius: 5px; background-color: {safety_color}20; border: 2px solid {safety_color};'>"
-                f"<h3 style='margin: 0; color: {safety_color};'>{safety_icon} {safety_text}</h3>"
+                f"<h3 style='margin: 0; color: {safety_color};'>{safety_text}</h3>"
+                f"<p style='margin: 6px 0 0; color: #cccccc;'>Not a potability clearance. Lead, bacteria, PFAS, and other contaminants not tested.</p>"
                 f"</div>",
                 unsafe_allow_html=True
             )
