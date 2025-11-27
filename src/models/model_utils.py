@@ -113,7 +113,7 @@ def save_model_metadata(
             'metrics': regressor_metrics
         },
         'training_info': {
-            'dataset': 'Kaggle European Water Quality (1991-2017)',
+            'dataset': 'Kaggle Water Quality Dataset (1991-2017, non‑US monitoring sites)',
             'samples': 2939,
             'features': 69,
             'target_classifier': 'is_safe (WQI >= 70)',

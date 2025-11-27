@@ -2,8 +2,8 @@
 Domain Calibration for Water Quality Models
 
 This module provides calibration functionality to correct systematic prediction bias
-when applying models trained on one data distribution (e.g., European water quality)
-to a different distribution (e.g., US water quality).
+when applying models trained on one data distribution (e.g., Kaggle water quality
+training data) to a different distribution (e.g., US water quality).
 
 Uses isotonic regression to learn a monotonic mapping from biased predictions to
 calibrated predictions based on ground truth samples from the target domain.
@@ -30,7 +30,7 @@ class DomainCalibrator:
     """
     Calibrates ML model predictions to correct for domain shift.
 
-    Problem: Models trained on European water quality (DO mean 1.67 mg/L, WQI 66.73)
+    Problem: Models trained on the Kaggle training distribution (DO mean 1.67 mg/L, WQI 66.73)
     systematically under-predict US water quality (DO mean 8.82 mg/L, WQI 86.53)
     by ~20 points.
 

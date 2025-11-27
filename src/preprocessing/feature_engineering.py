@@ -1,12 +1,13 @@
 """
 Feature Engineering Module for Water Quality ML Models
 
-This module transforms the Kaggle European water quality dataset into
-features suitable for machine learning models. It extracts WQI parameters,
-calculates labels, and creates comprehensive feature sets.
+This module transforms the Kaggle Water Quality dataset into features suitable
+for machine learning models. It extracts WQI-style parameters, calculates
+labels, and creates comprehensive feature sets.
 
 Dataset: data/raw/waterPollution.csv (20,000 rows × 29 columns)
-Source: European water quality monitoring stations (1991-2017)
+Source: Public water quality monitoring stations (1991-2017) as provided in the
+original Kaggle dataset.
 """
 
 import pandas as pd
@@ -414,8 +415,8 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     Create CORE feature set for machine learning models (universal water quality only).
 
     This function creates features based ONLY on water quality parameters and temporal
-    information, excluding European-specific geographic, economic, and waste management
-    features. This enables better generalization to non-European water quality data.
+    information, excluding dataset-specific geographic, economic, and waste management
+    features. This enables better generalization beyond the original training regions.
 
     Features created:
     1. Water quality features: Raw parameters + derived ratios

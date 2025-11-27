@@ -1,38 +1,38 @@
 {
-  "timestamp": "2025-11-17T04:25:24.458721",
-  "classifier": {
-    "path": "data/models/classifier_20251117_042439.joblib",
-    "metrics": {
-      "accuracy": 0.9897959183673469,
-      "precision": 0.9880952380952381,
-      "recall": 0.9940119760479041,
-      "f1_score": 0.991044776119403,
-      "roc_auc": 0.9996581639869867,
-      "true_negatives": 250,
-      "false_positives": 4,
-      "false_negatives": 2,
-      "true_positives": 332
+    "timestamp": "2025-11-17T04:25:24.458721",
+    "classifier": {
+        "path": "data/models/classifier_20251117_042439.joblib",
+        "metrics": {
+            "accuracy": 0.9897959183673469,
+            "precision": 0.9880952380952381,
+            "recall": 0.9940119760479041,
+            "f1_score": 0.991044776119403,
+            "roc_auc": 0.9996581639869867,
+            "true_negatives": 250,
+            "false_positives": 4,
+            "false_negatives": 2,
+            "true_positives": 332
+        }
+    },
+    "regressor": {
+        "path": "data/models/regressor_20251117_042524.joblib",
+        "metrics": {
+            "r2_score": 0.9910044461069403,
+            "mae": 1.082995578231293,
+            "mse": 7.471881318265289,
+            "rmse": 2.7334742212549377,
+            "explained_variance": 0.9910072957731787,
+            "mean_residual": 0.04865170068027434,
+            "std_residual": 2.733041223671207,
+            "min_residual": -17.31110000000001,
+            "max_residual": 28.25
+        }
+    },
+    "training_info": {
+        "dataset": "Kaggle Water Quality Dataset (1991-2017, non-US monitoring sites)",
+        "samples": 2939,
+        "features": 69,
+        "target_classifier": "is_safe (WQI >= 70)",
+        "target_regressor": "wqi_score (0-100)"
     }
-  },
-  "regressor": {
-    "path": "data/models/regressor_20251117_042524.joblib",
-    "metrics": {
-      "r2_score": 0.9910044461069403,
-      "mae": 1.082995578231293,
-      "mse": 7.471881318265289,
-      "rmse": 2.7334742212549377,
-      "explained_variance": 0.9910072957731787,
-      "mean_residual": 0.04865170068027434,
-      "std_residual": 2.733041223671207,
-      "min_residual": -17.31110000000001,
-      "max_residual": 28.25
-    }
-  },
-  "training_info": {
-    "dataset": "Kaggle European Water Quality (1991-2017)",
-    "samples": 2939,
-    "features": 69,
-    "target_classifier": "is_safe (WQI >= 70)",
-    "target_regressor": "wqi_score (0-100)"
-  }
 }

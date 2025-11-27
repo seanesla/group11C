@@ -11,18 +11,18 @@ This document describes the machine learning models trained to predict water qua
 ## Training Data
 
 ### Source
-- **Dataset:** Kaggle European Water Quality Dataset
+- **Dataset:** Kaggle Water Quality Dataset (public, multi-country; primarily European monitoring sites)
 - **Original Size:** 20,000 records × 29 columns
 - **Processed Size:** 2,939 samples × 69 features
 - **Time Range:** 1991-2017 (27 years)
 - **Geographic Coverage:** European countries (France 48%, UK 20%, Spain 16%, Germany, Czech Republic, and 23 others)
 
 ### Important Limitation
-**⚠ CRITICAL:** Models are trained on European data but applied to US water quality monitoring. This cross-continental application has inherent limitations:
-- Different regulatory standards
-- Different pollution sources
-- Different measurement methodologies
-- Climate and geographic differences
+**⚠ CRITICAL:** Models are trained on non‑US monitoring data (primarily European sites) but applied to US water quality monitoring. This cross‑regional application has inherent limitations:
+- Different regulatory standards and monitoring programs
+- Different dominant pollution sources
+- Potential differences in measurement methodologies
+- Climate and geographic differences between regions
 
 ### Available WQI Parameters
 From the Kaggle dataset, we successfully mapped 5 of 6 WQI parameters:

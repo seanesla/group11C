@@ -47,7 +47,7 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
 
         "environmental_demographic": {
             "name": "🌍 Environmental & Demographic",
-            "description": "Socio-environmental context features (Europe-specific)",
+            "description": "Socio-environmental context features from the original training dataset",
             "features": {
                 "PopulationDensity": "Population per square kilometer",
                 "TerraMarineProtected_2016_2018": "% protected areas (2016-2018)",
@@ -59,13 +59,13 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
                 "combustibleRenewables_2009_2014": "% renewable energy (2009-2014)",
                 "gdp": "Gross Domestic Product"
             },
-            "source": "European statistical databases",
+            "source": "External statistical datasets bundled with the training data",
             "available_for_us": False
         },
 
         "waste_management": {
             "name": "♻️ Waste Management",
-            "description": "Waste composition and treatment metrics (Europe-specific)",
+            "description": "Waste composition and treatment metrics from the original training dataset",
             "features": {
                 "composition_food_organic_waste_percent": "% food/organic waste",
                 "composition_glass_percent": "% glass waste",
@@ -78,7 +78,7 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
                 "composition_yard_garden_green_waste_percent": "% yard/garden waste",
                 "waste_treatment_recycling_percent": "% waste recycled"
             },
-            "source": "European waste management data",
+            "source": "Waste management data bundled with the training dataset",
             "available_for_us": False
         },
 
@@ -128,7 +128,7 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
 
         "geographic_country": {
             "name": "🗺️ Geographic (Country)",
-            "description": "European country one-hot encoding (Europe-specific)",
+            "description": "Country one-hot encoding for training-dataset countries",
             "features": {
                 "country_Belgium": "Sample from Belgium",
                 "country_Bulgaria": "Sample from Bulgaria",
@@ -137,7 +137,7 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
                 "country_Germany": "Sample from Germany",
                 "country_Italy": "Sample from Italy",
                 "country_Lithuania": "Sample from Lithuania",
-                "country_Other": "Sample from other European country",
+                "country_Other": "Sample from other training-dataset country",
                 "country_Serbia": "Sample from Serbia",
                 "country_Spain": "Sample from Spain",
                 "country_United Kingdom": "Sample from United Kingdom"
@@ -148,7 +148,7 @@ def get_feature_categories() -> Dict[str, Dict[str, any]]:
 
         "derived_economic": {
             "name": "💰 Derived Economic",
-            "description": "Calculated economic indicators (Europe-specific)",
+            "description": "Calculated economic indicators from the training dataset",
             "features": {
                 "gdp_per_capita_proxy": "GDP / population density (proxy for per capita)"
             },
@@ -190,21 +190,22 @@ def count_features_by_availability() -> Dict[str, int]:
     }
 
 
-def get_european_only_features() -> List[str]:
+def get_training_only_features() -> List[str]:
     """
-    Get list of features that are only available for European data.
+    Get list of features that are only available in the original training dataset
+    (not directly measurable from US monitoring data).
 
     Returns:
         List of feature names that will be imputed for US predictions
     """
     categories = get_feature_categories()
-    european_features = []
+    training_only = []
 
     for category_data in categories.values():
         if category_data["available_for_us"] is False:
-            european_features.extend(category_data["features"].keys())
+            training_only.extend(category_data["features"].keys())
 
-    return european_features
+    return training_only
 
 
 def get_us_available_features() -> List[str]:

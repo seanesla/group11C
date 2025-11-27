@@ -16,7 +16,7 @@ Test Coverage:
 Verified with Chrome DevTools during development session 2025-11-10:
 - ZIP 20001: 4,035 measurements from 93 stations
 - WQI: 91.7 (Excellent), Safe for drinking
-- ML predictions working (European model mismatch documented)
+- ML predictions working (training-data mismatch documented)
 - Future trend forecasting: STABLE (+0.0 points)
 - All visualizations rendering correctly
 - No console errors

@@ -3,7 +3,7 @@
 Train Water Quality ML Models
 
 This script trains both the classifier and regressor models on the
-Kaggle European water quality dataset.
+Kaggle Water Quality dataset.
 
 Usage:
     # Standard training (full feature set):
@@ -51,9 +51,9 @@ Examples:
         '--core-params-only',
         action='store_true',
         help='Train using only core water quality features (~24 features) instead of '
-             'full feature set (59 features). This excludes European-specific features '
+             'full feature set (59 features). This excludes dataset-specific context features '
              '(geographic, environmental, economic, waste management) to enable better '
-             'generalization to non-European water quality data.'
+             'generalization beyond the original training regions.'
     )
 
     return parser.parse_args()
@@ -68,7 +68,7 @@ def main():
     if args.core_params_only:
         logger.info("MODE: CORE PARAMETERS ONLY (universal water quality features)")
     else:
-        logger.info("MODE: FULL FEATURE SET (includes European-specific features)")
+        logger.info("MODE: FULL FEATURE SET (includes dataset-specific context features)")
     logger.info("=" * 80)
 
     try:

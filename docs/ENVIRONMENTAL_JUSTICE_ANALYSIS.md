@@ -426,9 +426,9 @@ A surface water quality index cannot detect a distribution system problem.
 
 ### 5.2 ML Model Training Labels
 
-**Training Data:** European Water Quality Dataset (Kaggle, 1991-2017)
+**Training Data:** Kaggle Water Quality Dataset (1991-2017, non‑US monitoring sites)
 - 2,939 water quality measurements
-- 11 European countries
+- 11 training-dataset countries (primarily European)
 - Ground truth labels: WQI scores calculated from available parameters
 
 **Classifier Label:**

@@ -5,8 +5,8 @@ This module converts the 6 WQI parameters from US data into the ~30 CORE feature
 that the ML models were trained on (water quality + temporal features only).
 
 CORE FEATURE APPROACH:
-The models are now trained on UNIVERSAL water quality features only, excluding
-European-specific geographic, economic, and waste management features. This enables
+The models are trained on UNIVERSAL water quality features only, excluding
+dataset-specific geographic, economic, and waste management features. This enables
 better generalization to US water quality data.
 """
 
@@ -36,7 +36,7 @@ def prepare_us_features_for_prediction(
     - Missing value indicators
     - Interaction features
 
-    EXCLUDES European-specific features (geographic, environmental, waste management)
+    EXCLUDES training‑region–specific features (geographic, environmental, waste management)
     to enable better generalization to US water quality data.
 
     IMPORTANT: Feature order must match training data exactly.

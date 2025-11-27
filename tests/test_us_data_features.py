@@ -254,7 +254,7 @@ class TestFeatureOrderMatches:
             assert wb in df.columns, f"Missing water body type: {wb}"
 
     def test_country_encoding_positions(self, sample_us_data_complete):
-        """Country one-hot encoding should include all European countries + Other."""
+        """Country one-hot encoding should include all training-dataset countries + Other."""
         df = prepare_us_features_for_prediction(**sample_us_data_complete)
         european_countries = [
             'Belgium', 'Bulgaria', 'Finland', 'France', 'Germany',

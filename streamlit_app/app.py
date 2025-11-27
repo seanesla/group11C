@@ -24,7 +24,12 @@ from data_collection.wqp_client import WQPClient
 from data_collection.usgs_client import USGSClient
 from data_collection.fallback import fetch_with_fallback
 from utils.wqi_calculator import WQICalculator
-from utils.ml_feature_definitions import get_feature_categories, count_features_by_availability, get_european_only_features, get_us_available_features
+from utils.ml_feature_definitions import (
+    get_feature_categories,
+    count_features_by_availability,
+    get_training_only_features,
+    get_us_available_features,
+)
 from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
@@ -382,7 +387,7 @@ def display_epa_who_standards():
         st.markdown("#### Nitrate Unit Conversion System")
         st.markdown("""
         Water quality data sources use different unit conventions for nitrate:
-        - **European/Kaggle Data**: mg{NO₃}/L (molecular form)
+        - **Some historical datasets (e.g., Kaggle)**: mg{NO₃}/L (molecular form)
         - **EPA/USGS Standards**: mg/L as N (nitrogen content only)
 
         This **4.43× difference** is critical for accurate WQI calculations.
@@ -889,10 +894,11 @@ This tool analyzes 6 water quality parameters for general environmental assessme
         if ml_predictions:
             st.subheader("ML Model Predictions")
 
-            # Add disclaimer about European training data
+            # Add disclaimer about training data
             st.info(
-                "**Note:** These predictions come from machine learning models trained on European water quality data (1991-2017). "
-                "While chemical relationships are universal, predictions for US locations should be interpreted with caution."
+                "**Note:** These predictions come from machine learning models trained on a historical public water quality dataset "
+                "(Kaggle, 1991–2017). While chemical relationships are universal, predictions for US locations should be interpreted "
+                "with caution because the training data comes from different regions."
             )
 
             col1, col2, col3 = st.columns(3)
@@ -941,8 +947,8 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                 **Model Information:**
                 - **Classifier:** RandomForest (98.64% accuracy on test set)
                 - **Regressor:** RandomForest (R² = 0.9859 on test set)
-                - **Training Data:** 2,939 European water samples (1991-2017)
-                - **Limitations:** Geographic mismatch (Europe → US), missing turbidity data
+                - **Training Data:** 2,939 samples from a historical public water quality dataset (1991–2017, non‑US regions)
+                - **Limitations:** Geographic mismatch between training data and US locations, missing turbidity data
                 """)
 
             st.divider()
@@ -1055,7 +1061,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
         # Get feature categories and counts
         feature_categories = get_feature_categories()
         feature_counts = count_features_by_availability()
-        european_features = set(get_european_only_features())
+        training_only_features = set(get_training_only_features())
 
         # Summary statistics
         col1, col2, col3, col4 = st.columns(4)
@@ -1064,7 +1070,12 @@ This tool analyzes 6 water quality parameters for general environmental assessme
         with col2:
             st.metric("Available for US", feature_counts['available'], help="Direct measurements from US water samples")
         with col3:
-            st.metric("Europe-Only (Imputed)", feature_counts['missing'], delta=None, help="Imputed from European training data averages")
+            st.metric(
+                "Training-Only (Imputed)",
+                feature_counts['missing'],
+                delta=None,
+                help="Imputed from training-data averages (not directly measured in US data)",
+            )
         with col4:
             st.metric("Partial", feature_counts['partial'], help="Some components available for US data")
 
@@ -1079,7 +1090,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                 if availability is True:
                     st.success(f"✅ **Available for US data** | Source: {category_data['source']}")
                 elif availability is False:
-                    st.warning(f"⚠️ **Europe-only (imputed for US predictions)** | Source: {category_data['source']}")
+                    st.warning(f"⚠️ **Training-only (imputed for US predictions)** | Source: {category_data['source']}")
                 else:
                     st.info(f"ℹ️ **Partial availability** | Source: {category_data['source']}")
 
@@ -1088,7 +1099,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                     {
                         "Feature": feat_name,
                         "Description": feat_desc,
-                        "Status": "🔴 Imputed" if feat_name in european_features else "🟢 Available"
+                        "Status": "🔴 Imputed" if feat_name in training_only_features else "🟢 Available"
                     }
                     for feat_name, feat_desc in category_data['features'].items()
                 ])
@@ -1139,10 +1150,10 @@ This tool analyzes 6 water quality parameters for general environmental assessme
         # === HIGHLIGHT MISSING/IMPUTED FEATURES ===
         with st.expander("⚠️ Imputed Features for US Predictions (Phase 3.3)", expanded=False):
             st.markdown(f"""
-            #### {len(european_features)} European Features Imputed for US Data
+            #### {len(training_only_features)} Training-Only Context Features Imputed for US Data
 
-            The ML models were trained on **European water quality data (1991-2017)**. When making predictions for US locations,
-            **{len(european_features)} Europe-specific features** are **imputed (filled with average values from training data)** because
+            The ML models were trained on a historical public water quality dataset (Kaggle). When making predictions for US locations,
+            **{len(training_only_features)} context features** are **imputed (filled with average values from training data)** because
             they're not available for US water samples.
 
             **Why This Matters:**
@@ -1222,18 +1233,18 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                 # Annotate with availability
                 us_features = get_us_available_features()
-                eu_features = get_european_only_features()
+                training_only_features = get_training_only_features()
 
                 clf_importance_df = annotate_importance_with_availability(
                     importances['classifier'],
                     us_features,
-                    eu_features
+                    training_only_features,
                 )
 
                 reg_importance_df = annotate_importance_with_availability(
                     importances['regressor'],
                     us_features,
-                    eu_features
+                    training_only_features,
                 )
 
                 # Display feature importance tables in expandable sections
@@ -1565,14 +1576,14 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                     # Annotate with availability
                     us_features = get_us_available_features()
-                    eu_features = get_european_only_features()
+                    training_only_features = get_training_only_features()
 
                     clf_contrib_df = clf_contributions['contributions'].copy()
 
                     def get_availability_marker(feature_name: str) -> str:
                         if feature_name in us_features:
                             return "🟢 Available"
-                        elif feature_name in eu_features:
+                        elif feature_name in training_only_features:
                             return "🔴 Imputed"
                         else:
                             return "🟡 Partial"
