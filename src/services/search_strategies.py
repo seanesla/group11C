@@ -62,7 +62,11 @@ def build_search_strategies(
     """Generate deterministic search strategies.
 
     Strategies progress from the user's exact request to progressively wider
-    searches (radius + lookback) capped by ``max_radius``.
+    searches (radius + modest lookback) capped by ``max_radius``.
+
+    Conservative by design: only one radius expansion and one history expansion
+    to avoid "fallback everywhere" behavior. This keeps results anchored to the
+    user's intent unless the initial query is truly empty.
     """
 
     if end_date < start_date:
@@ -91,15 +95,12 @@ def build_search_strategies(
     # 1) User's inputs
     add_strategy(radius_miles, start_date, "Local search", auto=False)
 
-    # 2) Slightly larger radius for sparse geographies
+    # 2) Single radius expansion for sparse geographies
     if radius_miles < max_radius:
         expanded_radius = max(radius_miles * 1.5, radius_miles + 15, 40)
         add_strategy(expanded_radius, start_date, "Expanded radius", auto=True)
 
-    # 3) Extend lookback to 3 years (or keep user's if already longer)
-    add_strategy(max(radius_miles, 60), _extend_start(start_date, end_date, 3), "Extended history (3yr)", True)
-
-    # 4) Extend lookback to 5 years for stubborn cases
-    add_strategy(max(radius_miles, 75), _extend_start(start_date, end_date, 5), "Extended history (5yr)", True)
+    # 3) Modest history extension to 3 years (no extra radius bump)
+    add_strategy(radius_miles, _extend_start(start_date, end_date, 3), "Extended history (3yr)", True)
 
     return strategies
