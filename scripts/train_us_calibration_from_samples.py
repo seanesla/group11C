@@ -148,6 +148,13 @@ def main() -> int:
     # Build feature matrix aligned to inference path
     X_features = build_feature_matrix(df_us)
 
+    # Align columns to the regressor's training schema (18 core features).
+    expected_cols = regressor.feature_names
+    for col in expected_cols:
+        if col not in X_features:
+            X_features[col] = pd.NA
+    X_features = X_features[expected_cols]
+
     # Predict on US samples (no calibration yet)
     y_pred = regressor.predict(X_features, apply_calibration=False)
 

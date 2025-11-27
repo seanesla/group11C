@@ -30,7 +30,7 @@ def prepare_us_features_for_prediction(
     """
     Convert US WQI parameters into CORE feature set matching ML model training.
 
-    Creates ~30 CORE features from 6 WQI parameters by engineering:
+    Creates ~20 CORE features from 6 WQI parameters by engineering:
     - Temporal features (year-based)
     - Water quality derived features (ratios, categories)
     - Missing value indicators
@@ -117,29 +117,19 @@ def prepare_us_features_for_prediction(
     temp_val = temperature if temperature is not None else 15
     features['temp_stress'] = abs(temp_val - 15) / 15
 
-    # Convert to DataFrame with explicit column order
-    # CRITICAL: Column order must match training data EXACTLY
+    # Convert to DataFrame with explicit column order (matches trained models: 18 features)
     column_order = [
-        # Year (identifier)
         'year',
-        # Raw WQI parameters
         'ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance',
-        # Temporal features
         'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s',
-        # Water quality derived
         'ph_deviation_from_7', 'do_temp_ratio',
         'conductance_low', 'conductance_medium', 'conductance_high',
-        # Missing indicators
-        'ph_missing', 'dissolved_oxygen_missing', 'temperature_missing',
-        'turbidity_missing', 'nitrate_missing', 'conductance_missing',
-        'n_params_available',
-        # Interaction features
         'pollution_stress', 'temp_stress'
     ]
 
     df = pd.DataFrame([features], columns=column_order)
 
-    # Verify feature count (should be 25 features to match model)
+    # Verify feature count (should be 18 features to match model)
     expected_count = len(column_order)
     if len(df.columns) != expected_count:
         raise ValueError(f"Expected {expected_count} features, got {len(df.columns)}")

@@ -510,8 +510,10 @@ class TestErrorHandlingEdgeCases:
             year=2025
         )
 
-        assert len(features.columns) == 59, "Should produce exactly 59 features"
         assert len(features) == 1, "Should produce exactly 1 row"
+        # Ensure the feature frame contains (at least) the model's expected columns.
+        expected_cols = set(regressor.feature_names)
+        assert expected_cols.issubset(set(features.columns)), "Missing required inference features"
 
         is_safe = classifier.predict(features)[0]
         wqi_pred = regressor.predict(features)[0]
@@ -731,7 +733,7 @@ class TestDataValidation:
             assert 0 <= score <= 100, f"{param} score out of range: {score}"
 
     def test_ml_features_count(self):
-        """Test ML features are exactly 59."""
+        """Test ML features include the trained model schema (18 features)."""
         features = prepare_us_features_for_prediction(
             ph=7.0,
             dissolved_oxygen=8.0,
@@ -742,7 +744,7 @@ class TestDataValidation:
             year=2025
         )
 
-        assert len(features.columns) == 59, f"Expected 59 features, got {len(features.columns)}"
+        assert len(features.columns) == 18, f"Expected 18 features, got {len(features.columns)}"
         assert len(features) == 1, "Should produce exactly 1 row"
 
     def test_ml_features_numeric(self):

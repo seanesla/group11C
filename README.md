@@ -161,6 +161,16 @@ To evaluate and tighten model behavior on real US water samples:
    future `load_latest_models()` calls will auto-attach the calibration for US
    predictions.
 
+### Operations & Maintenance
+
+- **Refresh US samples weekly**: `poetry run python scripts/build_us_training_samples.py --lookback-years 3 --radius 30`  
+  (adjust ZIP list with `--zip` for targeted audits; completes in ~3 min for 5 ZIPs).
+- **Rebuild calibrator after refresh**: `poetry run python scripts/train_us_calibration_from_samples.py`  
+  saves `calibrator_us_<timestamp>.joblib` alongside the active regressor so the app auto-loads it.
+- **Streamlit smoke (headless)**: `poetry run pytest tests/test_e2e_streamlit.py -k "wqp_api_timeout_handling"` exercises the UI data path without a browser.
+- **Full geographic sweep (slow, ~17 min)**: `poetry run pytest tests/test_geographic_coverage_191_locations.py` ensures all US/territory ZIPs route through fallback logic.
+- **Data source overrides**: use env vars `WQP_TIMEOUT`, `USGS_TIMEOUT`, and `MAX_RADIUS_MILES` to tune latency and fallback aggressiveness in production-like runs.
+
 ## Documentation
 
 - **Project Proposal**: `projectspec/project.pdf`
