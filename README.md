@@ -102,8 +102,8 @@ group11C/
 ├── streamlit_app/            # Web application
 ├── tests/                    # Unit and integration tests (in progress)
 ├── data/                     # Data directories
-├── notebooks/                # Jupyter notebooks for analysis
-└── projectspec/              # Project documentation
+└── docs/                     # Reports, standards, screenshots, project specs
+    └── projectspec/          # Course briefs, rubrics, proposal PDFs
 ```
 
 ## Water Quality Index (WQI)
@@ -173,9 +173,10 @@ To evaluate and tighten model behavior on real US water samples:
 
 ## Documentation
 
-- **Project Proposal**: `projectspec/project.pdf`
+- **Project Proposal**: `docs/projectspec/project.pdf`
 - **Implementation Plan**: `.claude/plan.md`
 - **Contributor Guide**: `AGENTS.md`
+- **Legacy validation reports**: `docs/archive/` (kept for reference)
 
 ## License
 

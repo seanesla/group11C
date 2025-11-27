@@ -44,7 +44,7 @@ poetry.lock
 
 # Testing
 .pytest_cache/
-.coverage
+.coverage*
 htmlcov/
 .tox/
 .mypy_cache/
@@ -90,5 +90,6 @@ kaggle.json
 .DS_Store
 Thumbs.db
 
-
-projectspec/
+# Course spec PDFs (track only the main brief)
+docs/projectspec/*
+!docs/projectspec/project.pdf

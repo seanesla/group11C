@@ -498,7 +498,7 @@ The Water Quality Index Lookup application has been **HYPER-RIGOROUSLY TESTED** 
 
 **RECOMMENDATION**: ✅ **APPROVED FOR DEPLOYMENT**
 
-The application meets all project requirements per `projectspec/project.pdf`:
+The application meets all project requirements per `docs/projectspec/project.pdf`:
 1. ✅ User inputs ZIP code → Receives WQI score
 2. ✅ Trend prediction graph displayed
 3. ✅ Real data from USGS/WQP APIs
