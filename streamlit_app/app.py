@@ -145,16 +145,12 @@ def make_ml_predictions(
         return None
 
 
-def create_time_series_chart(df: pd.DataFrame) -> go.Figure:
-    """Create time series chart showing WQI over time with quality zones."""
+def get_daily_wqi_scores(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate raw measurements into daily WQI scores (one row per day)."""
     if df.empty or 'ActivityStartDate' not in df.columns:
-        return None
+        return pd.DataFrame()
 
-    # WQP API returns data in long format - need to group by date and calculate WQI
     calculator = WQICalculator()
-    wqi_scores = []
-    dates = []
-
     param_mapping = {
         'pH': 'ph',
         'Dissolved oxygen (DO)': 'dissolved_oxygen',
@@ -164,34 +160,35 @@ def create_time_series_chart(df: pd.DataFrame) -> go.Figure:
         'Specific conductance': 'conductance'
     }
 
-    # Group by date
+    df = df.copy()
     df['ActivityStartDate'] = pd.to_datetime(df['ActivityStartDate'])
+
+    rows = []
     for date, date_df in df.groupby('ActivityStartDate'):
-        try:
-            # Aggregate parameters for this date
-            params = {}
-            for characteristic_name, param_key in param_mapping.items():
-                mask = date_df['CharacteristicName'] == characteristic_name
-                values = pd.to_numeric(date_df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
-
-                if len(values) > 0:
-                    params[param_key] = float(values.median())
-
-            if params:  # Only calculate if we have at least some parameters
+        params = {}
+        for characteristic_name, param_key in param_mapping.items():
+            mask = date_df['CharacteristicName'] == characteristic_name
+            values = pd.to_numeric(date_df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
+            if len(values) > 0:
+                params[param_key] = float(values.median())
+        if params:
+            try:
                 wqi, _, _ = calculator.calculate_wqi(**params)
-                wqi_scores.append(wqi)
-                dates.append(date)
-        except Exception:
-            continue
+                rows.append({"Date": date, "WQI": wqi})
+            except Exception:
+                continue
 
-    if not wqi_scores:
+    if not rows:
+        return pd.DataFrame()
+
+    return pd.DataFrame(rows).sort_values('Date').reset_index(drop=True)
+
+
+def create_time_series_chart(df: pd.DataFrame) -> go.Figure:
+    """Create time series chart showing WQI over time with quality zones."""
+    plot_df = get_daily_wqi_scores(df)
+    if plot_df.empty:
         return None
-
-    # Create DataFrame for plotting
-    plot_df = pd.DataFrame({
-        'Date': dates,
-        'WQI': wqi_scores
-    }).sort_values('Date')
 
     # Create figure
     fig = go.Figure()
@@ -541,6 +538,68 @@ def create_future_trend_chart(
     )
 
     return fig
+
+
+def build_forecast_from_history(
+    daily_wqi: pd.DataFrame,
+    periods: int = 12
+) -> Optional[Dict[str, Any]]:
+    """
+    Derive a simple 12-month forecast from observed daily WQI history using
+    linear extrapolation. Avoids flat lines by reflecting actual recent trend.
+    """
+    if daily_wqi is None or daily_wqi.empty or len(daily_wqi) < 3:
+        return None
+
+    import numpy as np
+    from dateutil.relativedelta import relativedelta
+
+    # Use last 180 days to reduce noise
+    cutoff = daily_wqi['Date'].max() - pd.Timedelta(days=180)
+    recent = daily_wqi[daily_wqi['Date'] >= cutoff] if len(daily_wqi) > 30 else daily_wqi
+
+    ordinals = recent['Date'].map(datetime.toordinal).to_numpy()
+    wqis = recent['WQI'].to_numpy()
+
+    # If variance is zero, no meaningful slope
+    if np.isclose(wqis.std(), 0):
+        return None
+
+    slope, intercept = np.polyfit(ordinals, wqis, 1)  # WQI per day
+    start_date = recent['Date'].max()
+    current_wqi = recent.loc[recent['Date'].idxmax(), 'WQI']
+
+    dates = []
+    predictions = []
+    for i in range(1, periods + 1):
+        future_date = start_date + relativedelta(months=i)
+        days_ahead = (future_date - start_date).days
+        pred = current_wqi + slope * days_ahead
+        pred = max(0, min(100, pred))
+        dates.append(future_date)
+        predictions.append(pred)
+
+    final_wqi = predictions[-1]
+    wqi_change = final_wqi - current_wqi
+    if wqi_change > 2:
+        trend = 'improving'
+    elif wqi_change < -2:
+        trend = 'declining'
+    else:
+        trend = 'stable'
+
+    return {
+        'dates': dates,
+        'predictions': predictions,
+        'trend': trend,
+        'trend_slope': wqi_change / periods,
+        'current_wqi': current_wqi,
+        'final_wqi': final_wqi,
+        'wqi_change': wqi_change,
+        'periods': periods,
+        'frequency': 'M',
+        'method': 'historical_linear'
+    }
 
 
 def fetch_water_quality_data(
@@ -936,27 +995,29 @@ def main():
             """)
 
             try:
-                # Prepare features for prediction
-                import numpy as np
-                X_features = prepare_us_features_for_prediction(
-                    ph=aggregated.get('ph'),
-                    dissolved_oxygen=aggregated.get('dissolved_oxygen'),
-                    temperature=aggregated.get('temperature'),
-                    turbidity=aggregated.get('turbidity'),
-                    nitrate=aggregated.get('nitrate'),
-                    conductance=aggregated.get('conductance'),
-                    year=datetime.now().year
-                )
-                X_array = np.array(X_features).reshape(1, -1)
-
-                # Generate 12-month forecast
+                # Try to derive forecast from observed history; fallback to model drift
                 current_date = datetime.now()
-                trend_data = regressor.predict_future_trend(
-                    X=X_array,
-                    start_date=current_date,
-                    periods=12,
-                    freq='M'
-                )
+                trend_data = build_forecast_from_history(daily_wqi, periods=12)
+
+                if trend_data is None:
+                    import numpy as np
+                    X_features = prepare_us_features_for_prediction(
+                        ph=aggregated.get('ph'),
+                        dissolved_oxygen=aggregated.get('dissolved_oxygen'),
+                        temperature=aggregated.get('temperature'),
+                        turbidity=aggregated.get('turbidity'),
+                        nitrate=aggregated.get('nitrate'),
+                        conductance=aggregated.get('conductance'),
+                        year=current_date.year
+                    )
+                    X_array = np.array(X_features).reshape(1, -1)
+
+                    trend_data = regressor.predict_future_trend(
+                        X=X_array,
+                        start_date=current_date,
+                        periods=12,
+                        freq='M'
+                    )
 
                 # Create and display the forecast chart
                 if trend_data and trend_data.get('dates'):
@@ -1010,9 +1071,8 @@ def main():
 
                         # Forecast disclaimer
                         st.warning(
-                            "**Forecast Limitations:** These predictions assume current water quality parameters remain constant "
-                            "and are based on models trained on historical European data (1991-2017). Actual water quality may vary "
-                            "due to seasonal changes, environmental factors, and human activities. Use as guidance only."
+                            "**Forecast Limitations:** Uses observed WQI trend over recent months when available (fallback: model drift). "
+                            "Actual water quality may shift with seasonality, infrastructure changes, and unmeasured contaminants. Guidance only."
                         )
 
                 else:
