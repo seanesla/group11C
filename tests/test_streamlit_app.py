@@ -408,8 +408,9 @@ class TestFetchWaterQualityData:
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_success_valid_zip(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_success_valid_zip(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test successful fetch with valid ZIP code."""
         # Mock ZipCodeMapper
         mapper_instance = MagicMock()
@@ -423,6 +424,11 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = test_df
         mock_wqp.return_value = client_instance
 
+        # Mock USGSClient to avoid real network calls
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         # Mock streamlit spinner
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
@@ -430,11 +436,12 @@ class TestFetchWaterQualityData:
         # Test
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert df is not None
         assert error is None
         assert len(df) == 3
+        assert source is not None
 
     @patch('app.ZipCodeMapper')
     @patch('app.st')
@@ -449,11 +456,12 @@ class TestFetchWaterQualityData:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("INVALID", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("INVALID", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
         assert "Invalid ZIP code" in error
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.st')
@@ -469,16 +477,18 @@ class TestFetchWaterQualityData:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("99999", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("99999", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
         assert "Could not find coordinates" in error
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_empty_dataframe(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_empty_dataframe(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test when API returns empty DataFrame."""
         mapper_instance = MagicMock()
         mapper_instance.is_valid_zipcode.return_value = True
@@ -489,21 +499,27 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = pd.DataFrame()
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
-        assert "No water quality data found" in error
+        assert "No water quality data" in error
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_with_custom_radius(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_with_custom_radius(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test with custom search radius."""
         mapper_instance = MagicMock()
         mapper_instance.is_valid_zipcode.return_value = True
@@ -515,12 +531,16 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = test_df
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 50.0, start_date, end_date)
+        df, error, _ = fetch_water_quality_data("20001", 50.0, start_date, end_date)
 
         # Verify radius passed to client
         client_instance.get_data_by_location.assert_called_once()
@@ -529,8 +549,9 @@ class TestFetchWaterQualityData:
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_with_date_range(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_with_date_range(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test with specific date range."""
         mapper_instance = MagicMock()
         mapper_instance.is_valid_zipcode.return_value = True
@@ -542,12 +563,16 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = test_df
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
         start_date = datetime(2023, 6, 1)
         end_date = datetime(2023, 8, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, _ = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         # Verify dates passed to client
         client_instance.get_data_by_location.assert_called_once()
@@ -557,8 +582,9 @@ class TestFetchWaterQualityData:
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_api_exception(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_api_exception(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test when API raises exception."""
         mapper_instance = MagicMock()
         mapper_instance.is_valid_zipcode.return_value = True
@@ -569,16 +595,21 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.side_effect = Exception("API Error")
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.side_effect = Exception("USGS error")
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
-        assert "Error fetching data" in error
+        assert "No water quality data" in error
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.st')
@@ -593,10 +624,11 @@ class TestFetchWaterQualityData:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
@@ -615,16 +647,18 @@ class TestFetchWaterQualityData:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("20001", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert df is None
         assert error is not None
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_returns_tuple(self, mock_st, mock_wqp, mock_mapper):
-        """Test that function always returns tuple (df, error)."""
+    def test_fetch_returns_tuple(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
+        """Test that function always returns tuple (df, error, source)."""
         mapper_instance = MagicMock()
         mapper_instance.is_valid_zipcode.return_value = True
         mapper_instance.get_coordinates.return_value = (38.9072, -77.0369)
@@ -635,6 +669,10 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = test_df
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
@@ -643,7 +681,7 @@ class TestFetchWaterQualityData:
         result = fetch_water_quality_data("20001", 25.0, start_date, end_date)
 
         assert isinstance(result, tuple)
-        assert len(result) == 2
+        assert len(result) == 3
 
     @patch('app.ZipCodeMapper')
     @patch('app.st')
@@ -658,16 +696,18 @@ class TestFetchWaterQualityData:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("ABC", 25.0, start_date, end_date)
+        df, error, source = fetch_water_quality_data("ABC", 25.0, start_date, end_date)
 
         assert error is not None
         assert "ABC" in error
         assert "Invalid ZIP code" in error
+        assert source is None
 
     @patch('app.ZipCodeMapper')
     @patch('app.WQPClient')
+    @patch('app.USGSClient')
     @patch('app.st')
-    def test_fetch_coordinates_passed_correctly(self, mock_st, mock_wqp, mock_mapper):
+    def test_fetch_coordinates_passed_correctly(self, mock_st, mock_usgs, mock_wqp, mock_mapper):
         """Test that coordinates are passed correctly to API client."""
         test_lat, test_lon = 40.7128, -74.0060
 
@@ -681,12 +721,16 @@ class TestFetchWaterQualityData:
         client_instance.get_data_by_location.return_value = test_df
         mock_wqp.return_value = client_instance
 
+        usgs_instance = MagicMock()
+        usgs_instance.get_data_by_location.return_value = pd.DataFrame()
+        mock_usgs.return_value = usgs_instance
+
         mock_st.spinner.return_value.__enter__ = MagicMock()
         mock_st.spinner.return_value.__exit__ = MagicMock()
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 12, 31)
-        df, error = fetch_water_quality_data("10001", 25.0, start_date, end_date)
+        df, error, _ = fetch_water_quality_data("10001", 25.0, start_date, end_date)
 
         # Verify coordinates passed to client
         client_instance.get_data_by_location.assert_called_once()

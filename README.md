@@ -2,12 +2,12 @@
 
 **Group 11C**: Joseann Boneo, Sean Esla, Zizwe Mtonga, Lademi Aromolaran
 
-A machine learning–assisted system that provides Water Quality Index (WQI) scores and trend insights based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal/USGS and calculates NSF-style quality assessments.
+A machine learning–assisted system that provides Water Quality Index (WQI) scores and trend insights based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal/USGS and calculates NSF-style quality assessments. Training data comes from a public Kaggle water-quality dataset (global/non‑US); core chemical features are universal, but predictions remain **experimental**.
 
 ## Features
 
 - **ZIP Code Lookup**: Search for water quality data by US ZIP code
-- **Real-Time Data**: Fetches live water quality measurements from EPA/USGS Water Quality Portal
+- **Real-Time Data**: Fetches live water quality measurements from EPA/USGS Water Quality Portal with automatic WQP → USGS fallback
 - **WQI Calculation**: Comprehensive Water Quality Index based on 6 key parameters:
   - pH
   - Dissolved Oxygen (DO)
@@ -15,10 +15,10 @@ A machine learning–assisted system that provides Water Quality Index (WQI) sco
   - Turbidity
   - Nitrate (with automatic unit conversion mg{NO3}/L → mg/L as N)
   - Specific Conductance
-- **ML-Powered Predictions**: Random Forest models provide:
-  - Safety classification (Safe/Unsafe) with 98.98% accuracy
-  - WQI score prediction with R² = 0.991
-  - 12-month future trend forecasting (improving/stable/declining)
+- **ML-Powered Predictions**: Random Forest models (core-parameter only) provide:
+  - Safety classification (Safe/Unsafe) — test accuracy **0.986** on Kaggle holdout (2,939 samples)
+  - WQI regression — test R² **0.985** on Kaggle holdout
+  - 12-month future trend forecasting (experimental)
 - **Interactive Visualizations**: Time series charts and parameter comparisons using Plotly
 - **Safety Assessment**: Indicates whether water is safe for drinking (WQI ≥ 70)
 - **Data Export**: Download raw data as CSV
@@ -26,15 +26,16 @@ A machine learning–assisted system that provides Water Quality Index (WQI) sco
 
 ## Project Status
 
-**⚠ NOT FOR PRODUCTION USE** – Research/portfolio project with strong engineering and explicit safety limitations
+**⚠ NOT FOR PRODUCTION USE** – Research/portfolio project with explicit safety limitations and non‑US training data. Use for awareness, not for drinking-water decisions.
 
 **Implemented Components:**
 - ✅ Water Quality Portal API client with unit standardization and timeouts
-- ✅ USGS NWIS API client integration and USGS fallback when WQP returns no data
+- ✅ USGS NWIS API client integration with automatic fallback when WQP returns no data
 - ✅ ZIP code to geolocation mapping and geographic coverage tests across all US states and territories
+- ✅ Search-strategy fallback that widens radius/lookback automatically (helps sparse areas like many CA ZIPs)
 - ✅ WQI calculation engine (NSF-WQI style) used as the primary safety signal
 - ✅ Streamlit web application with interactive visualizations and environmental-justice warnings
-- ✅ ML models (Random Forest classifier + regressor) trained on processed public water-quality data (Kaggle dataset) and used as **experimental** predictors with clear disclaimers
+- ✅ ML models (Random Forest classifier + regressor) trained on cleaned Kaggle water-quality data (global, non‑US); clearly labeled as experimental
 - ✅ 1,500+ unit and integration tests (fast tests run by default; live external/API tests are marked `integration`)
 - ✅ Nitrate unit conversion system (mg{NO3}/L → mg/L as N) consistent with EPA standards
 
@@ -84,9 +85,9 @@ The app will open in your default browser at `http://localhost:8501`.
 
 ### Example ZIP Codes
 
-- **20001** – Washington, DC
-- **10001** – New York City, NY
-- **90001** – Los Angeles, CA
+- **20001** – Washington, DC (dense data)
+- **10001** – New York City, NY (dense data)
+- **90001** – Los Angeles, CA (works via auto-extended search if recent data are sparse)
 
 ## Project Structure
 
@@ -119,7 +120,8 @@ Water is considered **safe for drinking** when WQI ≥ 70.
 
 ## Data Sources
 
-- **Water Quality Portal**: Aggregates data from EPA, USGS, and other agencies
+- **Water Quality Portal / USGS NWIS**: Live US measurements (primary inference data)
+- **Kaggle Water Quality Dataset (1991–2017, global/non‑US)**: Training data for ML models (chemical-only core features)
 - **pgeocode**: ZIP code to coordinates conversion
 
 ## Development

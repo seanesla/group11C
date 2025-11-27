@@ -1,1 +1,0 @@
-- make granulated, unambiguous todo lists that aren't confusing and left up to multiple interpretations.

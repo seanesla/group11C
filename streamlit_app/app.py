@@ -33,6 +33,7 @@ from utils.ml_feature_definitions import (
 from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
+from services.search_strategies import build_search_strategies, SearchStrategy
 
 
 # Page configuration
@@ -553,7 +554,7 @@ def fetch_water_quality_data(
 
     Returns:
         Tuple of (DataFrame, error_message, source_label)
-        If successful: (DataFrame, None, "WQP" or "USGS NWIS")
+        If successful: (DataFrame, None, "<source> · <strategy>")
         If failed: (None, error_message, None)
     """
     try:
@@ -581,22 +582,42 @@ def fetch_water_quality_data(
             "Specific conductance"
         ]
 
-        with st.spinner(f"Fetching water quality data within {radius_miles} miles of ZIP {zip_code}..."):
-            df, source_label = fetch_with_fallback(
-                latitude=lat,
-                longitude=lon,
-                radius_miles=radius_miles,
-                start_date=start_date,
-                end_date=end_date,
-                characteristics=characteristics,
-                wqp_client=client,
-                usgs_client=usgs_client
-            )
+        strategies = build_search_strategies(
+            radius_miles=radius_miles,
+            start_date=start_date,
+            end_date=end_date
+        )
 
-        if df.empty:
-            return None, f"No water quality data found within {radius_miles} miles of ZIP {zip_code} for the selected date range.", None
+        attempt_history = []
 
-        return df, None, source_label
+        for strategy in strategies:
+            description = strategy.describe()
+            attempt_history.append(description)
+
+            with st.spinner(f"Searching {description} for ZIP {zip_code}..."):
+                df, source_label = fetch_with_fallback(
+                    latitude=lat,
+                    longitude=lon,
+                    radius_miles=strategy.radius_miles,
+                    start_date=strategy.start_date,
+                    end_date=strategy.end_date,
+                    characteristics=characteristics,
+                    wqp_client=client,
+                    usgs_client=usgs_client
+                )
+
+            if df is not None and not df.empty:
+                label = source_label or "WQP/USGS"
+                context = f"{label} · {description}"
+                if strategy.auto_adjusted:
+                    context += " (auto-extended)"
+                return df, None, context
+
+        attempts_text = "; ".join(attempt_history)
+        return None, (
+            f"No water quality data found for ZIP {zip_code} after trying: {attempts_text}. "
+            "Try a different ZIP or select a broader date range."
+        ), None
 
     except Exception as e:
         return None, f"Error fetching data: {str(e)}", None

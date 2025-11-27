@@ -140,7 +140,7 @@ class WQPClient:
             response = self._make_request('Station', params)
 
             # Parse CSV response
-            df = pd.read_csv(io.StringIO(response.text))
+            df = pd.read_csv(io.StringIO(response.text), dtype=str)
             logger.info(f"Found {len(df)} monitoring stations")
 
             return df
