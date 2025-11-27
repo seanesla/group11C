@@ -29,3 +29,6 @@
 ## Security & Data Handling
 - Do not embed secrets; rely on environment variables for API keys. Avoid committing large model binaries—use `data/models/` for staged artifacts and coordinate if size exceeds repo norms.
 - When adding new external calls, ensure timeout/retry logic and document expected response shapes in the relevant client docstring or README snippet.
+
+
+Long-running tooling (tests, docker compose, migrations, etc.) must always be invoked with sensible timeouts or in non-interactive batch mode. Never leave a shell command waiting indefinitely—prefer explicit timeouts, scripted runs, or log polling after the command exits.
