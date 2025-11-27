@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-11-26T19:30:51.235379",
+  "classifier": {
+    "path": "data/models/classifier_20251126_193025.joblib",
+    "metrics": {
+      "accuracy": 0.9863713798977853,
+      "precision": 0.9909365558912386,
+      "recall": 0.984984984984985,
+      "f1_score": 0.9879518072289156,
+      "roc_auc": 0.998829538199617,
+      "true_negatives": 251,
+      "false_positives": 3,
+      "false_negatives": 5,
+      "true_positives": 328
+    }
+  },
+  "regressor": {
+    "path": "data/models/regressor_20251126_193051.joblib",
+    "metrics": {
+      "r2_score": 0.9854411801376591,
+      "mae": 1.5241981449933768,
+      "mse": 11.399825327718652,
+      "rmse": 3.376362736395284,
+      "explained_variance": 0.9856526534847093,
+      "mean_residual": 0.40692449365891453,
+      "std_residual": 3.3517514502389774,
+      "min_residual": -18.93503333333335,
+      "max_residual": 25.955899999999993
+    }
+  },
+  "training_info": {
+    "dataset": "Kaggle Water Quality Dataset (1991-2017, non\u2011US monitoring sites)",
+    "samples": 2939,
+    "features": 69,
+    "target_classifier": "is_safe (WQI >= 70)",
+    "target_regressor": "wqi_score (0-100)"
+  }
+}

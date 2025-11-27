@@ -82,7 +82,16 @@ class WaterQualityClassifier:
                 'Country',  # Already one-hot encoded
                 'Country_grouped',
                 'parameterWaterBodyCategory',  # Already one-hot encoded
-                'nitrate_pollution_level'  # Categorical, already processed
+                'nitrate_pollution_level',  # Categorical, already processed
+                # Missingness indicators are useful for diagnostics but too brittle
+                # to serve as primary predictors in production models.
+                'ph_missing',
+                'dissolved_oxygen_missing',
+                'temperature_missing',
+                'turbidity_missing',
+                'nitrate_missing',
+                'conductance_missing',
+                'n_params_available',
             ]
 
         # Extract target

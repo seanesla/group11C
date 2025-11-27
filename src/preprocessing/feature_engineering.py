@@ -91,6 +91,46 @@ def load_kaggle_data(file_path: str = "data/raw/waterPollution.csv") -> pd.DataF
     return df
 
 
+# Physical plausibility filters for training data
+VALID_RANGES = {
+    "ph": (0.0, 14.0),
+    "dissolved_oxygen": (0.0, 15.0),  # mg/L
+    "temperature": (-5.0, 40.0),  # °C
+    "turbidity": (0.0, 100.0),  # NTU
+    "nitrate": (0.0, 50.0),  # mg/L as N
+    "conductance": (0.0, 3000.0),  # µS/cm
+}
+
+
+def remove_physical_outliers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove rows with physically impossible or extreme parameter values.
+
+    This uses conservative bounds derived from EPA/WHO guidance and the
+    production deployment checklist. Any row with a parameter outside its
+    valid range (and non-null) is dropped from the training dataset.
+    """
+    if df.empty:
+        return df
+
+    original_len = len(df)
+    mask = pd.Series(True, index=df.index)
+
+    for param, (lo, hi) in VALID_RANGES.items():
+        if param in df.columns:
+            values = df[param]
+            param_mask = values.isna() | ((values >= lo) & (values <= hi))
+            mask &= param_mask
+
+    cleaned = df[mask].copy()
+    dropped = original_len - len(cleaned)
+    logger.info(
+        f"Removed {dropped} rows with out-of-range physical values "
+        f"({original_len} → {len(cleaned)})"
+    )
+    return cleaned
+
+
 def extract_wqi_parameters(df: pd.DataFrame) -> pd.DataFrame:
     """
     Extract and pivot the 5 available WQI parameters from long to wide format.
@@ -572,6 +612,9 @@ def prepare_ml_dataset(
 
     # Step 3: Calculate WQI labels
     df = calculate_wqi_labels(df)
+
+    # Step 3.5: Remove physically impossible outliers before model training
+    df = remove_physical_outliers(df)
 
     # Step 4: Create ML features (conditional based on mode)
     if core_params_only:
