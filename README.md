@@ -149,7 +149,7 @@ poetry run flake8 src/
 
 - **Project Proposal**: `projectspec/project.pdf`
 - **Implementation Plan**: `.claude/plan.md`
-- **Development Guidelines**: `.claude/CLAUDE.md`
+- **Contributor Guide**: `AGENTS.md`
 
 ## License
 
