@@ -2,7 +2,7 @@
 
 **Group 11C**: Joseann Boneo, Sean Esla, Zizwe Mtonga, Lademi Aromolaran
 
-A machine learning system that provides Water Quality Index (WQI) scores and trend predictions based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal and calculates comprehensive quality assessments.
+A machine learning–assisted system that provides Water Quality Index (WQI) scores and trend insights based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal/USGS and calculates NSF-style quality assessments.
 
 ## Features
 
@@ -26,19 +26,17 @@ A machine learning system that provides Water Quality Index (WQI) scores and tre
 
 ## Project Status
 
-**✅ PRODUCTION READY** - Complete end-to-end system with ML predictions and comprehensive testing
+**⚠ NOT FOR PRODUCTION USE** – Research/portfolio project with strong engineering and explicit safety limitations
 
-**Completed Features:**
-- ✅ Water Quality Portal API client with unit standardization
-- ✅ USGS API client integration
-- ✅ ZIP code to geolocation mapping
-- ✅ WQI calculation engine (NSF-WQI standard)
-- ✅ Streamlit web application with interactive visualizations
-- ✅ ML models: Classifier (98.98% accuracy) & Regressor (R² = 0.991)
-- ✅ Future trend forecasting (12-month predictions)
-- ✅ Comprehensive test suite: 1,555+ tests passing
-- ✅ Nitrate unit conversion system (Kaggle mg{NO3}/L → EPA mg/L as N)
-- ✅ End-to-end integration tests covering full pipeline
+**Implemented Components:**
+- ✅ Water Quality Portal API client with unit standardization and timeouts
+- ✅ USGS NWIS API client integration and USGS fallback when WQP returns no data
+- ✅ ZIP code to geolocation mapping and geographic coverage tests across all US states and territories
+- ✅ WQI calculation engine (NSF-WQI style) used as the primary safety signal
+- ✅ Streamlit web application with interactive visualizations and environmental-justice warnings
+- ✅ ML models (Random Forest classifier + regressor) trained on processed public water-quality data (Kaggle dataset) and used as **experimental** predictors with clear disclaimers
+- ✅ 1,500+ unit and integration tests (fast tests run by default; live external/API tests are marked `integration`)
+- ✅ Nitrate unit conversion system (mg{NO3}/L → mg/L as N) consistent with EPA standards
 
 ## Installation
 
@@ -86,9 +84,9 @@ The app will open in your default browser at `http://localhost:8501`.
 
 ### Example ZIP Codes
 
-- **20001** - Washington, DC (4,287 measurements, WQI: 91.2 Excellent)
-- **10001** - New York City, NY (3,504 measurements)
-- **99501** - Anchorage, AK (21 measurements)
+- **20001** – Washington, DC
+- **10001** – New York City, NY
+- **90001** – Los Angeles, CA
 
 ## Project Structure
 

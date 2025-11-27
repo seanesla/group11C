@@ -9,7 +9,7 @@
 ## Environment, Build, and Run Commands
 - Install and activate: `poetry install` then `poetry shell`.
 - Run the web app: `poetry run streamlit run streamlit_app/app.py`.
-- Execute tests with coverage: `poetry run pytest` (configured to fail under 80% coverage).
+- Execute fast test suite: `poetry run pytest` (default excludes `@integration` tests that hit live APIs/browsers).
 - Lint/format/type-check: `poetry run black .`, `poetry run flake8 src`, `poetry run mypy src`.
 
 ## Coding Style & Naming Conventions
@@ -19,7 +19,7 @@
 
 ## Testing Guidelines
 - Framework: pytest (`test_*.py`, functions `test_*`). Markers available: `unit`, `integration`, `slow`.
-- Aim for ≥80% coverage (enforced in `pytest.ini`). Add fixtures under `tests/fixtures/` and prefer deterministic inputs over live API calls; integration tests that hit REAL endpoints should be explicitly marked.
+- Aim for good coverage on core logic; coverage is reported but not enforced as a hard gate. Add fixtures under `tests/fixtures/` and prefer deterministic inputs over live API calls; integration tests that hit REAL endpoints should be explicitly marked.
 - For new features, add focused unit tests plus an end-to-end check if UI or data pipeline behavior changes.
 
 ## Commit & Pull Request Guidelines
