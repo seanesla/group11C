@@ -52,7 +52,7 @@ class WQPClient:
             'User-Agent': 'WaterQualityPrediction/1.0 (Educational Project)'
         })
 
-    def _make_request(self, endpoint: str, params: Dict[str, Any]) -> requests.Response:
+    def _make_request(self, endpoint: str, params: Dict[str, Any], retries: int = 2) -> requests.Response:
         """
         Make an API request with rate limiting and error handling.
 
@@ -70,19 +70,30 @@ class WQPClient:
 
         url = f"{self.BASE_URL}/{endpoint}/search"
 
-        try:
-            response = self.session.get(url, params=params, timeout=self.timeout)
-            response.raise_for_status()
-            return response
-        except requests.exceptions.Timeout:
-            logger.error(f"Request timeout for URL: {url}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error {e.response.status_code}: {e.response.text[:200]}")
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {str(e)}")
-            raise
+        last_exc = None
+        for attempt in range(retries):
+            try:
+                response = self.session.get(url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                return response
+            except requests.exceptions.Timeout as e:
+                last_exc = e
+                logger.error(f"Request timeout for URL: {url}")
+            except requests.exceptions.HTTPError as e:
+                last_exc = e
+                status = e.response.status_code if e.response else 'unknown'
+                if status >= 500 and attempt < retries - 1:
+                    logger.warning(f"HTTP {status} from WQP, retrying ({attempt+1}/{retries})")
+                    continue
+                logger.error(f"HTTP error {status}: {e.response.text[:200] if e.response else ''}")
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+                logger.error(f"Request failed: {str(e)}")
+
+            time.sleep(self.rate_limit_delay)
+
+        # Exhausted retries
+        raise last_exc or RuntimeError("Unknown WQP request failure")
 
     def get_stations(
         self,

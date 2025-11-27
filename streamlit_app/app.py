@@ -312,7 +312,7 @@ def display_wqi_methodology():
         })
 
     weight_df = pd.DataFrame(weight_data)
-    st.dataframe(weight_df, use_container_width=True, hide_index=True)
+    st.dataframe(weight_df, width='stretch', hide_index=True)
 
     st.markdown("""
     **Note:** When some parameters are unavailable (e.g., turbidity), the weights are dynamically normalized
@@ -346,7 +346,7 @@ def display_epa_who_standards():
             {"Contaminant": "Nitrite (as N)", "MCL": "1 mg/L", "Health Concern": "Similar to nitrate, infant health risk"},
             {"Contaminant": "Turbidity", "MCL": "1 NTU", "Health Concern": "Treatment technique; indicates filtration effectiveness"}
         ])
-        st.dataframe(epa_mcl, use_container_width=True, hide_index=True)
+        st.dataframe(epa_mcl, width='stretch', hide_index=True)
 
         st.markdown("##### Secondary Drinking Water Standards (SMCLs)")
         st.markdown("*Non-mandatory aesthetic guidelines:*")
@@ -355,7 +355,7 @@ def display_epa_who_standards():
             {"Parameter": "Conductivity", "SMCL": "No standard", "Concern": "Aesthetic indicator"},
             {"Parameter": "Temperature", "SMCL": "No standard", "Concern": "Affects aquatic life, not human health"}
         ])
-        st.dataframe(epa_smcl, use_container_width=True, hide_index=True)
+        st.dataframe(epa_smcl, width='stretch', hide_index=True)
 
         st.info("**Note:** Dissolved Oxygen (DO) is **not regulated** for drinking water. DO is a surface water quality parameter for aquatic ecosystem health.")
 
@@ -373,7 +373,7 @@ def display_epa_who_standards():
             {"Parameter": "Nitrate (as NO₃)", "Guideline": "50 mg/L", "Notes": "Equivalent to 11.3 mg/L as N"},
             {"Parameter": "Turbidity", "Guideline": "<5 NTU ideal", "Notes": "Higher values indicate treatment problems"}
         ])
-        st.dataframe(who_guidelines, use_container_width=True, hide_index=True)
+        st.dataframe(who_guidelines, width='stretch', hide_index=True)
 
         st.markdown("**Reference:**")
         st.markdown("- [WHO Guidelines for Drinking-water Quality](https://iris.who.int/bitstream/handle/10665/44584/9789241548151_eng.pdf)")
@@ -403,7 +403,7 @@ def display_epa_who_standards():
             {"mg{NO₃}/L": "88.6", "mg/L as N": "20.0", "Safety Level": "Unsafe (2× MCL)"},
             {"mg{NO₃}/L": "221.5", "mg/L as N": "50.0", "Safety Level": "Very Unsafe (5× MCL)"}
         ])
-        st.dataframe(conversion_examples, use_container_width=True, hide_index=True)
+        st.dataframe(conversion_examples, width='stretch', hide_index=True)
 
         st.success("✅ This app uses **mg/L as N** (EPA standard) for all nitrate measurements and calculations.")
 
@@ -701,7 +701,7 @@ def main():
         st.sidebar.error("Radius must be greater than zero miles.")
 
     # Submit button
-    search_button = st.sidebar.button("Search", type="primary", use_container_width=True)
+    search_button = st.sidebar.button("Search", type="primary")
 
     # EPA/WHO Standards Reference in Sidebar
     st.sidebar.divider()
@@ -792,7 +792,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
         if wqi is None:
             st.warning("Unable to calculate WQI from available data.")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width='stretch')
             return
 
         # Get aggregated parameters for ML predictions
@@ -935,7 +935,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                     {"Prediction": "Unsafe (WQI < 70)", "Probability": f"{ml_predictions['prob_unsafe']*100:.1f}%"},
                     {"Prediction": "Safe (WQI ≥ 70)", "Probability": f"{ml_predictions['prob_safe']*100:.1f}%"}
                 ])
-                st.dataframe(prob_df, use_container_width=True, hide_index=True)
+                st.dataframe(prob_df, width='stretch', hide_index=True)
 
                 st.markdown("""
                 **Model Information:**
@@ -986,7 +986,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                     )
 
                     if trend_chart:
-                        st.plotly_chart(trend_chart, use_container_width=True)
+                        st.plotly_chart(trend_chart, width='stretch')
 
                         # Display trend analysis
                         trend = trend_data.get('trend', 'unknown')
@@ -1095,7 +1095,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                 st.dataframe(
                     features_df,
-                    use_container_width=True,
+                    width='stretch',
                     hide_index=True
                 )
 
@@ -1253,7 +1253,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                     st.dataframe(
                         clf_display,
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True
                     )
 
@@ -1276,7 +1276,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                         yaxis=dict(autorange="reversed"),  # Top feature at top
                         height=400
                     )
-                    st.plotly_chart(fig_clf, use_container_width=True)
+                    st.plotly_chart(fig_clf, width='stretch')
 
                 with st.expander("📊 Top 20 Features - Regressor (WQI Score)", expanded=False):
                     st.markdown(f"""
@@ -1294,7 +1294,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                     st.dataframe(
                         reg_display,
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True
                     )
 
@@ -1316,7 +1316,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                         yaxis=dict(autorange="reversed"),  # Top feature at top
                         height=400
                     )
-                    st.plotly_chart(fig_reg, use_container_width=True)
+                    st.plotly_chart(fig_reg, width='stretch')
 
                 # Add interpretation guide
                 with st.expander("ℹ️ How to Interpret Feature Importance", expanded=False):
@@ -1500,7 +1500,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                         )
                     )
 
-                    st.plotly_chart(fig_clf_contrib, use_container_width=True)
+                    st.plotly_chart(fig_clf_contrib, width='stretch')
 
                     st.caption("""
                     🟢 **Green bars**: Features pushing prediction toward SAFE (positive contribution)
@@ -1543,7 +1543,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                         )
                     )
 
-                    st.plotly_chart(fig_reg_contrib, use_container_width=True)
+                    st.plotly_chart(fig_reg_contrib, width='stretch')
 
                     st.caption("""
                     🔵 **Blue bars**: Features increasing predicted WQI score (positive contribution)
@@ -1589,7 +1589,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                     st.dataframe(
                         clf_display[['Rank', 'Feature', 'Value', 'Direction', 'Availability']],
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True
                     )
 
@@ -1625,7 +1625,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                     st.dataframe(
                         reg_display[['Rank', 'Feature', 'Value', 'Direction', 'Availability']],
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True
                     )
 
@@ -1852,7 +1852,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
             st.dataframe(
                 param_df,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True
             )
 
@@ -1882,7 +1882,7 @@ This tool analyzes 6 water quality parameters for general environmental assessme
                         threshold_df["Score"] = threshold_df["Score"].astype(str)
                         st.dataframe(
                             threshold_df,
-                            use_container_width=True,
+                            width='stretch',
                             hide_index=True
                         )
 
@@ -1925,20 +1925,20 @@ This tool analyzes 6 water quality parameters for general environmental assessme
         # Time series chart
         time_series_fig = create_time_series_chart(df)
         if time_series_fig:
-            st.plotly_chart(time_series_fig, use_container_width=True)
+            st.plotly_chart(time_series_fig, width='stretch')
         else:
             st.info("Not enough data to create time series chart")
 
         # Parameter scores chart
         param_fig = create_parameter_chart(scores)
         if param_fig:
-            st.plotly_chart(param_fig, use_container_width=True)
+            st.plotly_chart(param_fig, width='stretch')
 
         st.divider()
 
         # Raw data
         with st.expander("View Raw Data"):
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width='stretch')
 
             # Download button
             csv = df.to_csv(index=False)
