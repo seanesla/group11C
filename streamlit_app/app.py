@@ -21,6 +21,8 @@ sys.path.insert(0, str(src_path))
 
 from geolocation.zipcode_mapper import ZipCodeMapper
 from data_collection.wqp_client import WQPClient
+from data_collection.usgs_client import USGSClient
+from data_collection.fallback import fetch_with_fallback
 from utils.wqi_calculator import WQICalculator
 from utils.ml_feature_definitions import get_feature_categories, count_features_by_availability, get_european_only_features, get_us_available_features
 from models.model_utils import load_latest_models
@@ -540,55 +542,59 @@ def fetch_water_quality_data(
     radius_miles: float,
     start_date: datetime,
     end_date: datetime
-) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+) -> Tuple[Optional[pd.DataFrame], Optional[str], Optional[str]]:
     """
     Fetch water quality data for a ZIP code.
 
     Returns:
-        Tuple of (DataFrame, error_message)
-        If successful: (DataFrame, None)
-        If failed: (None, error_message)
+        Tuple of (DataFrame, error_message, source_label)
+        If successful: (DataFrame, None, "WQP" or "USGS NWIS")
+        If failed: (None, error_message, None)
     """
     try:
         # Initialize clients
         mapper = ZipCodeMapper()
         client = WQPClient()
+        usgs_client = USGSClient()
 
         # Validate and convert ZIP code
         if not mapper.is_valid_zipcode(zip_code):
-            return None, f"Invalid ZIP code: {zip_code}"
+            return None, f"Invalid ZIP code: {zip_code}", None
 
         coords = mapper.get_coordinates(zip_code)
         if coords is None:
-            return None, f"Could not find coordinates for ZIP code: {zip_code}"
+            return None, f"Could not find coordinates for ZIP code: {zip_code}", None
 
         lat, lon = coords
 
-        # Fetch data
+        characteristics = [
+            "pH",
+            "Dissolved oxygen (DO)",
+            "Temperature, water",
+            "Turbidity",
+            "Nitrate",
+            "Specific conductance"
+        ]
+
         with st.spinner(f"Fetching water quality data within {radius_miles} miles of ZIP {zip_code}..."):
-            df = client.get_data_by_location(
+            df, source_label = fetch_with_fallback(
                 latitude=lat,
                 longitude=lon,
                 radius_miles=radius_miles,
                 start_date=start_date,
                 end_date=end_date,
-                characteristics=[
-                    "pH",
-                    "Dissolved oxygen (DO)",
-                    "Temperature, water",
-                    "Turbidity",
-                    "Nitrate",
-                    "Specific conductance"
-                ]
+                characteristics=characteristics,
+                wqp_client=client,
+                usgs_client=usgs_client
             )
 
         if df.empty:
-            return None, f"No water quality data found within {radius_miles} miles of ZIP {zip_code} for the selected date range."
+            return None, f"No water quality data found within {radius_miles} miles of ZIP {zip_code} for the selected date range.", None
 
-        return df, None
+        return df, None, source_label
 
     except Exception as e:
-        return None, f"Error fetching data: {str(e)}"
+        return None, f"Error fetching data: {str(e)}", None
 
 
 def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[Dict[str, float]], Optional[str]]:
@@ -758,12 +764,16 @@ This tool analyzes 6 water quality parameters for general environmental assessme
     st.divider()
 
     if search_button:
-        # Fetch data
-        df, error = fetch_water_quality_data(zip_code, radius_miles, start_date, end_date)
+        # Fetch data with WQP → USGS fallback
+        df, error, source_label = fetch_water_quality_data(zip_code, radius_miles, start_date, end_date)
 
         if error:
             st.error(error)
             st.info("Try increasing the search radius or adjusting the date range.")
+            return
+
+        if df is None or df.empty:
+            st.warning("No data available for the specified criteria.")
             return
 
         # Get location info
@@ -828,6 +838,8 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
         # WQI Summary
         st.subheader("Water Quality Summary")
+        if source_label:
+            st.caption(f"Data source: {source_label}")
 
         col1, col2, col3 = st.columns(3)
 
@@ -1860,6 +1872,8 @@ This tool analyzes 6 water quality parameters for general environmental assessme
 
                         st.markdown("**Threshold Brackets:**")
                         # Style the DataFrame to highlight current bracket
+                        threshold_df = threshold_df.copy()
+                        threshold_df["Score"] = threshold_df["Score"].astype(str)
                         st.dataframe(
                             threshold_df,
                             use_container_width=True,
