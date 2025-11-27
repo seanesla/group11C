@@ -666,7 +666,7 @@ def main():
 
     radius_miles = st.sidebar.slider(
         "Search Radius (miles)",
-        min_value=10,
+        min_value=5,
         max_value=100,
         value=25,
         step=5,
@@ -693,6 +693,12 @@ def main():
     # Convert to datetime
     start_date = datetime.combine(start_date, datetime.min.time())
     end_date = datetime.combine(end_date, datetime.min.time())
+
+    # Input validation
+    if end_date < start_date:
+        st.sidebar.error("End date must be on or after start date.")
+    if radius_miles <= 0:
+        st.sidebar.error("Radius must be greater than zero miles.")
 
     # Submit button
     search_button = st.sidebar.button("Search", type="primary", use_container_width=True)

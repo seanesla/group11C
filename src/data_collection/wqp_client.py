@@ -38,7 +38,7 @@ class WQPClient:
         'total_phosphorus': 'Phosphorus',
     }
 
-    def __init__(self, rate_limit_delay: float = 1.0):
+    def __init__(self, rate_limit_delay: float = 1.0, timeout: int = 20):
         """
         Initialize the WQP client.
 
@@ -46,6 +46,7 @@ class WQPClient:
             rate_limit_delay: Delay in seconds between API requests
         """
         self.rate_limit_delay = rate_limit_delay
+        self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'WaterQualityPrediction/1.0 (Educational Project)'
@@ -70,7 +71,7 @@ class WQPClient:
         url = f"{self.BASE_URL}/{endpoint}/search"
 
         try:
-            response = self.session.get(url, params=params, timeout=60)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             return response
         except requests.exceptions.Timeout:
