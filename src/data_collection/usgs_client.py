@@ -8,6 +8,7 @@ temperature, turbidity, and nitrate levels.
 API Documentation: https://waterservices.usgs.gov/rest/
 """
 
+import os
 import requests
 import pandas as pd
 import numpy as np
@@ -39,14 +40,16 @@ class USGSClient:
         'nitrate': '99133',          # Nitrate, water, filtered, milligrams per liter as nitrogen
     }
 
-    def __init__(self, rate_limit_delay: float = 1.0):
+    def __init__(self, rate_limit_delay: float = 1.0, timeout: Optional[int] = None):
         """
         Initialize the USGS client.
 
         Args:
             rate_limit_delay: Delay in seconds between API requests to avoid rate limiting
         """
+        default_timeout = int(os.getenv("USGS_TIMEOUT", 30))
         self.rate_limit_delay = rate_limit_delay
+        self.timeout = timeout if timeout is not None else default_timeout
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'WaterQualityPrediction/1.0 (Educational Project)'
@@ -69,7 +72,7 @@ class USGSClient:
         time.sleep(self.rate_limit_delay)
 
         try:
-            response = self.session.get(url, params=params, timeout=30)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             return response
         except requests.exceptions.Timeout:

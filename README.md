@@ -64,6 +64,11 @@ poetry install
 poetry shell
 ```
 
+4. (Optional) Configure Kaggle credentials for dataset downloads:
+   - Copy `kaggle.json.example` to `~/.kaggle/kaggle.json`
+   - Replace the placeholder values with your Kaggle username and API key
+   - Ensure the file stays untracked (`kaggle.json` is already in `.gitignore`)
+
 ## Usage
 
 ### Running the Web Application
@@ -131,6 +136,18 @@ Water is considered **safe for drinking** when WQI ≥ 70.
 ```bash
 poetry run pytest
 ```
+
+For long runs, use the chunked runner to execute themed batches sequentially:
+
+```bash
+poetry run python scripts/run_tests_chunked.py            # all groups
+poetry run python scripts/run_tests_chunked.py --group geo  # just geo tests
+```
+
+### Configuration
+
+- Environment timeouts (optional): set `WQP_TIMEOUT` and `USGS_TIMEOUT` (seconds). See `.env.example`.
+- Kaggle: place real creds in `~/.kaggle/kaggle.json` (template at `kaggle.json.example`).
 
 ### Code Quality
 

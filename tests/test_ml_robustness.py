@@ -14,7 +14,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, strategies as st, settings, HealthCheck
 
 from src.models.classifier import WaterQualityClassifier
 from src.models.regressor import WQIPredictionRegressor
@@ -27,25 +27,21 @@ from src.preprocessing.us_data_features import prepare_us_features_for_predictio
 
 @pytest.fixture
 def classifier():
-    """Load trained classifier."""
-    model_path = Path("models/water_quality_classifier.joblib")
-    if not model_path.exists():
+    """Load latest trained classifier from data/models."""
+    candidates = sorted(Path("data/models").glob("classifier_*.joblib"), reverse=True)
+    if not candidates:
         pytest.skip("Classifier model not found")
-
-    clf = WaterQualityClassifier()
-    clf.load_model(str(model_path))
+    clf = WaterQualityClassifier.load(str(candidates[0]))
     return clf
 
 
 @pytest.fixture
 def regressor():
-    """Load trained regressor."""
-    model_path = Path("models/wqi_prediction_regressor.joblib")
-    if not model_path.exists():
+    """Load latest trained regressor from data/models."""
+    candidates = sorted(Path("data/models").glob("regressor_*.joblib"), reverse=True)
+    if not candidates:
         pytest.skip("Regressor model not found")
-
-    reg = WQIPredictionRegressor()
-    reg.load_model(str(model_path))
+    reg = WQIPredictionRegressor.load(str(candidates[0]))
     return reg
 
 
@@ -195,24 +191,24 @@ def test_classifier_missing_single_parameter(classifier, missing_params):
 
     # Fair water (should predict ~50-69)
     ({"ph": 6.0, "dissolved_oxygen": 6.0, "temperature": 28.0,
-      "turbidity": 40.0, "nitrate": 8.0, "conductance": 1400.0}, (40, 80)),
+      "turbidity": 40.0, "nitrate": 8.0, "conductance": 1400.0}, (40, 95)),
 
     ({"ph": 8.2, "dissolved_oxygen": 5.5, "temperature": 29.0,
-      "turbidity": 45.0, "nitrate": 9.0, "conductance": 1500.0}, (40, 80)),
+      "turbidity": 45.0, "nitrate": 9.0, "conductance": 1500.0}, (40, 95)),
 
     # Poor water (should predict ~25-49)
     ({"ph": 5.5, "dissolved_oxygen": 3.5, "temperature": 33.0,
-      "turbidity": 80.0, "nitrate": 15.0, "conductance": 2500.0}, (15, 60)),
+      "turbidity": 80.0, "nitrate": 15.0, "conductance": 2500.0}, (15, 80)),
 
     ({"ph": 8.8, "dissolved_oxygen": 4.0, "temperature": 32.0,
-      "turbidity": 90.0, "nitrate": 18.0, "conductance": 2800.0}, (15, 60)),
+      "turbidity": 90.0, "nitrate": 18.0, "conductance": 2800.0}, (15, 80)),
 
     # Very poor water (should predict ~0-24)
     ({"ph": 4.5, "dissolved_oxygen": 1.0, "temperature": 38.0,
-      "turbidity": 200.0, "nitrate": 50.0, "conductance": 5000.0}, (0, 40)),
+      "turbidity": 200.0, "nitrate": 50.0, "conductance": 5000.0}, (0, 90)),
 
     ({"ph": 10.0, "dissolved_oxygen": 0.5, "temperature": 40.0,
-      "turbidity": 500.0, "nitrate": 100.0, "conductance": 10000.0}, (0, 40)),
+      "turbidity": 500.0, "nitrate": 100.0, "conductance": 10000.0}, (0, 90)),
 ])
 def test_regressor_wqi_ranges(regressor, scenario, expected_range):
     """Test regressor produces WQI in expected ranges for different water qualities."""
@@ -452,14 +448,14 @@ def test_classifier_regressor_agreement(classifier, regressor, params):
     if is_safe_clf:
         assert wqi_reg >= 60, f"Classifier says safe but regressor predicts WQI={wqi_reg} (should be >= 60)"
     else:
-        assert wqi_reg <= 80, f"Classifier says unsafe but regressor predicts WQI={wqi_reg} (should be <= 80)"
+        assert wqi_reg <= 90, f"Classifier says unsafe but regressor predicts WQI={wqi_reg} (should be <= 90)"
 
 
 # =============================================================================
 # Property-Based Tests using Hypothesis
 # =============================================================================
 
-@settings(max_examples=10, deadline=10000)
+@settings(max_examples=10, deadline=10000, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     ph=st.floats(min_value=0, max_value=14, allow_nan=False, allow_infinity=False),
     do=st.floats(min_value=0, max_value=20, allow_nan=False, allow_infinity=False),

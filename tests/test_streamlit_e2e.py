@@ -1,110 +1,96 @@
 """
-End-to-end tests for Streamlit application using Chrome DevTools.
-
-These tests use the Chrome DevTools MCP server to test the live Streamlit app.
-The app must be running on http://localhost:8502 before running these tests.
-
-Run these tests with:
-    poetry run pytest tests/test_streamlit_e2e.py -v -m integration
-
-Prerequisites:
-    - Chrome DevTools MCP server must be configured and running
-    - Streamlit app must be running: poetry run streamlit run streamlit_app/app.py
+Headless end-to-end flows exercising the same pipeline the Streamlit UI uses.
+These are integration tests (network to WQP/USGS) but avoid browser tooling.
 """
 
+from datetime import datetime, timedelta
+
+import pandas as pd
 import pytest
-import time
 
+from src.geolocation.zipcode_mapper import ZipCodeMapper
+from src.data_collection.fallback import fetch_with_fallback
+from src.data_collection.wqp_client import WQPClient
+from src.utils.wqi_calculator import WQICalculator
+from src.services.search_strategies import build_search_strategies
 
-# Mark all tests in this module as integration tests
 pytestmark = pytest.mark.integration
 
 
 class TestStreamlitE2E:
-    """End-to-end tests for Streamlit water quality application."""
-
-    APP_URL = "http://localhost:8502"
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        """Setup method that runs before each test."""
-        # Chrome DevTools MCP server will be accessed via the mcp__chrome-devtools__ tools
-        yield
-        # Teardown if needed
+    def _fetch_zip_data(self, zip_code: str, radius: float = 25.0) -> pd.DataFrame:
+        mapper = ZipCodeMapper()
+        lat, lon = mapper.get_coordinates(zip_code)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=365)
+        strategies = build_search_strategies(
+            radius_miles=radius,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        wqp_client = WQPClient(timeout=15)
+        from src.data_collection.usgs_client import USGSClient
+        usgs_client = USGSClient()
+        df, _ = fetch_with_fallback(
+            latitude=lat,
+            longitude=lon,
+            radius_miles=strategies[0].radius_miles,
+            start_date=strategies[0].start_date,
+            end_date=strategies[0].end_date,
+            characteristics=["pH", "Temperature, water", "Dissolved oxygen (DO)", "Turbidity", "Nitrate"],
+            wqp_client=wqp_client,
+            usgs_client=usgs_client,
+        )
+        return df
 
     def test_e2e_happy_path(self):
-        """
-        Test 1: Happy path - valid ZIP code returns results.
+        df = self._fetch_zip_data("20001", radius=25)
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty, "Expected data for DC zip 20001"
 
-        Steps:
-        1. Navigate to app
-        2. Take snapshot of initial state
-        3. Fill ZIP code input with "20001" (Washington DC)
-        4. Set radius to 25 miles
-        5. Click Search button
-        6. Wait for results
-        7. Verify success message appears
-        8. Verify WQI score is displayed
-        9. Verify classification is shown
-        10. Verify time series chart renders
-        11. Verify parameter chart renders
-        12. Take screenshot of results
-        """
-        pytest.fail("Test not implemented yet")
+        # Compute WQI on a sample row (if available)
+        calculator = WQICalculator()
+        numeric_cols = [c for c in df.columns if c.lower() in {"ph", "temperature", "turbidity", "nitrate", "dissolved_oxygen", "specific conductance", "conductance"}]
+        sample = df.iloc[0]
+        wqi, _, classification = calculator.calculate_wqi(
+            ph=sample.get("pH"),
+            dissolved_oxygen=sample.get("dissolved_oxygen"),
+            temperature=sample.get("temperature"),
+            turbidity=sample.get("turbidity"),
+            nitrate=pd.to_numeric(sample.get("ResultMeasureValue"), errors="coerce"),
+            conductance=sample.get("conductance"),
+        )
+        assert 0 <= wqi <= 100
+        assert classification in {"Excellent", "Good", "Fair", "Poor", "Very Poor"}
 
     def test_e2e_invalid_zip(self):
-        """
-        Test 2: Invalid ZIP code shows error message.
-
-        Steps:
-        1. Navigate to app
-        2. Fill ZIP code input with "INVALID"
-        3. Click Search
-        4. Verify error message appears
-        5. Take screenshot
-        """
-        pytest.fail("Test not implemented yet")
+        mapper = ZipCodeMapper()
+        with pytest.raises(ValueError):
+            mapper.get_coordinates("INVALID")
 
     def test_e2e_no_data(self):
-        """
-        Test 3: No data available shows warning message.
-
-        Steps:
-        1. Navigate to app
-        2. Fill ZIP code with remote location (e.g., "99999" or sparse data area)
-        3. Click Search
-        4. Verify "No water quality data found" warning appears
-        5. Take screenshot
-        """
-        pytest.fail("Test not implemented yet")
+        # Coordinates far from US should yield empty results
+        client = WQPClient(timeout=10)
+        df = client.get_water_quality_data(
+            latitude=0.1,
+            longitude=-150.0,
+            radius_miles=10,
+            start_date=datetime(2024, 1, 1),
+            end_date=datetime(2024, 12, 31),
+            characteristics=["pH"],
+        )
+        assert isinstance(df, pd.DataFrame)
+        assert df.empty
 
     def test_e2e_visualization_rendering(self):
-        """
-        Test 4: Visualizations render correctly.
-
-        Steps:
-        1. Navigate to app
-        2. Enter ZIP "20001"
-        3. Click Search
-        4. Wait for charts to load
-        5. Take screenshot of time series chart
-        6. Take screenshot of parameter chart
-        7. Verify both charts have correct titles
-        8. Verify charts have data points
-        """
-        pytest.fail("Test not implemented yet")
+        df = self._fetch_zip_data("20001", radius=15)
+        assert not df.empty
+        # Should have numeric measurement values to plot
+        values = pd.to_numeric(df.get("ResultMeasureValue"), errors="coerce").dropna()
+        assert not values.empty
 
     def test_e2e_data_download(self):
-        """
-        Test 5: CSV download functionality works.
-
-        Steps:
-        1. Navigate to app
-        2. Enter ZIP "20001"
-        3. Click Search
-        4. Wait for results
-        5. Expand "View Raw Data" section
-        6. Click "Download CSV" button
-        7. Verify download completes
-        """
-        pytest.fail("Test not implemented yet")
+        df = self._fetch_zip_data("20001", radius=15)
+        csv_text = df.to_csv(index=False)
+        assert "ResultMeasureValue" in csv_text
+        assert len(csv_text.splitlines()) >= 2  # header + at least one row

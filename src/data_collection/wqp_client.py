@@ -7,6 +7,7 @@ which aggregates data from USGS, EPA, and other water quality monitoring agencie
 API Documentation: https://www.waterqualitydata.us/webservices_documentation/
 """
 
+import os
 import requests
 import pandas as pd
 from datetime import datetime
@@ -38,15 +39,16 @@ class WQPClient:
         'total_phosphorus': 'Phosphorus',
     }
 
-    def __init__(self, rate_limit_delay: float = 1.0, timeout: int = 20):
+    def __init__(self, rate_limit_delay: float = 1.0, timeout: Optional[int] = None):
         """
         Initialize the WQP client.
 
         Args:
             rate_limit_delay: Delay in seconds between API requests
         """
+        default_timeout = int(os.getenv("WQP_TIMEOUT", 20))
         self.rate_limit_delay = rate_limit_delay
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else default_timeout
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'WaterQualityPrediction/1.0 (Educational Project)'

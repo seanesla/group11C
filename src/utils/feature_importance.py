@@ -236,22 +236,30 @@ def get_prediction_contributions(
     X_ordered = X_sample[feature_names].copy()
 
     # Apply preprocessing (imputation + scaling)
+    # Use numpy array input to avoid sklearn feature-name warnings when the
+    # imputer was fit without column labels.
+    X_imputed_array = imputer.transform(X_ordered.to_numpy())
     X_imputed = pd.DataFrame(
-        imputer.transform(X_ordered),
+        X_imputed_array,
         columns=feature_names,
         index=X_ordered.index
     )
+    X_scaled_array = scaler.transform(X_imputed.to_numpy())
     X_scaled = pd.DataFrame(
-        scaler.transform(X_imputed),
+        X_scaled_array,
         columns=feature_names,
         index=X_imputed.index
     )
+
+    # Convert to numpy for downstream sklearn + SHAP calls to avoid feature-name
+    # warnings from estimators fitted without column labels.
+    X_np = X_scaled.to_numpy()
 
     # Create SHAP TreeExplainer
     explainer = shap.TreeExplainer(sklearn_model)
 
     # Calculate SHAP values for single sample
-    shap_values = explainer.shap_values(X_scaled)
+    shap_values = explainer.shap_values(X_np)
 
     # Handle different output formats based on SHAP version and model type
     if model_type == 'classifier':
@@ -305,9 +313,9 @@ def get_prediction_contributions(
     # Get actual prediction
     if model_type == 'classifier':
         # Predict probability of class 1 (SAFE)
-        prediction = sklearn_model.predict_proba(X_scaled)[0][1]
+        prediction = sklearn_model.predict_proba(X_np)[0][1]
     else:
-        prediction = sklearn_model.predict(X_scaled)[0]
+        prediction = sklearn_model.predict(X_np)[0]
 
     # Create contributions DataFrame
     contributions_df = pd.DataFrame({

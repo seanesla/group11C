@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import glob
 import json
+import pytest
 
 # Add src to path
 src_path = Path(__file__).parent.parent / "src"
@@ -128,8 +129,7 @@ def test_phase_4_2_shap_contributions():
     regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
 
     if not classifier_files or not regressor_files:
-        print("✗ FAILED: Model files not found")
-        return False, None
+        pytest.skip("Model files not found")
 
     classifier_path = classifier_files[0]
     regressor_path = regressor_files[0]
@@ -327,7 +327,7 @@ def test_phase_4_2_shap_contributions():
                 for error in results[model_type]['errors'][:10]:  # Show first 10
                     print(f"  - {error['sample']}: {error['error']}")
 
-    return all_passed, results
+    assert all_passed, "Phase 4.2: SHAP contributions checks failed"
 
 
 def test_phase_4_3_decision_explanation():
@@ -351,8 +351,7 @@ def test_phase_4_3_decision_explanation():
     regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
 
     if not classifier_files or not regressor_files:
-        print("✗ FAILED: Model files not found")
-        return False, None
+        pytest.skip("Model files not found")
 
     classifier_path = classifier_files[0]
     regressor_path = regressor_files[0]
@@ -520,7 +519,7 @@ def test_phase_4_3_decision_explanation():
 
     all_passed = results['failed'] == 0
 
-    return all_passed, results
+    assert all_passed, "Phase 4.3: Decision explanation validation failed"
 
 
 if __name__ == "__main__":

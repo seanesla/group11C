@@ -50,6 +50,7 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+*,cover
 
 # Data files (don't commit large datasets)
 data/raw/*.csv
