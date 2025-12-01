@@ -39,7 +39,7 @@ from services.search_strategies import build_search_strategies, SearchStrategy
 # Page configuration
 st.set_page_config(
     page_title="Water Quality Index Lookup",
-    page_icon="💧",  # Keep page icon for browser tab
+    page_icon=":material/water_drop:",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -63,6 +63,18 @@ PARAMETER_UNITS = {
     'turbidity': 'NTU',
     'nitrate': 'mg/L as N',  # EPA standard: nitrogen content only
     'conductance': 'µS/cm'
+}
+
+
+# Canonical parameter name mapping (WQP characteristic names -> internal keys)
+# Used for data aggregation - single source of truth
+PARAM_MAPPING = {
+    'pH': 'ph',
+    'Dissolved oxygen (DO)': 'dissolved_oxygen',
+    'Temperature, water': 'temperature',
+    'Turbidity': 'turbidity',
+    'Nitrate': 'nitrate',
+    'Specific conductance': 'conductance'
 }
 
 
@@ -187,14 +199,6 @@ def get_daily_wqi_scores(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
     calculator = WQICalculator()
-    param_mapping = {
-        'pH': 'ph',
-        'Dissolved oxygen (DO)': 'dissolved_oxygen',
-        'Temperature, water': 'temperature',
-        'Turbidity': 'turbidity',
-        'Nitrate': 'nitrate',
-        'Specific conductance': 'conductance'
-    }
 
     df = df.copy()
     df['ActivityStartDate'] = pd.to_datetime(df['ActivityStartDate'])
@@ -202,7 +206,7 @@ def get_daily_wqi_scores(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for date, date_df in df.groupby('ActivityStartDate'):
         params = {}
-        for characteristic_name, param_key in param_mapping.items():
+        for characteristic_name, param_key in PARAM_MAPPING.items():
             mask = date_df['CharacteristicName'] == characteristic_name
             values = pd.to_numeric(date_df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
             if len(values) > 0:
@@ -370,7 +374,7 @@ def display_epa_who_standards():
 
     Information sourced from docs/WQI_STANDARDS.md (NO HARDCODING).
     """
-    st.markdown("### 📚 Water Quality Standards Reference")
+    st.markdown("### :material/menu_book: Water Quality Standards Reference")
 
     # Create tabs for EPA, WHO, and Nitrate Conversion
     tab1, tab2, tab3 = st.tabs(["EPA Standards", "WHO Guidelines", "Nitrate Units"])
@@ -444,7 +448,7 @@ def display_epa_who_standards():
         ])
         st.dataframe(conversion_examples, width='stretch', hide_index=True)
 
-        st.success("✅ This app uses **mg/L as N** (EPA standard) for all nitrate measurements and calculations.")
+        st.success(":material/check_circle: This app uses **mg/L as N** (EPA standard) for all nitrate measurements and calculations.")
 
 
 def create_future_trend_chart(
@@ -729,16 +733,7 @@ def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[D
     # Need to aggregate by characteristic name
     aggregated = {}
 
-    param_mapping = {
-        'pH': 'ph',
-        'Dissolved oxygen (DO)': 'dissolved_oxygen',
-        'Temperature, water': 'temperature',
-        'Turbidity': 'turbidity',
-        'Nitrate': 'nitrate',
-        'Specific conductance': 'conductance'
-    }
-
-    for characteristic_name, param_key in param_mapping.items():
+    for characteristic_name, param_key in PARAM_MAPPING.items():
         # Filter rows for this characteristic
         mask = df['CharacteristicName'] == characteristic_name
         values = pd.to_numeric(df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
@@ -839,13 +834,13 @@ def main():
 
     # EPA/WHO Standards Reference in Sidebar
     st.sidebar.divider()
-    with st.sidebar.expander("📚 Standards Reference"):
+    with st.sidebar.expander(":material/menu_book: Standards Reference"):
         display_epa_who_standards()
 
     # Main area
 
     # Keep safety context but avoid overwhelming users—one concise expander.
-    with st.expander("⚠️ Limitations & Safety (read before relying on results)", expanded=False):
+    with st.expander(":material/warning: Limitations & Safety", expanded=False):
         st.markdown("""
 - **Not a full potability test:** Only 6 parameters (pH, DO, Temperature, Turbidity, Nitrate, Conductance). **Not covered:** lead/arsenic/mercury, bacteria, PFAS, pesticides, pharmaceuticals.
 - **Lead risk:** Lead MCLG = 0; if home built <1986 or piping recently disturbed, get certified lead testing (EPA hotline 1‑800‑426‑4791).
@@ -886,17 +881,8 @@ def main():
             return
 
         # Get aggregated parameters for ML predictions
-        param_mapping = {
-            'pH': 'ph',
-            'Dissolved oxygen (DO)': 'dissolved_oxygen',
-            'Temperature, water': 'temperature',
-            'Turbidity': 'turbidity',
-            'Nitrate': 'nitrate',
-            'Specific conductance': 'conductance'
-        }
-
         aggregated = {}
-        for characteristic_name, param_key in param_mapping.items():
+        for characteristic_name, param_key in PARAM_MAPPING.items():
             mask = df['CharacteristicName'] == characteristic_name
             values = pd.to_numeric(df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
             if len(values) > 0:
@@ -973,7 +959,7 @@ def main():
             )
 
         # WQI Methodology Explainer
-        with st.expander("📊 How is WQI Calculated?", expanded=False):
+        with st.expander(":material/bar_chart: How is WQI Calculated?", expanded=False):
             display_wqi_methodology()
 
         st.divider()
@@ -1140,7 +1126,7 @@ def main():
             st.divider()
 
         # === ML FEATURES TRANSPARENCY SECTION ===
-        st.subheader("🧠 ML Model Features (59 Total)")
+        st.subheader(":material/psychology: ML Model Features (59 Total)")
 
         st.markdown("""
         The ML models use **59 features** organized into 9 categories. This section shows exactly what data the models
@@ -1169,7 +1155,7 @@ def main():
             st.metric("Partial", feature_counts['partial'], help="Some components available for US data")
 
         # Feature categories display
-        with st.expander("📋 View All 59 Features by Category", expanded=False):
+        with st.expander(":material/list_alt: View All 59 Features by Category", expanded=False):
             for category_key, category_data in feature_categories.items():
                 st.markdown(f"### {category_data['name']}")
                 st.markdown(f"*{category_data['description']}*")
@@ -1177,11 +1163,11 @@ def main():
                 # Availability indicator
                 availability = category_data['available_for_us']
                 if availability is True:
-                    st.success(f"✅ **Available for US data** | Source: {category_data['source']}")
+                    st.success(f":material/check_circle: **Available for US data** | Source: {category_data['source']}")
                 elif availability is False:
-                    st.warning(f"⚠️ **Training-only (imputed for US predictions)** | Source: {category_data['source']}")
+                    st.warning(f":material/warning: **Training-only (imputed for US predictions)** | Source: {category_data['source']}")
                 else:
-                    st.info(f"ℹ️ **Partial availability** | Source: {category_data['source']}")
+                    st.info(f":material/info: **Partial availability** | Source: {category_data['source']}")
 
                 # Feature list
                 features_df = pd.DataFrame([
@@ -1202,7 +1188,7 @@ def main():
                 st.divider()
 
         # === FEATURE DERIVATION EXPLANATIONS ===
-        with st.expander("🔬 How Are Features Derived? (Phase 3.2)", expanded=False):
+        with st.expander(":material/science: How Are Features Derived?", expanded=False):
             st.markdown("""
             #### Derived Feature Calculations
 
@@ -1237,7 +1223,7 @@ def main():
             """)
 
         # === HIGHLIGHT MISSING/IMPUTED FEATURES ===
-        with st.expander("⚠️ Imputed Features for US Predictions (Phase 3.3)", expanded=False):
+        with st.expander(":material/warning: Imputed Features for US Predictions", expanded=False):
             st.markdown(f"""
             #### {len(training_only_features)} Training-Only Context Features Imputed for US Data
 
@@ -1273,7 +1259,7 @@ def main():
         # ===================================================================
         # PHASE 4.1: FEATURE IMPORTANCE ANALYSIS
         # ===================================================================
-        st.subheader("🎯 Feature Importance Analysis")
+        st.subheader(":material/target: Feature Importance Analysis")
         st.markdown("""
         Understand which features most influence the ML model's predictions for water quality safety.
         """)
@@ -1303,7 +1289,7 @@ def main():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.metric(
-                        "🏆 Top Classifier Feature",
+                        "Top Classifier Feature",
                         summary['top_feature_classifier'].replace('_', ' ').title(),
                         f"{summary['top_importance_classifier']:.1f}% importance"
                     )
@@ -1311,7 +1297,7 @@ def main():
 
                 with col2:
                     st.metric(
-                        "🏆 Top Regressor Feature",
+                        "Top Regressor Feature",
                         summary['top_feature_regressor'].replace('_', ' ').title(),
                         f"{summary['top_importance_regressor']:.1f}% importance"
                     )
@@ -1337,7 +1323,7 @@ def main():
                 )
 
                 # Display feature importance tables in expandable sections
-                with st.expander("📊 Top 20 Features - Classifier (SAFE/UNSAFE)", expanded=False):
+                with st.expander(":material/bar_chart: Top 20 Features - Classifier (SAFE/UNSAFE)", expanded=False):
                     st.markdown(f"""
                     **What this shows:** The most important features the **binary classifier** uses
                     to decide if water is SAFE (WQI ≥ 70) or UNSAFE (WQI < 70).
@@ -1378,7 +1364,7 @@ def main():
                     )
                     st.plotly_chart(fig_clf, width='stretch')
 
-                with st.expander("📊 Top 20 Features - Regressor (WQI Score)", expanded=False):
+                with st.expander(":material/bar_chart: Top 20 Features - Regressor (WQI Score)", expanded=False):
                     st.markdown(f"""
                     **What this shows:** The most important features the **regression model** uses
                     to predict the exact WQI score (0-100).
@@ -1419,7 +1405,7 @@ def main():
                     st.plotly_chart(fig_reg, width='stretch')
 
                 # Add interpretation guide
-                with st.expander("ℹ️ How to Interpret Feature Importance", expanded=False):
+                with st.expander(":material/info: How to Interpret Feature Importance", expanded=False):
                     st.markdown("""
                     **Feature Importance** measures how much each feature contributes to the model's predictions:
 
@@ -1454,17 +1440,17 @@ def main():
                     ))
 
             else:
-                st.warning("⚠️ ML models not found. Please train models first.")
+                st.warning(":material/warning: ML models not found. Please train models first.")
 
         except Exception as e:
-            st.error(f"⚠️ Error loading feature importance: {e}")
+            st.error(f":material/error: Error loading feature importance: {e}")
 
         st.divider()
 
         # ===================================================================
         # PHASE 4.2: PER-PREDICTION FEATURE CONTRIBUTIONS (SHAP)
         # ===================================================================
-        st.subheader("🔍 Feature Contributions for This Prediction")
+        st.subheader(":material/search: Feature Contributions for This Prediction")
         st.markdown("""
         While **Feature Importance** shows which features matter most *overall*, **Feature Contributions** show
         how the *specific values* of features in THIS water sample influenced THIS prediction.
