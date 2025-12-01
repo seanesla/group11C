@@ -1,200 +1,229 @@
-# Environmental & Water Quality Prediction
+# Water Quality Prediction (Group 11C)
 
-**Group 11C**: Joseann Boneo, Sean Esla, Lademi Aromolaran
+Environmental & Water Quality Prediction using machine learning and open water-quality data.
 
-A machine learning–assisted system that provides Water Quality Index (WQI) scores and trend insights based on US ZIP codes. The system fetches real water quality data from the Water Quality Portal/USGS and calculates NSF-style quality assessments. Training data comes from a public Kaggle water-quality dataset (global/non‑US); core chemical features are universal, but predictions remain **experimental**.
+> AI4ALL Ignite capstone project (educational use only)
 
-## Features
+## Team
 
-- **ZIP Code Lookup**: Search for water quality data by US ZIP code
-- **Real-Time Data**: Fetches live water quality measurements from EPA/USGS Water Quality Portal with automatic WQP → USGS fallback
-- **WQI Calculation**: Comprehensive Water Quality Index based on 6 key parameters:
-  - pH
-  - Dissolved Oxygen (DO)
-  - Temperature
-  - Turbidity
-  - Nitrate (with automatic unit conversion mg{NO3}/L → mg/L as N)
-  - Specific Conductance
-- **ML-Powered Predictions**: Random Forest models (core-parameter only) provide:
-  - Safety classification (Safe/Unsafe) — test accuracy **0.986** on Kaggle holdout (2,939 samples)
-  - WQI regression — test R² **0.985** on Kaggle holdout
-  - 12-month future trend forecasting (experimental)
-- **Interactive Visualizations**: Time series charts and parameter comparisons using Plotly
-- **Safety Assessment**: Indicates whether water is safe for drinking (WQI ≥ 70)
-- **Data Export**: Download raw data as CSV
-- **Nitrate Unit Standardization**: Automatic conversion between mg{NO3}/L and mg/L as N (EPA standard)
+- Sean Esla
+- Lademi Aromolaran
+- Joseann Boneo
 
-## Project Status
+## Project Overview
 
-**⚠ NOT FOR PRODUCTION USE** – Research/portfolio project with explicit safety limitations and non‑US training data. Use for awareness, not for drinking-water decisions.
+This project builds an end-to-end pipeline for exploring surface-water quality in the United States and summarizing it with an interpretable **Water Quality Index (WQI)**.
 
-**Implemented Components:**
-- ✅ Water Quality Portal API client with unit standardization and timeouts
-- ✅ USGS NWIS API client integration with automatic fallback when WQP returns no data
-- ✅ ZIP code to geolocation mapping and geographic coverage tests across all US states and territories
-- ✅ Search-strategy fallback that widens radius/lookback automatically (helps sparse areas like many CA ZIPs)
-- ✅ WQI calculation engine (NSF-WQI style) used as the primary safety signal
-- ✅ Streamlit web application with interactive visualizations and environmental-justice warnings
-- ✅ ML models (Random Forest classifier + regressor) trained on cleaned Kaggle water-quality data (global, non‑US); clearly labeled as experimental
-- ✅ 1,500+ unit and integration tests (fast tests run by default; live external/API tests are marked `integration`)
-- ✅ Nitrate unit conversion system (mg{NO3}/L → mg/L as N) consistent with EPA standards
+Given a U.S. ZIP code, the Streamlit app:
 
-## Installation
+- Geocodes the ZIP to latitude/longitude.
+- Queries public APIs (USGS **National Water Information System** and the **Water Quality Portal**) for recent measurements.
+- Aggregates those measurements into daily values for core parameters (pH, dissolved oxygen, temperature, turbidity, nitrate, and specific conductance).
+- Computes a single WQI score (0–100) and classifies it as **Excellent / Good / Fair / Poor / Very Poor**.
+- Optionally uses trained ML models to predict WQI and a SAFE/UNSAFE label, with rich feature-importance and SHAP-based explanations.
+
+The goal is to make regulatory-grade water-quality data more accessible while highlighting environmental justice concerns around unequal data coverage and model performance.
+
+## Demo (media placeholders)
+
+> The image/GIF references below are **placeholders**. After running the app and scripts, replace them with real screenshots and animations stored under `docs/images/`.
+
+- ![Home screen: ZIP search and WQI summary](docs/images/app-home.png)
+- ![GIF: ZIP search flow and WQI trends](docs/images/zip-search-flow.gif)
+- ![Feature importance for core water-quality features](docs/images/shap-feature-importance.png)
+- ![Fairness diagnostic: WQI / safety vs demographics](docs/images/fairness-by-demographics.png)
+
+## Key Features
+
+- **ZIP-based search** – Enter a U.S. ZIP code to locate nearby monitoring sites and retrieve recent surface-water measurements.
+- **Robust data collection** – Uses both the **USGS NWIS** API and the **Water Quality Portal (WQP)** with a fallback layer to maximize coverage and handle API failures.
+- **Scientific WQI calculation** – Implements an NSF/EPA-inspired Water Quality Index using six core parameters with documented thresholds and weights.
+- **ML-based predictions** – Random forest classifier and regressor trained on a Kaggle water-pollution dataset, with support for a core-parameter-only feature set for better geographic generalization.
+- **Model interpretability** – Global feature importance (top features, availability in US data) and per-sample SHAP explanations, with mathematical checks that SHAP contributions sum to the prediction delta.
+- **Fairness & environmental justice** – Scripts and tests to examine performance across regions and demographics, focusing on where data or models may under-serve certain communities.
+- **Tested Python package** – Modular `src/` layout with unit, integration, and end-to-end tests.
+
+## Data Sources
+
+### Training data (Kaggle)
+
+ML models are trained on a Kaggle **water pollution / water quality** dataset (`data/raw/waterPollution.csv`) with global measurements of surface-water chemistry.
+
+- Place the downloaded CSV at: `data/raw/waterPollution.csv`.
+- The preprocessing pipeline (`src/preprocessing/feature_engineering.py`) builds a clean ML dataset and saves processed features under `data/processed/`.
+
+> Note: The exact dataset name and license are defined in your course materials. Make sure you follow Kaggle/owner licensing when reusing the data.
+
+### Live U.S. water-quality data
+
+The app uses live (or near-real-time) U.S. monitoring data:
+
+- **USGS National Water Information System (NWIS)** via `src/data_collection/usgs_client.py`.
+- **Water Quality Portal (WQP)** via `src/data_collection/wqp_client.py` (aggregates USGS, EPA, and state agencies).
+
+These APIs provide time series of pH, dissolved oxygen, temperature, turbidity, nitrate, conductivity, and related parameters around the requested ZIP code.
+
+### Data directory layout
+
+- `data/raw/` – Raw Kaggle CSV and any other unprocessed input files (not tracked in git except for `.gitkeep`).
+- `data/processed/` – Cleaned and feature-engineered datasets used for modeling.
+- `data/models/` – Saved classifier, regressor, and metadata files (model binaries are gitignored; metadata JSONs are tracked).
+
+## Repository Structure
+
+High-level layout:
+
+```text
+streamlit_app/
+  app.py                # Streamlit UI (ZIP search, visualizations, explanations)
+
+src/
+  data_collection/      # USGS & WQP API clients, robust fallback logic
+  geolocation/          # ZIP-to-lat/long mapping
+  preprocessing/        # Kaggle loading, feature engineering, US feature pipelines
+  models/               # Classifier, regressor, domain calibration, model utilities
+  services/             # Search strategies and other orchestration logic
+  utils/                # WQI calculator, feature definitions, importance utilities
+
+data/
+  raw/                  # Raw datasets (Kaggle, etc.)
+  processed/            # Processed ML-ready features
+  models/               # Trained models + metadata
+
+scripts/
+  *.py                  # Training, calibration, fairness tests, chunked test runners
+
+tests/
+  test_*.py             # Unit, integration, and E2E tests
+
+docs/projectspec/       # Original project specification & GitHub guidelines (PDFs)
+pyproject.toml          # Poetry project configuration
+```
+
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
-- Poetry (dependency management)
+- **Python**: 3.11+
+- **Poetry** for dependency management
+- A modern browser for the Streamlit UI
 
-### Setup
+### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd group11C
-```
+From the project root:
 
-2. Install dependencies with Poetry:
 ```bash
 poetry install
 ```
 
-3. Activate the virtual environment:
-```bash
-poetry shell
-```
+This installs both runtime and dev dependencies defined in `pyproject.toml`.
 
-4. (Optional) Configure Kaggle credentials for dataset downloads:
-   - Copy `kaggle.json.example` to `~/.kaggle/kaggle.json`
-   - Replace the placeholder values with your Kaggle username and API key
-   - Ensure the file stays untracked (`kaggle.json` is already in `.gitignore`)
+## Running the Streamlit App
 
-## Usage
-
-### Running the Web Application
-
-Start the Streamlit app:
+From the project root:
 
 ```bash
 poetry run streamlit run streamlit_app/app.py
 ```
 
-The app will open in your default browser at `http://localhost:8501`.
+Then open the URL shown in the terminal (usually `http://localhost:8501`).
 
-### Using the Web App
+Typical workflow inside the app:
 
-1. **Enter a ZIP code** (5 digits) in the sidebar
-2. **Adjust search radius** (10-100 miles) to find nearby monitoring stations
-3. **Select date range** to view historical data (default: last year)
-4. **Click "Search"** to fetch and analyze water quality data
+1. Enter a **U.S. ZIP code** (e.g., `20001`) and optional date range.
+2. The app looks up nearby monitoring stations and fetches recent measurements from USGS NWIS and WQP.
+3. Daily WQI scores are computed and visualized over time with color-coded quality categories.
+4. If compatible ML models are available in `data/models/`, you will also see:
+   - A **SAFE/UNSAFE** prediction with probability.
+   - A predicted **WQI score** with confidence.
+   - Global and per-sample **feature importance / SHAP explanations**.
 
-### Example ZIP Codes
+If no compatible models are found, the app gracefully falls back to rule-based WQI calculations only.
 
-- **20001** – Washington, DC (dense data)
-- **10001** – New York City, NY (dense data)
-- **90001** – Los Angeles, CA (works via auto-extended search if recent data are sparse)
+> Environment timeouts: you can override default API timeouts via `USGS_TIMEOUT` and `WQP_TIMEOUT` environment variables if needed.
 
-## Project Structure
+## Training the ML Models
 
-```
-group11C/
-├── src/
-│   ├── data_collection/     # API clients for water quality data
-│   ├── geolocation/          # ZIP code to coordinates mapping
-│   ├── utils/                # WQI calculator
-│   ├── models/               # ML models (in progress)
-│   └── preprocessing/        # Data processing (in progress)
-├── streamlit_app/            # Web application
-├── tests/                    # Unit and integration tests (in progress)
-├── data/                     # Data directories
-└── docs/                     # Reports, standards, screenshots, project specs
-    └── projectspec/          # Course briefs, rubrics, proposal PDFs
+The main training entrypoint is `train_models.py` at the project root.
+
+Make sure `data/raw/waterPollution.csv` is available, then run:
+
+```bash
+# Full feature set (includes dataset-specific context features)
+poetry run python train_models.py
+
+# Core-parameter-only models (recommended for deployment)
+poetry run python train_models.py --core-params-only
 ```
 
-## Water Quality Index (WQI)
+Training will:
 
-The WQI is calculated on a 0-100 scale based on multiple water quality parameters:
+- Load and validate the Kaggle dataset.
+- Build a feature matrix and labels under `data/processed/`.
+- Train a random forest **classifier** (SAFE vs UNSAFE) and **regressor** (continuous WQI).
+- Save models and metadata into `data/models/` with timestamped filenames.
+- Log performance metrics and check simple success criteria (e.g., classifier accuracy ≥ 75%, regressor R² ≥ 0.6).
 
-- **90-100**: Excellent - Pristine water quality
-- **70-89**: Good - Safe for most uses
-- **50-69**: Fair - Acceptable but needs monitoring
-- **25-49**: Poor - Treatment recommended
-- **0-24**: Very Poor - Significant contamination
+The Streamlit app then loads the **latest** compatible models via `src/models/model_utils.py`.
 
-Water is considered **safe for drinking** when WQI ≥ 70.
+## Testing
 
-## Data Sources
-
-- **Water Quality Portal / USGS NWIS**: Live US measurements (primary inference data)
-- **Kaggle Water Quality Dataset (1991–2017, global/non‑US)**: Training data for ML models (chemical-only core features)
-- **pgeocode**: ZIP code to coordinates conversion
-
-## Development
-
-### Running Tests
+Fast test run (no external API calls):
 
 ```bash
 poetry run pytest
 ```
 
-For long runs, use the chunked runner to execute themed batches sequentially:
+Highlights:
 
-```bash
-poetry run python scripts/run_tests_chunked.py            # all groups
-poetry run python scripts/run_tests_chunked.py --group geo  # just geo tests
-```
+- Core WQI science and unit handling (e.g., nitrate conversions) – `tests/test_wqi_*.py`, `tests/test_nitrate_*`.
+- Data collection clients with fixture-backed responses – `tests/test_usgs_client.py`, `tests/test_wqp_client.py`.
+- Preprocessing and feature engineering – `tests/test_feature_engineering.py`, `tests/test_us_data_features.py`.
+- Model training and robustness – `tests/test_classifier.py`, `tests/test_regressor.py`, `tests/test_ml_robustness.py`.
+- Streamlit backend and UI smoke tests – `tests/test_streamlit_app.py`, `tests/test_e2e_streamlit.py`.
+- Fairness and geographic coverage – `tests/test_geographic_*`, `tests/test_fairness_demographics.py`.
 
-### Configuration
+Some tests and scripts are marked for heavier, exploratory analysis (e.g., SHAP hyper-thorough tests, fairness diagnostics). These may be slow and are intended for offline analysis rather than every CI run.
 
-- Environment timeouts (optional): set `WQP_TIMEOUT` and `USGS_TIMEOUT` (seconds). See `.env.example`.
-- Kaggle: place real creds in `~/.kaggle/kaggle.json` (template at `kaggle.json.example`).
+## Water Quality Index (WQI)
 
-### Code Quality
+The WQI implementation lives in `src/utils/wqi_calculator.py` and is inspired by the **National Sanitation Foundation Water Quality Index (NSF-WQI)** and **EPA** standards.
 
-```bash
-# Format code
-poetry run black .
+- Parameters used: **pH**, **dissolved oxygen**, **temperature**, **turbidity**, **nitrate**, and **specific conductance**.
+- Each parameter is mapped to a 0–100 quality score using scientifically motivated thresholds.
+- Parameter scores are combined with weights to produce a single WQI (0–100).
+- WQI categories used throughout the app:
+  - **90–100**: Excellent
+  - **70–89**: Good
+  - **50–69**: Fair
+  - **25–49**: Poor
+  - **0–24**: Very Poor
 
-# Type checking
-poetry run mypy src/
+The WQI values shown in the app are meant to be intuitive summaries, not a replacement for regulatory assessments or local advisories.
 
-# Linting
-poetry run flake8 src/
-```
+## Ethics, Fairness & Limitations
 
-### Advanced: US Calibration Pipeline
+This is an educational project, not a production safety tool. Please keep in mind:
 
-To evaluate and tighten model behavior on real US water samples:
+- **Do not use this app as the sole basis for drinking or recreation decisions.** Always consult local water authorities and official advisories.
+- **Data coverage is uneven.** Many communities have sparse monitoring; model performance and WQI estimates are more uncertain in data-poor regions.
+- **Training data bias.** The Kaggle dataset and U.S. monitoring networks over-represent certain geographies and conditions, which can bias both the WQI calibration and ML models.
+- **Fairness & environmental justice.** The repository includes scripts/tests (e.g., under `scripts/` and `tests/test_fairness_demographics.py`) to explore whether errors or uncertainty cluster in particular demographic or geographic groups.
+- **Interpretability is an aid, not a guarantee.** SHAP and feature-importance plots explain model behavior but do not make the underlying data unbiased.
 
-1. Harvest US samples (WQP/USGS → aggregated WQI rows):
-   ```bash
-   poetry run python scripts/build_us_training_samples.py
-   ```
-2. Train a US domain calibrator paired with the latest regressor:
-   ```bash
-   poetry run python scripts/train_us_calibration_from_samples.py
-   ```
-   This writes `calibrator_us_*.joblib` next to `regressor_*.joblib`, and all
-   future `load_latest_models()` calls will auto-attach the calibration for US
-   predictions.
+Treat all numbers as **approximate indicators** to support learning and discussion about environmental justice, not as definitive regulatory values.
 
-### Operations & Maintenance
+## Media to Capture (for README screenshots & GIFs)
 
-- **Refresh US samples weekly**: `poetry run python scripts/build_us_training_samples.py --lookback-years 3 --radius 30`  
-  (adjust ZIP list with `--zip` for targeted audits; completes in ~3 min for 5 ZIPs).
-- **Rebuild calibrator after refresh**: `poetry run python scripts/train_us_calibration_from_samples.py`  
-  saves `calibrator_us_<timestamp>.joblib` alongside the active regressor so the app auto-loads it.
-- **Streamlit smoke (headless)**: `poetry run pytest tests/test_e2e_streamlit.py -k "wqp_api_timeout_handling"` exercises the UI data path without a browser.
-- **Full geographic sweep (slow, ~17 min)**: `poetry run pytest tests/test_geographic_coverage_191_locations.py` ensures all US/territory ZIPs route through fallback logic.
-- **Data source overrides**: use env vars `WQP_TIMEOUT`, `USGS_TIMEOUT`, and `MAX_RADIUS_MILES` to tune latency and fallback aggressiveness in production-like runs.
+When you are ready to polish the GitHub page, capture and save the following media under `docs/images/` to replace the placeholders above:
 
-## Documentation
+1. `app-home.png` – A static screenshot of the Streamlit home screen right after running a successful ZIP search, showing the map (if present), WQI summary card(s), and the main WQI visualization.
+2. `zip-search-flow.gif` – A short screen recording (5–10 seconds) of a user entering a ZIP code, clicking the search button, and scrolling through the WQI time series and raw measurements table.
+3. `shap-feature-importance.png` – A screenshot of the **Feature Importance Analysis** section with the top-10 classifier bar chart and explanatory text visible.
+4. `fairness-by-demographics.png` – A static chart exported from your fairness / environmental justice analysis (e.g., from `scripts/test_environmental_justice_COMPLETE.py` or related notebooks), comparing model performance or WQI distributions across different demographic or geographic groups.
 
-- **Project Proposal**: `docs/projectspec/project.pdf`
-- **Implementation Plan**: `.claude/plan.md`
-- **Contributor Guide**: `AGENTS.md`
-- **Legacy validation reports**: `docs/archive/` (kept for reference)
+## Acknowledgements
 
-## License
-
-This project is developed as part of an academic course.
+- **AI4ALL Ignite** instructors and mentors for guidance and project structure.
+- **Kaggle** and the creators of the water pollution dataset used for training.
+- **USGS**, **EPA**, and partners behind the **National Water Information System** and **Water Quality Portal** for providing open water-quality data.
