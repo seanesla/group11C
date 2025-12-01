@@ -1184,68 +1184,20 @@ def main():
         # === FEATURE DERIVATION EXPLANATIONS ===
         with st.expander(":material/science: How Are Features Derived?", expanded=False):
             st.markdown("""
-            #### Derived Feature Calculations
+            **From Water Quality:** `ph_deviation_from_7`, `do_temp_ratio`, `conductance_low/medium/high`, `pollution_stress`, `temp_stress`
 
-            Many ML features are calculated from the raw water quality measurements. Here's how:
+            **From Temporal Data:** `years_since_1991`, `decade`, `is_1990s/2000s/2010s`
 
-            **From Water Quality Parameters:**
-            - `ph_deviation_from_7` = |pH - 7.0| (distance from neutral)
-            - `do_temp_ratio` = dissolved_oxygen / (temperature + 1) (DO saturation proxy)
-            - `conductance_low` = 1 if conductance < 200 µS/cm, else 0
-            - `conductance_medium` = 1 if 200 ≤ conductance < 800 µS/cm, else 0
-            - `conductance_high` = 1 if conductance ≥ 800 µS/cm, else 0
-            - `pollution_stress` = (nitrate / 50) × (1 - dissolved_oxygen / 10)
-            - `temp_stress` = |temperature - 15°C| / 15 (deviation from optimal)
+            **From Missing Data:** `*_missing` flags, `n_params_available`
 
-            **From Temporal Data:**
-            - `years_since_1991` = year - 1991 (baseline year)
-            - `decade` = (year // 10) × 10 (decade bin: 1990, 2000, 2010)
-            - `is_1990s` = 1 if 1990 ≤ year < 2000, else 0
-            - `is_2000s` = 1 if 2000 ≤ year < 2010, else 0
-            - `is_2010s` = 1 if 2010 ≤ year < 2020, else 0
-
-            **From Missing Data:**
-            - `ph_missing`, `dissolved_oxygen_missing`, etc. = 1 if parameter is missing, else 0
-            - `n_params_available` = count of non-missing WQI parameters (0-6)
-
-            **From Socioeconomic Data (Europe-specific):**
-            - `gdp_per_capita_proxy` = GDP / (PopulationDensity + 1)
-
-            **From Geographic Data:**
-            - `water_body_GW`, `water_body_LW`, `water_body_RW`: One-hot encoding of water body type
-            - `country_*`: One-hot encoding of European countries (11 categories)
+            **From Geography (Europe-specific):** `water_body_*`, `country_*`, `gdp_per_capita_proxy`
             """)
 
         # === HIGHLIGHT MISSING/IMPUTED FEATURES ===
         with st.expander(":material/warning: Imputed Features for US Predictions", expanded=False):
             st.markdown(f"""
-            #### {len(training_only_features)} Training-Only Context Features Imputed for US Data
-
-            The ML models were trained on a historical public water quality dataset (Kaggle). When making predictions for US locations,
-            **{len(training_only_features)} context features** are **imputed (filled with average values from training data)** because
-            they're not available for US water samples.
-
-            **Why This Matters:**
-            - Models learn relationships between water quality and socioeconomic/environmental context
-            - European averages may not represent US conditions accurately
-            - Predictions should be interpreted with this limitation in mind
-
-            **Categories of Imputed Features:**
-            """)
-
-            # Group European features by category
-            for category_key, category_data in feature_categories.items():
-                if category_data['available_for_us'] is False:
-                    n_features = len(category_data['features'])
-                    st.markdown(f"**{category_data['name']}** ({n_features} features):")
-                    feature_list = ", ".join(f"`{f}`" for f in category_data['features'].keys())
-                    st.markdown(f"  {feature_list}")
-
-            st.markdown("""
-            **Imputation Strategy:**
-            - Missing features are filled with **median values** from the European training dataset
-            - This ensures numerical stability but may not reflect actual US conditions
-            - Core water quality parameters (pH, DO, temperature, nitrate, conductance) are **directly measured** from US data
+            **{len(training_only_features)} features** are imputed from European training data averages for US predictions.
+            Core parameters (pH, DO, temp, nitrate, conductance) are directly measured.
             """)
 
         st.divider()
@@ -1399,39 +1351,11 @@ def main():
                     st.plotly_chart(fig_reg, width='stretch')
 
                 # Add interpretation guide
-                with st.expander(":material/info: How to Interpret Feature Importance", expanded=False):
+                with st.expander(":material/info: How to Interpret", expanded=False):
                     st.markdown("""
-                    **Feature Importance** measures how much each feature contributes to the model's predictions:
-
-                    - **High Importance (>10%)**: Critical features that strongly influence predictions
-                    - **Medium Importance (5-10%)**: Significant features with moderate influence
-                    - **Low Importance (<5%)**: Supportive features with minor influence
-
-                    **Key Insights from Current Models:**
-
-                    1. **`dissolved_oxygen_missing`** is the most important feature for both models
-                       - Classifier: {clf_imp:.1f}% importance
-                       - Regressor: {reg_imp:.1f}% importance
-                       - **Why**: Missing DO measurements often indicate incomplete water testing,
-                         which correlates with unsafe water conditions
-
-                    2. **Availability Markers:**
-                       - :green[**Available**]: Feature directly measured from US water samples
-                       - :red[**Imputed**]: Europe-only feature (imputed from training data for US predictions)
-                       - :orange[**Partial**]: Some components available for US data
-
-                    3. **Model Differences:**
-                       - **Classifier** focuses on distinguishing SAFE vs UNSAFE (binary decision)
-                       - **Regressor** predicts exact WQI score (0-100 continuous value)
-                       - Different feature importance patterns reflect these different goals
-
-                    **For Your Current Prediction:**
-                    The features shown above indicate what the models considered most important
-                    when making the prediction for your water sample.
-                    """.format(
-                        clf_imp=summary['top_importance_classifier'],
-                        reg_imp=summary['top_importance_regressor']
-                    ))
+                    - **>10%**: Critical | **5-10%**: Significant | **<5%**: Minor
+                    - :green[Available]: Measured from US data | :red[Imputed]: From European training data
+                    """)
 
             else:
                 st.warning(":material/warning: ML models not found. Please train models first.")
@@ -1717,40 +1641,12 @@ def main():
                     """)
 
                 # Add interpretation guide
-                with st.expander(":material/info: How to Interpret Feature Contributions", expanded=False):
+                with st.expander(":material/info: About SHAP Values", expanded=False):
                     st.markdown("""
-                    **Feature Contributions vs Feature Importance:**
-
-                    | Aspect | Feature Importance (Phase 4.1) | Feature Contributions (Phase 4.2) |
-                    |--------|--------------------------------|-----------------------------------|
-                    | **Scope** | Global (all predictions) | Local (this prediction only) |
-                    | **Question** | "Which features matter most overall?" | "Why did THIS sample get THIS prediction?" |
-                    | **Values** | Model-level percentages | Sample-specific deltas |
-                    | **Use Case** | Understand model behavior | Explain individual predictions |
-
-                    **SHAP (SHapley Additive exPlanations):**
-                    - Based on game theory (Shapley values from cooperative game theory)
-                    - Guarantees: Sum of contributions = (Prediction - Base Value)
-                    - Accounts for feature interactions (not just linear effects)
-                    - "Fair" allocation of prediction credit to each feature
-
-                    **Reading the Contributions:**
-
-                    For **Classifier** (SAFE/UNSAFE):
-                    - Base value ≈ 0.5676 means 56.76% of training samples were SAFE
-                    - Positive contribution → pushes toward SAFE (class 1)
-                    - Negative contribution → pushes toward UNSAFE (class 0)
-
-                    For **Regressor** (WQI Score):
-                    - Base value ≈ 67.48 is the average WQI across all training samples
-                    - Positive contribution → increases WQI score
-                    - Negative contribution → decreases WQI score
-
-                    **Example:**
-                    If `dissolved_oxygen_missing` has contribution +0.18 for the classifier:
-                    - This specific sample is missing DO measurement
-                    - Missing DO increased SAFE probability by 0.18 (18 percentage points)
-                    - This is counterintuitive but reflects training data patterns
+                    **SHAP** explains why THIS sample got THIS prediction (not overall model behavior).
+                    - **Positive**: Pushes toward SAFE / higher WQI
+                    - **Negative**: Pushes toward UNSAFE / lower WQI
+                    - Sum of contributions = Prediction - Base Value
                     """)
 
             else:
@@ -1766,11 +1662,7 @@ def main():
         # ===================================================================
         # PHASE 4.3: "WHY SAFE/UNSAFE?" MODEL DECISION EXPLANATION
         # ===================================================================
-        st.subheader(":material/chat: Why is this water predicted as SAFE/UNSAFE?")
-        st.markdown("""
-        This section provides a plain-language explanation of the model's classification decision,
-        synthesizing the feature contributions into actionable insights.
-        """)
+        st.subheader(":material/chat: Decision Explanation")
 
         try:
             if classifier_files and regressor_files and ml_predictions and 'clf_contributions' in locals() and 'reg_contributions' in locals():
@@ -1875,33 +1767,10 @@ def main():
                         st.markdown(f"- {rec}")
 
                 # Add interpretation help
-                with st.expander(":material/info: Understanding This Explanation", expanded=False):
+                with st.expander(":material/info: About This Explanation", expanded=False):
                     st.markdown("""
-                    **How This Explanation Was Generated:**
-
-                    This explanation synthesizes the SHAP feature contributions (Phase 4.2) into plain language:
-
-                    1. **Verdict**: Based on classifier probability (SAFE if ≥ 50%, UNSAFE if < 50%)
-                    2. **Confidence**: Strength of the model's conviction in its classification
-                    3. **Key Factors**: Features with the largest SHAP contributions to the prediction
-                    4. **Parameter Assessment**: Each core water quality parameter evaluated against:
-                       - EPA Maximum Contaminant Levels (MCLs)
-                       - WHO Guidelines for Drinking Water Quality
-                       - NSF Water Quality Index standards
-                    5. **Recommendations**: Actionable steps to improve water quality (UNSAFE only)
-
-                    **Thresholds Referenced:**
-                    - **pH**: 6.5-8.5 (EPA guideline), 6.8-7.5 (optimal)
-                    - **Dissolved Oxygen**: ≥8 mg/L (excellent), ≥6 mg/L (good), <4 mg/L (poor)
-                    - **Temperature**: 10-20°C (optimal), <25°C (WHO preference)
-                    - **Turbidity**: <1 NTU (EPA), <5 NTU (WHO ideal)
-                    - **Nitrate**: <5 mg/L (excellent), <10 mg/L (EPA MCL), ≥10 mg/L (exceeds limit)
-                    - **Conductivity**: 150-500 µS/cm (optimal), >800 µS/cm (concerning)
-
-                    **Important Notes:**
-                    - This is a predictive model trained on European water quality data
-                    - Actual safety depends on comprehensive testing by certified laboratories
-                    - Always consult local water quality authorities for official assessments
+                    Based on SHAP contributions and EPA/WHO thresholds. Model trained on European data.
+                    For official assessments, consult certified laboratories.
                     """)
 
             else:
