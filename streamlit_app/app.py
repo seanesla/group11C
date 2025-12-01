@@ -1174,7 +1174,7 @@ def main():
                     {
                         "Feature": feat_name,
                         "Description": feat_desc,
-                        "Status": "🔴 Imputed" if feat_name in training_only_features else "🟢 Available"
+                        "Status": ":red[Imputed]" if feat_name in training_only_features else ":green[Available]"
                     }
                     for feat_name, feat_desc in category_data['features'].items()
                 ])
@@ -1422,9 +1422,9 @@ def main():
                          which correlates with unsafe water conditions
 
                     2. **Availability Markers:**
-                       - 🟢 **Available**: Feature directly measured from US water samples
-                       - 🔴 **Imputed**: Europe-only feature (imputed from training data for US predictions)
-                       - 🟡 **Partial**: Some components available for US data
+                       - :green[**Available**]: Feature directly measured from US water samples
+                       - :red[**Imputed**]: Europe-only feature (imputed from training data for US predictions)
+                       - :orange[**Partial**]: Some components available for US data
 
                     3. **Model Differences:**
                        - **Classifier** focuses on distinguishing SAFE vs UNSAFE (binary decision)
@@ -1516,7 +1516,7 @@ def main():
                 reg_match_error = abs(reg_contributions['shap_sum'] - reg_pred_delta)
 
                 # Show verification (collapsed by default)
-                with st.expander("🔬 SHAP Mathematical Verification", expanded=False):
+                with st.expander(":material/science: SHAP Mathematical Verification", expanded=False):
                     st.markdown("""
                     **SHAP (SHapley Additive exPlanations)** values must satisfy:
                     """)
@@ -1531,9 +1531,9 @@ def main():
                         st.write(f"Sum of SHAP: {clf_contributions['shap_sum']:.4f}")
                         st.write(f"Match Error: {clf_match_error:.6f}")
                         if clf_match_error < 0.001:
-                            st.success("✅ Perfect match")
+                            st.success("Perfect match")
                         else:
-                            st.warning(f"⚠️ Mismatch: {clf_match_error:.6f}")
+                            st.warning(f"Mismatch: {clf_match_error:.6f}")
 
                     with col2:
                         st.markdown("**Regressor:**")
@@ -1543,13 +1543,13 @@ def main():
                         st.write(f"Sum of SHAP: {reg_contributions['shap_sum']:.2f}")
                         st.write(f"Match Error: {reg_match_error:.4f}")
                         if reg_match_error < 0.1:
-                            st.success("✅ Perfect match")
+                            st.success("Perfect match")
                         else:
-                            st.warning(f"⚠️ Mismatch: {reg_match_error:.4f}")
+                            st.warning(f"Mismatch: {reg_match_error:.4f}")
 
                 # ===  VISUALIZATION: WATERFALL/BAR CHARTS ===
                 # Create tabs for visualizations
-                viz_tab1, viz_tab2 = st.tabs(["📊 Classifier Contributions", "📈 Regressor Contributions"])
+                viz_tab1, viz_tab2 = st.tabs(["Classifier Contributions", "Regressor Contributions"])
 
                 with viz_tab1:
                     # Classifier contributions bar chart
@@ -1589,8 +1589,8 @@ def main():
                     st.plotly_chart(fig_clf_contrib, width='stretch')
 
                     st.caption("""
-                    🟢 **Green bars**: Features pushing prediction toward SAFE (positive contribution)
-                    🟠 **Orange bars**: Features pushing prediction toward UNSAFE (negative contribution)
+                    :green[**Green bars**]: Features pushing prediction toward SAFE (positive contribution)
+                    :orange[**Orange bars**]: Features pushing prediction toward UNSAFE (negative contribution)
                     **Bar length**: Magnitude of influence on the prediction
                     """)
 
@@ -1638,7 +1638,7 @@ def main():
                     """)
 
                 # Display classifier contributions
-                with st.expander("🎯 Top 20 Feature Contributions - Classifier (SAFE/UNSAFE)", expanded=False):
+                with st.expander(":material/target: Top 20 Feature Contributions - Classifier", expanded=False):
                     st.markdown(f"""
                     **What this shows:** How each feature VALUE in this water sample pushed the prediction
                     toward SAFE (positive contribution) or UNSAFE (negative contribution).
@@ -1657,11 +1657,11 @@ def main():
 
                     def get_availability_marker(feature_name: str) -> str:
                         if feature_name in us_features:
-                            return "🟢 Available"
+                            return ":green[Available]"
                         elif feature_name in training_only_features:
-                            return "🔴 Imputed"
+                            return ":red[Imputed]"
                         else:
-                            return "🟡 Partial"
+                            return ":orange[Partial]"
 
                     clf_contrib_df['availability'] = clf_contrib_df['feature'].apply(get_availability_marker)
 
@@ -1680,14 +1680,14 @@ def main():
                     )
 
                     st.info("""
-                    💡 **Interpretation:**
-                    - **Positive contribution**: Feature pushes prediction toward SAFE (WQI ≥ 70)
+                    **Interpretation:**
+                    - **Positive contribution**: Feature pushes prediction toward SAFE (WQI >= 70)
                     - **Negative contribution**: Feature pushes prediction toward UNSAFE (WQI < 70)
                     - **Magnitude**: How strongly this feature influenced the decision
                     """)
 
                 # Display regressor contributions
-                with st.expander("📊 Top 20 Feature Contributions - Regressor (WQI Score)", expanded=True):
+                with st.expander(":material/bar_chart: Top 20 Feature Contributions - Regressor", expanded=True):
                     st.markdown(f"""
                     **What this shows:** How each feature VALUE in this water sample pushed the predicted
                     WQI score higher or lower.
@@ -1716,14 +1716,14 @@ def main():
                     )
 
                     st.info("""
-                    💡 **Interpretation:**
+                    **Interpretation:**
                     - **Positive contribution**: Feature increases predicted WQI score
                     - **Negative contribution**: Feature decreases predicted WQI score
                     - **Magnitude**: How many WQI points this feature added/subtracted
                     """)
 
                 # Add interpretation guide
-                with st.expander("ℹ️ How to Interpret Feature Contributions", expanded=False):
+                with st.expander(":material/info: How to Interpret Feature Contributions", expanded=False):
                     st.markdown("""
                     **Feature Contributions vs Feature Importance:**
 
@@ -1760,10 +1760,10 @@ def main():
                     """)
 
             else:
-                st.warning("⚠️ ML models or predictions not available. Cannot calculate feature contributions.")
+                st.warning("ML models or predictions not available. Cannot calculate feature contributions.")
 
         except Exception as e:
-            st.error(f"⚠️ Error calculating feature contributions: {e}")
+            st.error(f"Error calculating feature contributions: {e}")
             import traceback
             st.code(traceback.format_exc())
 
@@ -1772,7 +1772,7 @@ def main():
         # ===================================================================
         # PHASE 4.3: "WHY SAFE/UNSAFE?" MODEL DECISION EXPLANATION
         # ===================================================================
-        st.subheader("💬 Why is this water predicted as SAFE/UNSAFE?")
+        st.subheader(":material/chat: Why is this water predicted as SAFE/UNSAFE?")
         st.markdown("""
         This section provides a plain-language explanation of the model's classification decision,
         synthesizing the feature contributions into actionable insights.
@@ -1804,9 +1804,9 @@ def main():
                 wqi_category = explanation['wqi_category']
 
                 if verdict == 'SAFE':
-                    st.success(f"### ✅ Water Quality: **{verdict}**")
+                    st.success(f"### Water Quality: **{verdict}**")
                 else:
-                    st.error(f"### ⚠️ Water Quality: **{verdict}**")
+                    st.error(f"### Water Quality: **{verdict}**")
 
                 # Display summary
                 st.markdown(f"**{explanation['summary']}**")
@@ -1836,7 +1836,7 @@ def main():
 
                 # Display primary factors
                 if explanation['primary_factors']:
-                    st.markdown("#### 🎯 Key Factors Influencing This Prediction:")
+                    st.markdown("#### Key Factors Influencing This Prediction:")
                     for factor in explanation['primary_factors']:
                         st.markdown(f"- {factor}")
                 else:
@@ -1846,7 +1846,7 @@ def main():
 
                 # Display parameter assessment
                 if explanation['parameter_assessment']:
-                    st.markdown("#### 📋 Water Quality Parameter Assessment:")
+                    st.markdown("#### Water Quality Parameter Assessment:")
 
                     # Create columns for better layout
                     assessment_items = list(explanation['parameter_assessment'].items())
@@ -1865,23 +1865,23 @@ def main():
 
                                     with col:
                                         if status == 'excellent':
-                                            st.success(f"**{param_name}**: ✅ {reason}")
+                                            st.success(f"**{param_name}**: {reason}")
                                         elif status == 'good':
-                                            st.info(f"**{param_name}**: ✓ {reason}")
+                                            st.info(f"**{param_name}**: {reason}")
                                         elif status == 'concerning':
-                                            st.warning(f"**{param_name}**: ⚠ {reason}")
+                                            st.warning(f"**{param_name}**: {reason}")
                                         else:  # poor
-                                            st.error(f"**{param_name}**: ❌ {reason}")
+                                            st.error(f"**{param_name}**: {reason}")
 
                 # Display recommendations (for UNSAFE only)
                 if explanation['recommendations'] and verdict == 'UNSAFE':
                     st.divider()
-                    st.markdown("#### 💡 Recommendations for Improvement:")
+                    st.markdown("#### Recommendations for Improvement:")
                     for rec in explanation['recommendations']:
                         st.markdown(f"- {rec}")
 
                 # Add interpretation help
-                with st.expander("ℹ️ Understanding This Explanation", expanded=False):
+                with st.expander(":material/info: Understanding This Explanation", expanded=False):
                     st.markdown("""
                     **How This Explanation Was Generated:**
 
@@ -1911,10 +1911,10 @@ def main():
                     """)
 
             else:
-                st.warning("⚠️ ML predictions not available. Cannot generate decision explanation.")
+                st.warning("ML predictions not available. Cannot generate decision explanation.")
 
         except Exception as e:
-            st.error(f"⚠️ Error generating decision explanation: {e}")
+            st.error(f"Error generating decision explanation: {e}")
             import traceback
             st.code(traceback.format_exc())
 
@@ -1943,7 +1943,7 @@ def main():
             )
 
             # Add expandable threshold information for each parameter
-            st.markdown("#### 📋 Parameter Thresholds & Standards")
+            st.markdown("#### Parameter Thresholds & Standards")
             st.markdown("Click on a parameter to see how scores are calculated:")
 
             for param_name, param_score in scores.items():
@@ -1973,12 +1973,12 @@ def main():
                         )
 
                         # Add explanation of current bracket
-                        st.info(f"💡 This parameter score is in the **{calculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
+                        st.info(f"This parameter score is in the **{calculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
 
                         # Add nitrate-specific unit explainer
                         if param_name == 'nitrate':
                             st.markdown("---")
-                            st.markdown("#### ℹ️ Nitrate Units: mg/L as N")
+                            st.markdown("#### Nitrate Units: mg/L as N")
                             st.markdown(f"""
                             This app displays nitrate as **mg/L as N** (EPA/USGS standard), which measures only the nitrogen content of nitrate.
 
@@ -2000,7 +2000,7 @@ def main():
                             - 44.3 mg{{NO₃}}/L = 10.0 mg/L as N (EPA MCL threshold)
                             - 88.6 mg{{NO₃}}/L = 20.0 mg/L as N (2× EPA MCL, unsafe)
 
-                            ✅ **The nitrate value you see above ({param_value:.2f} mg/L as N) is from USGS/EPA sources and is already in the correct unit.** No conversion was applied to this displayed value.
+                            The nitrate value you see above ({param_value:.2f} mg/L as N) is from USGS/EPA sources and is already in the correct unit. No conversion was applied to this displayed value.
                             """)
 
         st.divider()
@@ -2029,7 +2029,7 @@ def main():
             # Download button
             csv = df.to_csv(index=False)
             st.download_button(
-                label="📥 Download CSV",
+                label="Download CSV",
                 data=csv,
                 file_name=f"water_quality_{zip_code}_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
