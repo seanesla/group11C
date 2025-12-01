@@ -104,7 +104,8 @@ class WQPClient:
         longitude: Optional[float] = None,
         radius_miles: Optional[float] = None,
         state_code: Optional[str] = None,
-        county_code: Optional[str] = None
+        county_code: Optional[str] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Find water quality monitoring stations.
@@ -116,13 +117,21 @@ class WQPClient:
             radius_miles: Search radius in miles
             state_code: Two-letter state code (e.g., 'VA')
             county_code: County FIPS code (e.g., 'US:51:059')
+            site_types: List of WQP site types to include (e.g., ['Stream', 'Lake']).
+                       Defaults to surface water types, excluding marine/estuarine.
 
         Returns:
             DataFrame containing station information
         """
+        from .constants import SURFACE_WATER_SITE_TYPES_WQP
+
+        if site_types is None:
+            site_types = SURFACE_WATER_SITE_TYPES_WQP
+
         params = {
             'mimeType': 'csv',
             'sorted': 'yes',
+            'siteType': ';'.join(site_types),
         }
 
         if bbox:
@@ -162,7 +171,8 @@ class WQPClient:
         characteristics: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        site_ids: Optional[List[str]] = None
+        site_ids: Optional[List[str]] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Retrieve water quality measurement data.
@@ -178,14 +188,22 @@ class WQPClient:
             start_date: Start date for data retrieval
             end_date: End date for data retrieval
             site_ids: List of specific monitoring location IDs
+            site_types: List of WQP site types to include (e.g., ['Stream', 'Lake']).
+                       Defaults to surface water types, excluding marine/estuarine.
 
         Returns:
             DataFrame containing water quality measurements
         """
+        from .constants import SURFACE_WATER_SITE_TYPES_WQP
+
+        if site_types is None:
+            site_types = SURFACE_WATER_SITE_TYPES_WQP
+
         params = {
             'mimeType': 'csv',
             'sorted': 'yes',
             'sampleMedia': 'Water',  # Focus on water samples
+            'siteType': ';'.join(site_types),
         }
 
         # Geographic filters
@@ -245,7 +263,8 @@ class WQPClient:
         state_code: str,
         start_date: datetime,
         end_date: datetime,
-        characteristics: Optional[List[str]] = None
+        characteristics: Optional[List[str]] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Convenience method to get water quality data for an entire state.
@@ -255,6 +274,7 @@ class WQPClient:
             start_date: Start date
             end_date: End date
             characteristics: List of characteristic names
+            site_types: List of WQP site types to include. Defaults to surface water.
 
         Returns:
             DataFrame with water quality data
@@ -266,7 +286,8 @@ class WQPClient:
             state_code=state_code,
             start_date=start_date,
             end_date=end_date,
-            characteristics=characteristics
+            characteristics=characteristics,
+            site_types=site_types,
         )
 
     def get_data_by_location(
@@ -276,7 +297,8 @@ class WQPClient:
         radius_miles: float = 50.0,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        characteristics: Optional[List[str]] = None
+        characteristics: Optional[List[str]] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Convenience method to get water quality data near a location.
@@ -288,6 +310,7 @@ class WQPClient:
             start_date: Start date
             end_date: End date
             characteristics: List of characteristic names
+            site_types: List of WQP site types to include. Defaults to surface water.
 
         Returns:
             DataFrame with water quality data
@@ -301,7 +324,8 @@ class WQPClient:
             radius_miles=radius_miles,
             start_date=start_date,
             end_date=end_date,
-            characteristics=characteristics
+            characteristics=characteristics,
+            site_types=site_types,
         )
 
     def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
