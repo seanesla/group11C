@@ -135,6 +135,23 @@ def get_wqi_color(classification: str) -> str:
     return WQI_COLORS.get(classification, "#808080")
 
 
+def render_colored_card(
+    title: str,
+    color: str,
+    subtitle: str = None,
+    label: str = None
+) -> None:
+    """Render a colored card with consistent styling."""
+    html = f"<div style='padding: 15px; border-radius: 5px; background-color: {color}20; border: 2px solid {color};'>"
+    if label:
+        html += f"<h4 style='margin: 0;'>{label}</h4>"
+    html += f"<h3 style='margin: 0; color: {color};'>{title}</h3>"
+    if subtitle:
+        html += f"<p style='margin: 6px 0 0; color: #cccccc;'>{subtitle}</p>"
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
 def format_coordinates(lat: float, lon: float) -> str:
     """Format coordinates for display."""
     lat_dir = "N" if lat >= 0 else "S"
@@ -937,25 +954,17 @@ def main():
 
         with col2:
             color = get_wqi_color(classification)
-            st.markdown(
-                f"<div style='padding: 20px; border-radius: 5px; background-color: {color}20; border: 2px solid {color};'>"
-                f"<h3 style='margin: 0; color: {color};'>{classification}</h3>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
+            render_colored_card(classification, color)
 
         with col3:
             calculator = WQICalculator()
             is_safe = calculator.is_safe(wqi)
-            safety_text = "WQI ≥ 70 (core parameters only)" if is_safe else "WQI < 70 (core parameters only)"
+            safety_text = "SAFE" if is_safe else "UNSAFE"
             safety_color = "#00CC00" if is_safe else "#FF6600"
-
-            st.markdown(
-                f"<div style='padding: 20px; border-radius: 5px; background-color: {safety_color}20; border: 2px solid {safety_color};'>"
-                f"<h3 style='margin: 0; color: {safety_color};'>{safety_text}</h3>"
-                f"<p style='margin: 6px 0 0; color: #cccccc;'>Not a potability clearance. Lead, bacteria, PFAS, and other contaminants not tested.</p>"
-                f"</div>",
-                unsafe_allow_html=True
+            render_colored_card(
+                safety_text,
+                safety_color,
+                subtitle="Core parameters only. Lead, bacteria, PFAS not tested."
             )
 
         # WQI Methodology Explainer
@@ -981,13 +990,7 @@ def main():
                 # ML Classification
                 ml_safety = "SAFE" if ml_predictions['is_safe'] else "UNSAFE"
                 ml_color = "#00CC00" if ml_predictions['is_safe'] else "#FF6600"
-                st.markdown(
-                    f"<div style='padding: 20px; border-radius: 5px; background-color: {ml_color}20; border: 2px solid {ml_color};'>"
-                    f"<h4 style='margin: 0;'>ML Classification</h4>"
-                    f"<h3 style='margin: 0; color: {ml_color};'>{ml_safety}</h3>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
+                render_colored_card(ml_safety, ml_color, label="ML Classification")
 
             with col2:
                 # ML Predicted WQI
@@ -1001,13 +1004,7 @@ def main():
                 # Confidence
                 confidence_pct = ml_predictions['confidence'] * 100
                 confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
-                st.markdown(
-                    f"<div style='padding: 20px; border-radius: 5px; background-color: {confidence_color}20; border: 2px solid {confidence_color};'>"
-                    f"<h4 style='margin: 0;'>Model Confidence</h4>"
-                    f"<h3 style='margin: 0; color: {confidence_color};'>{confidence_pct:.1f}%</h3>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
+                render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
 
             # Show probability breakdown
             with st.expander("View Detailed Probabilities"):
@@ -1092,13 +1089,10 @@ def main():
                         col1, col2 = st.columns(2)
 
                         with col1:
-                            st.markdown(
-                                f"<div style='padding: 15px; border-radius: 5px; background-color: {trend_color}20; border: 2px solid {trend_color};'>"
-                                f"<h4 style='margin: 0;'>{trend_icon} Trend Analysis</h4>"
-                                f"<p style='margin: 5px 0 0 0; color: {trend_color}; font-size: 18px; font-weight: bold;'>"
-                                f"{trend_desc.upper()}: {wqi_change:+.1f} points over 12 months</p>"
-                                f"</div>",
-                                unsafe_allow_html=True
+                            render_colored_card(
+                                f"{trend_desc.upper()}: {wqi_change:+.1f} pts/12mo",
+                                trend_color,
+                                label="Trend Analysis"
                             )
 
                         with col2:
