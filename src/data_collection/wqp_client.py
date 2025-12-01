@@ -308,66 +308,105 @@ class WQPClient:
         """
         Standardize nitrate units to mg/L as N (EPA standard).
 
-        **CURRENT STATUS**: This method is designed for WIDE-FORMAT data (one column per parameter)
-        but WQP API returns LONG-FORMAT data (CharacteristicName + ResultMeasureValue columns).
-        As a result, this method currently returns early without performing any conversions.
+        Supports both:
+        - Wide-format training/test data with ``nitrate`` / ``nitrate_unit`` columns
+        - Long-format WQP API responses with ``CharacteristicName``,
+          ``ResultMeasureValue``, and ``ResultMeasure/MeasureUnitCode``
 
-        **This is harmless** because USGS (the primary WQP data source) already reports nitrate
-        as mg/L as N. See: https://waterwatch.usgs.gov/wqwatch/?pcode=00630
-
-        **For future development**: To handle non-USGS sources that might use mg{NO3}/L,
-        this method would need to be rewritten to work with long-format data by:
-        1. Filtering for CharacteristicName == 'Nitrate'
-        2. Checking ResultMeasure/MeasureUnitCode column for unit type
-        3. Applying conversion to ResultMeasureValue if needed
-
-        Conversions that WOULD be applied (if data were in wide format):
-        - mg{NO3}/L → mg/L as N: multiply by 0.2258 (N/NO3 molecular weight ratio)
-        - mg/L as NO3-N: already in correct format, no conversion
-        - mg/L as N: already in correct format, no conversion
+        Wide-format behaviour is exercised directly in unit tests
+        (tests/test_nitrate_unit_system.py) and is kept backwards compatible.
+        For long-format WQP data we apply a conservative strategy:
+        - If units are reported in µmol/L, convert to mg/L as N using the
+          molecular weight of nitrogen.
+        - If units are already reported in mg/L, we assume they are mg/L as N,
+          which matches USGS conventions for nitrate-as-N reporting.
 
         Args:
             df: DataFrame with water quality data (long or wide format)
 
         Returns:
-            DataFrame with standardized nitrate units (currently unchanged for WQP long-format data)
+            DataFrame with standardized nitrate units
         """
-        # CURRENT BEHAVIOR: Return early for WQP long-format data
-        # WQP returns long format without 'nitrate' column, so this check always triggers
-        if df is None or df.empty or 'nitrate' not in df.columns:
-            logger.debug("Nitrate conversion skipped: Data is in long format or no nitrate column. "
-                        "USGS data is already in mg/L as N.")
+        if df is None or df.empty:
             return df
 
-        # Check if we have unit information (only relevant for wide-format data)
-        if 'nitrate_unit' not in df.columns:
-            logger.warning("No unit information for nitrate - assuming mg/L as N (EPA standard)")
+        # --- Wide-format path (used in unit tests) ---
+        if 'nitrate' in df.columns:
+            # Check if we have unit information (only relevant for wide-format data)
+            if 'nitrate_unit' not in df.columns:
+                logger.warning("No unit information for nitrate - assuming mg/L as N (EPA standard)")
+                return df
+
+            # Nitrate unit conversion constant: mg{NO3}/L -> mg/L as N
+            NITRATE_NO3_TO_N = 0.2258  # Atomic weight N / Molecular weight NO3
+
+            for idx, row in df.iterrows():
+                if pd.notna(row.get('nitrate')) and pd.notna(row.get('nitrate_unit')):
+                    unit = str(row['nitrate_unit']).lower()
+
+                    # mg{NO3}/L or mg/l as NO3 → convert to mg/L as N
+                    if 'no3' in unit and 'as n' not in unit:
+                        original_value = row['nitrate']
+                        df.at[idx, 'nitrate'] = original_value * NITRATE_NO3_TO_N
+                        logger.debug(
+                            "Converted nitrate from mg{NO3}/L to mg/L as N: "
+                            f"{original_value:.2f} → {df.at[idx, 'nitrate']:.2f}"
+                        )
+
+                    # mg/L as N or mg/L as NO3-N → already correct
+                    elif 'as n' in unit or 'no3-n' in unit:
+                        logger.debug(f"Nitrate already in mg/L as N: {row['nitrate']:.2f}")
+
+                    # Unexpected unit
+                    else:
+                        warnings.warn(
+                            f"Unexpected nitrate unit '{row['nitrate_unit']}' at index {idx}. "
+                            "Assuming mg/L as N. Please verify correctness.",
+                            UserWarning,
+                        )
+
             return df
 
-        # Nitrate unit conversion constant
-        NITRATE_NO3_TO_N = 0.2258  # Atomic weight N / Molecular weight NO3
+        # --- Long-format WQP path ---
+        if 'CharacteristicName' not in df.columns or 'ResultMeasureValue' not in df.columns:
+            # Not a schema we know how to normalize; leave unchanged
+            return df
 
-        for idx, row in df.iterrows():
-            if pd.notna(row.get('nitrate')) and pd.notna(row.get('nitrate_unit')):
-                unit = str(row['nitrate_unit']).lower()
+        unit_col = 'ResultMeasure/MeasureUnitCode'
+        if unit_col not in df.columns:
+            logger.debug(
+                "No ResultMeasure/MeasureUnitCode column for nitrate - assuming mg/L as N "
+                "for any nitrate measurements."
+            )
+            return df
 
-                # mg{NO3}/L or mg/l as NO3 → convert to mg/L as N
-                if 'no3' in unit and 'as n' not in unit:
-                    original_value = row['nitrate']
-                    df.at[idx, 'nitrate'] = original_value * NITRATE_NO3_TO_N
-                    logger.debug(f"Converted nitrate from mg{{NO3}}/L to mg/L as N: {original_value:.2f} → {df.at[idx, 'nitrate']:.2f}")
+        # Conversion constant: µmol/L -> mg/L as N
+        UMOL_PER_L_TO_MG_PER_L_N = 14.0067 / 1000.0
 
-                # mg/L as N or mg/L as NO3-N → already correct
-                elif 'as n' in unit or 'no3-n' in unit:
-                    logger.debug(f"Nitrate already in mg/L as N: {row['nitrate']:.2f}")
+        nitrate_mask = df['CharacteristicName'].str.contains('Nitrate', case=False, na=False)
+        for idx, row in df.loc[nitrate_mask].iterrows():
+            value = row.get('ResultMeasureValue')
+            unit = row.get(unit_col)
+            if pd.isna(value) or pd.isna(unit):
+                continue
 
-                # Unexpected unit
-                else:
-                    warnings.warn(
-                        f"Unexpected nitrate unit '{row['nitrate_unit']}' at index {idx}. "
-                        f"Assuming mg/L as N. Please verify correctness.",
-                        UserWarning
-                    )
+            unit_str = str(unit).lower()
+
+            if 'umol' in unit_str:
+                original_value = value
+                df.at[idx, 'ResultMeasureValue'] = float(original_value) * UMOL_PER_L_TO_MG_PER_L_N
+                df.at[idx, unit_col] = 'mg/L as N'
+                logger.debug(
+                    "Converted nitrate from umol/L to mg/L as N: "
+                    f"{original_value} → {df.at[idx, 'ResultMeasureValue']:.4f}"
+                )
+            else:
+                # For mg/L-style units we assume mg/L as N, consistent with USGS.
+                logger.debug(
+                    "Leaving nitrate value unchanged for unit '%s' at index %s",
+                    unit_str,
+                    idx,
+                )
 
         return df
 

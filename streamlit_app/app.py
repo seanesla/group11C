@@ -66,20 +66,56 @@ PARAMETER_UNITS = {
 }
 
 
+def _expected_feature_columns() -> list[str]:
+    """
+    Canonical 18-feature schema used for US predictions.
+
+    Derived from prepare_us_features_for_prediction so training and inference
+    stay in lockstep even if the core feature pipeline evolves.
+    """
+    sample_df = prepare_us_features_for_prediction(
+        ph=7.0,
+        dissolved_oxygen=8.0,
+        temperature=15.0,
+        turbidity=2.0,
+        nitrate=3.0,
+        conductance=450.0,
+    )
+    return list(sample_df.columns)
+
+
 @st.cache_resource
 def load_ml_models():
     """
-    Load trained ML models with Streamlit caching.
+    Load trained ML models with Streamlit caching and schema validation.
 
     Returns:
-        Tuple of (classifier, regressor). Either may be None if not found.
+        Tuple of (classifier, regressor). Either may be None if not found or
+        incompatible with the deployed feature schema.
     """
     try:
         classifier, regressor = load_latest_models()
-        return classifier, regressor
     except Exception as e:
         st.error(f"Failed to load ML models: {e}")
         return None, None
+
+    if classifier is None or regressor is None:
+        return classifier, regressor
+
+    expected = _expected_feature_columns()
+    clf_features = getattr(classifier, "feature_names", None)
+    reg_features = getattr(regressor, "feature_names", None)
+
+    if clf_features != expected or reg_features != expected:
+        st.warning(
+            "ML models were trained with a feature schema that does not match the "
+            "deployed US prediction pipeline. To enable ML predictions in the app, "
+            "retrain models with the core-parameter feature set "
+            "(`train_models.py --core-params-only`) and redeploy."
+        )
+        return None, None
+
+    return classifier, regressor
 
 
 def get_wqi_color(classification: str) -> str:
@@ -782,10 +818,13 @@ def main():
     end_date = datetime.combine(end_date, datetime.min.time())
 
     # Input validation
+    has_input_error = False
     if end_date < start_date:
         st.sidebar.error("End date must be on or after start date.")
+        has_input_error = True
     if radius_miles <= 0:
         st.sidebar.error("Radius must be greater than zero miles.")
+        has_input_error = True
 
     # Submit button
     search_button = st.sidebar.button("Search", type="primary")
@@ -809,6 +848,10 @@ def main():
     st.divider()
 
     if search_button:
+        if has_input_error:
+            st.error("Please fix the issues in the sidebar (date range and/or radius) before searching.")
+            return
+
         # Fetch data with WQP → USGS fallback
         df, error, source_label = fetch_water_quality_data(zip_code, radius_miles, start_date, end_date)
 

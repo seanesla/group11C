@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Environmental & Water Quality Prediction | Group 11C</title>
+
+        <!-- Fonts: Inter for UI, Poppins for Headings -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            /* --- VARIABLES & RESET --- */
+            :root {
+                --primary: #0e7490; /* Deep Teal */
+                --primary-dark: #155e75;
+                --accent: #06b6d4; /* Cyan */
+                --accent-light: #e0f2fe; /* Light Water Blue */
+                --bg-body: #f8fafc;
+                --bg-surface: #ffffff;
+                --text-main: #1e293b;
+                --text-muted: #64748b;
+                --border: #e2e8f0;
+
+                --spacing-sm: 1rem;
+                --spacing-md: 2rem;
+                --spacing-lg: 4rem;
+
+                --radius: 12px;
+                --shadow:
+                    0 4px 6px -1px rgb(0 0 0 / 0.1),
+                    0 2px 4px -2px rgb(0 0 0 / 0.1);
+                --shadow-lg:
+                    0 10px 15px -3px rgb(0 0 0 / 0.1),
+                    0 4px 6px -4px rgb(0 0 0 / 0.1);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: var(--bg-body);
+                color: var(--text-main);
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4 {
+                font-family: "Poppins", sans-serif;
+                font-weight: 600;
+                line-height: 1.2;
+                color: var(--text-main);
+            }
+
+            p {
+                margin-bottom: 1rem;
+                color: var(--text-muted);
+            }
+
+            a {
+                text-decoration: none;
+                color: inherit;
+                transition: all 0.2s ease;
+            }
+
+            ul {
+                list-style: none;
+            }
+
+            img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+            }
+
+            /* --- UTILITIES --- */
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 var(--spacing-md);
+            }
+
+            .section-padding {
+                padding: var(--spacing-lg) 0;
+            }
+
+            .text-center {
+                text-align: center;
+            }
+            .text-primary {
+                color: var(--primary);
+            }
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.75rem 1.5rem;
+                border-radius: 50px;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                font-size: 1rem;
+            }
+
+            .btn-primary {
+                background-color: var(--primary);
+                color: white;
+                box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+            }
+            .btn-primary:hover {
+                background-color: var(--primary-dark);
+                transform: translateY(-2px);
+            }
+
+            .btn-outline {
+                background-color: transparent;
+                border: 2px solid var(--primary);
+                color: var(--primary);
+            }
+            .btn-outline:hover {
+                background-color: var(--accent-light);
+            }
+
+            .badge {
+                background-color: var(--accent-light);
+                color: var(--primary-dark);
+                padding: 0.25rem 0.75rem;
+                border-radius: 999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+            }
+
+            /* --- NAVIGATION --- */
+            .navbar {
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid var(--border);
+                padding: 1rem 0;
+            }
+
+            .nav-inner {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .logo {
+                font-family: "Poppins", sans-serif;
+                font-weight: 700;
+                font-size: 1.25rem;
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 2rem;
+                align-items: center;
+            }
+
+            .nav-links a {
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: var(--text-main);
+            }
+            .nav-links a:hover {
+                color: var(--primary);
+            }
+
+            /* Mobile Nav Toggle (Simplified for pure CSS) */
+            @media (max-width: 768px) {
+                .nav-links {
+                    display: none;
+                } /* Hidden on mobile for simplicity in this specific request */
+                .nav-btn-mobile {
+                    display: block;
+                }
+            }
+
+            /* --- HERO SECTION --- */
+            .hero {
+                padding: 6rem 0;
+                background: linear-gradient(135deg, #ecfeff 0%, #ffffff 100%);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .hero-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+            }
+
+            .hero-content h1 {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                color: var(--text-main);
+            }
+
+            .hero-content .subtitle {
+                font-size: 1.25rem;
+                color: var(--text-muted);
+                margin-bottom: 2rem;
+                max-width: 540px;
+            }
+
+            .hero-actions {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .hero-image-card {
+                background: white;
+                padding: 1rem;
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-lg);
+                transform: rotate(-2deg);
+                border: 1px solid var(--border);
+                transition: transform 0.3s ease;
+            }
+            .hero-image-card:hover {
+                transform: rotate(0deg);
+            }
+
+            .mock-placeholder {
+                background-color: #f1f5f9;
+                width: 100%;
+                height: 300px; /* Aspect ratio placeholder */
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #94a3b8;
+                border: 2px dashed #cbd5e1;
+            }
+
+            /* --- OVERVIEW --- */
+            .overview-section {
+                background-color: var(--bg-surface);
+            }
+
+            .quick-facts {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-top: 3rem;
+            }
+
+            .fact-card {
+                background: var(--bg-body);
+                padding: 1.5rem;
+                border-radius: var(--radius);
+                border: 1px solid var(--border);
+            }
+            .fact-card h4 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+                color: var(--primary);
+            }
+            .fact-card p {
+                font-size: 0.9rem;
+                margin: 0;
+            }
+
+            /* --- DATA & METHODS --- */
+            .methods-section {
+                background-color: var(--bg-body);
+            }
+
+            .pipeline-container {
+                margin: 4rem 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                position: relative;
+                gap: 1rem;
+            }
+
+            /* Line through pipeline */
+            .pipeline-container::before {
+                content: "";
+                position: absolute;
+                top: 25px;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background: #cbd5e1;
+                z-index: 0;
+            }
+
+            .pipeline-step {
+                position: relative;
+                z-index: 1;
+                flex: 1;
+                text-align: center;
+            }
+
+            .step-icon {
+                width: 50px;
+                height: 50px;
+                background: var(--bg-surface);
+                border: 2px solid var(--primary);
+                color: var(--primary);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1rem auto;
+                font-weight: bold;
+                box-shadow: 0 0 0 4px var(--bg-body); /* Fake spacing for line */
+            }
+
+            .step-content h4 {
+                font-size: 0.9rem;
+                margin-bottom: 0.25rem;
+            }
+            .step-content p {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+            }
+
+            .data-methods-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3rem;
+                align-items: start;
+            }
+
+            /* --- MODEL & EVALUATION --- */
+            .model-section {
+                background-color: var(--bg-surface);
+            }
+
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 2rem;
+                margin: 2rem 0;
+            }
+
+            .metric-card {
+                text-align: center;
+                padding: 2rem;
+                background: var(--accent-light);
+                border-radius: var(--radius);
+                color: var(--primary-dark);
+            }
+
+            .metric-value {
+                font-size: 2.5rem;
+                font-weight: 700;
+                font-family: "Poppins", sans-serif;
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+
+            .metric-label {
+                font-size: 0.9rem;
+                font-weight: 500;
+                opacity: 0.9;
+            }
+
+            .disclaimer-box {
+                border-left: 4px solid #f59e0b;
+                background: #fffbeb;
+                padding: 1rem;
+                border-radius: 0 var(--radius) var(--radius) 0;
+                font-size: 0.9rem;
+                margin-top: 1rem;
+                color: #92400e;
+            }
+
+            /* --- IMPACT & ETHICS --- */
+            .impact-section {
+                background-color: var(--bg-body);
+            }
+
+            .research-question {
+                background: linear-gradient(
+                    to right,
+                    var(--primary),
+                    var(--primary-dark)
+                );
+                color: white;
+                padding: 2rem;
+                border-radius: var(--radius);
+                text-align: center;
+                font-size: 1.25rem;
+                font-family: "Poppins", sans-serif;
+                margin-bottom: 3rem;
+                box-shadow: var(--shadow);
+            }
+
+            .ethics-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+
+            .ethics-card {
+                background: white;
+                padding: 2rem;
+                border-radius: var(--radius);
+                border: 1px solid var(--border);
+            }
+            .ethics-card h3 {
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            /* --- TEAM --- */
+            .team-section {
+                background-color: var(--bg-surface);
+            }
+
+            .team-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+                margin-top: 3rem;
+            }
+
+            .team-card {
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                overflow: hidden;
+                transition:
+                    transform 0.2s ease,
+                    box-shadow 0.2s ease;
+            }
+            .team-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .team-header {
+                padding: 2rem;
+                background: var(--accent-light);
+                text-align: center;
+            }
+
+            .team-avatar {
+                width: 100px;
+                height: 100px;
+                background-color: #cbd5e1;
+                border-radius: 50%;
+                margin: 0 auto 1rem auto;
+                border: 4px solid white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                overflow: hidden;
+            }
+
+            .team-body {
+                padding: 1.5rem;
+            }
+            .team-role {
+                color: var(--primary);
+                font-weight: 600;
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+                display: block;
+            }
+            .team-body ul li {
+                position: relative;
+                padding-left: 1.25rem;
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+                color: var(--text-muted);
+            }
+            .team-body ul li::before {
+                content: "•";
+                color: var(--primary);
+                position: absolute;
+                left: 0;
+                font-weight: bold;
+            }
+
+            /* --- GET STARTED & FOOTER --- */
+            .start-section {
+                background-color: var(--bg-body);
+            }
+
+            .code-block {
+                background: #1e293b;
+                color: #cbd5e1;
+                padding: 1.5rem;
+                border-radius: 8px;
+                font-family: monospace;
+                overflow-x: auto;
+                margin: 1.5rem 0;
+            }
+
+            footer {
+                background: #0f172a;
+                color: #94a3b8;
+                padding: 3rem 0;
+                font-size: 0.9rem;
+            }
+
+            .footer-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            /* --- RESPONSIVE MEDIA QUERIES --- */
+            @media (max-width: 900px) {
+                .hero-grid {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                    gap: 2rem;
+                }
+                .hero-content .subtitle {
+                    margin: 0 auto 2rem auto;
+                }
+                .hero-actions {
+                    justify-content: center;
+                }
+                .pipeline-container {
+                    flex-direction: column;
+                    gap: 0;
+                    align-items: flex-start;
+                }
+                .pipeline-container::before {
+                    width: 2px;
+                    height: 100%;
+                    left: 25px;
+                    top: 0;
+                }
+                .step-icon {
+                    margin: 0 1rem 0 0;
+                    display: inline-flex;
+                }
+                .pipeline-step {
+                    display: flex;
+                    align-items: center;
+                    text-align: left;
+                    margin-bottom: 2rem;
+                    width: 100%;
+                }
+                .step-content {
+                    padding-left: 1rem;
+                }
+                .data-methods-grid {
+                    grid-template-columns: 1fr;
+                }
+                .ethics-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- NAV -->
+        <nav class="navbar">
+            <div class="container nav-inner">
+                <a href="#" class="logo">
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                    </svg>
+                    Group 11C
+                </a>
+                <div class="nav-links">
+                    <a href="#overview">Overview</a>
+                    <a href="#methods">Data & Methods</a>
+                    <a href="#model">Model</a>
+                    <a href="#ethics">Impact & Ethics</a>
+                    <a href="#team">Team</a>
+                    <a href="#start">Get Started</a>
+                    <a
+                        href="YOUR_GITHUB_REPO_URL_HERE"
+                        class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; font-size: 0.9rem"
+                        >View on GitHub</a
+                    >
+                </div>
+            </div>
+        </nav>
+
+        <!-- HERO -->
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="hero-content">
+                    <span class="badge">AI4ALL Ignite Project</span>
+                    <h1>Environmental & Water Quality Prediction</h1>
+                    <p class="subtitle">
+                        A machine-learning assisted Streamlit app that estimates
+                        Water Quality Index (WQI) scores and trends for US ZIP
+                        codes using real EPA/USGS data.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="STREAMLIT_APP_URL_HERE" class="btn btn-primary"
+                            >Run the App</a
+                        >
+                        <a
+                            href="YOUR_GITHUB_REPO_URL_HERE"
+                            class="btn btn-outline"
+                            >View the Code</a
+                        >
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="hero-image-card">
+                        <!-- PLACEHOLDER: Replace src with actual app screenshot -->
+                        <div class="mock-placeholder">
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <rect
+                                    x="3"
+                                    y="3"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    ry="2"
+                                />
+                                <line x1="3" y1="9" x2="21" y2="9" />
+                                <line x1="9" y1="21" x2="9" y2="9" />
+                            </svg>
+                            <p style="margin-top: 1rem; color: #94a3b8">
+                                App Screenshot Placeholder
+                            </p>
+                            <small style="color: #cbd5e1"
+                                >(assets/mock-app-screenshot.png)</small
+                            >
+                        </div>
+                        <p
+                            class="text-center"
+                            style="
+                                margin-top: 0.5rem;
+                                font-size: 0.8rem;
+                                color: #64748b;
+                            "
+                        >
+                            Streamlit App UI Preview
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- OVERVIEW -->
+        <section id="overview" class="overview-section section-padding">
+            <div class="container">
+                <div
+                    class="text-center"
+                    style="max-width: 800px; margin: 0 auto"
+                >
+                    <h2>Project Overview</h2>
+                    <p>
+                        Clean drinking water is fundamental to public health,
+                        yet data about water quality is often complex or hard to
+                        access. Our project leverages machine learning to bridge
+                        this gap.
+                    </p>
+                    <p>
+                        The app allows users to input a US ZIP code to instantly
+                        retrieve recent measurements from the Water Quality
+                        Portal. We then calculate a Water Quality Index (WQI)
+                        score and use predictive models to estimate trends,
+                        helping communities better understand their environment.
+                    </p>
+                </div>
+
+                <div class="quick-facts">
+                    <div class="fact-card">
+                        <h4>Data Sources</h4>
+                        <p>
+                            Live data from USGS/WQP and training data from
+                            global Kaggle repositories.
+                        </p>
+                    </div>
+                    <div class="fact-card">
+                        <h4>Core Tech</h4>
+                        <p>
+                            Python, Streamlit, Scikit-learn (Random Forest),
+                            Pandas, Pytest.
+                        </p>
+                    </div>
+                    <div class="fact-card">
+                        <h4>The Goal</h4>
+                        <p>
+                            Educational awareness about water safety with
+                            transparent uncertainty.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA & METHODS -->
+        <section id="methods" class="methods-section section-padding">
+            <div class="container">
+                <h2 class="text-center">Data & Methods</h2>
+
+                <!-- Pipeline Visualization -->
+                <div class="pipeline-container">
+                    <div class="pipeline-step">
+                        <div class="step-icon">1</div>
+                        <div class="step-content">
+                            <h4>Ingestion</h4>
+                            <p>USGS NWIS & Kaggle Datasets</p>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">2</div>
+                        <div class="step-content">
+                            <h4>Cleaning</h4>
+                            <p>Imputation & Unit Conversion</p>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">3</div>
+                        <div class="step-content">
+                            <h4>Engineering</h4>
+                            <p>18 Features (pH, DO, etc.)</p>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">4</div>
+                        <div class="step-content">
+                            <h4>Modeling</h4>
+                            <p>Random Forest Classifiers</p>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">5</div>
+                        <div class="step-content">
+                            <h4>Deployment</h4>
+                            <p>Streamlit Interactive App</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-methods-grid">
+                    <div>
+                        <h3>Data Engineering Details</h3>
+                        <p>
+                            We focused heavily on data quality before modeling.
+                            Key steps included:
+                        </p>
+                        <ul
+                            style="
+                                list-style: disc;
+                                padding-left: 1.5rem;
+                                color: var(--text-muted);
+                                margin-bottom: 2rem;
+                            "
+                        >
+                            <li>
+                                <strong>Standardization:</strong> Converting
+                                diverse nitrate units (e.g.,
+                                <code>mg{NO3}/L</code>) into a unified
+                                <code>mg/L as N</code> standard.
+                            </li>
+                            <li>
+                                <strong>Geocoding:</strong> Using
+                                <code>pgeocode</code> to map ZIP codes to
+                                latitude/longitude for spatial queries.
+                            </li>
+                            <li>
+                                <strong>Sanitization:</strong> Filtering out
+                                physically impossible values (e.g., negative pH)
+                                to reduce noise.
+                            </li>
+                            <li>
+                                <strong>Feature Creation:</strong> Engineered
+                                "pollution_stress" indicators and decade-based
+                                temporal features.
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <!-- PLACEHOLDER: Replace src with actual plot -->
+                        <div
+                            class="mock-placeholder"
+                            style="
+                                height: 250px;
+                                background: white;
+                                border: 1px solid var(--border);
+                            "
+                        >
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <polyline
+                                    points="22 12 18 12 15 21 9 3 6 12 2 12"
+                                />
+                            </svg>
+                            <p style="margin-top: 1rem; color: #94a3b8">
+                                Data Visualization Placeholder
+                            </p>
+                            <small style="color: #cbd5e1"
+                                >(assets/mock-timeseries-plot.png)</small
+                            >
+                        </div>
+                        <p
+                            class="text-center"
+                            style="font-size: 0.8rem; margin-top: 0.5rem"
+                        >
+                            Example of temporal water quality trends analyzed.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODEL & EVALUATION -->
+        <section id="model" class="model-section section-padding">
+            <div class="container">
+                <h2 class="text-center">Model & Evaluation</h2>
+                <p
+                    class="text-center"
+                    style="max-width: 700px; margin: 0 auto 3rem auto"
+                >
+                    We utilized Random Forest algorithms for their robustness
+                    against overfitting and ability to handle non-linear
+                    relationships in chemical data.
+                </p>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-value">98.6%</span>
+                        <span class="metric-label">Classifier Accuracy</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">0.985</span>
+                        <span class="metric-label">Regressor R² Score</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">2,900+</span>
+                        <span class="metric-label">Holdout Samples</span>
+                    </div>
+                </div>
+
+                <div class="disclaimer-box">
+                    <strong>Note on Performance:</strong> These metrics reflect
+                    performance on the Kaggle global dataset holdout set.
+                    Performance on real-world US tap water data may differ due
+                    to domain shift and local geological variances.
+                </div>
+
+                <div style="margin-top: 3rem">
+                    <h3>Deployment & Monitoring Strategy</h3>
+                    <p>
+                        To ensure reliability, our models are serialized as
+                        <code>.joblib</code> files and loaded dynamically within
+                        the Streamlit runtime. Our "light-weight" monitoring
+                        plan includes:
+                    </p>
+                    <ul
+                        style="
+                            display: flex;
+                            gap: 2rem;
+                            flex-wrap: wrap;
+                            margin-top: 1rem;
+                        "
+                    >
+                        <li
+                            style="
+                                flex: 1;
+                                background: white;
+                                padding: 1.5rem;
+                                border-radius: var(--radius);
+                                border: 1px solid var(--border);
+                            "
+                        >
+                            <strong>Automated Tests:</strong> Using
+                            <code>pytest</code> to catch data schema changes or
+                            API breakages from the USGS WQP service.
+                        </li>
+                        <li
+                            style="
+                                flex: 1;
+                                background: white;
+                                padding: 1.5rem;
+                                border-radius: var(--radius);
+                                border: 1px solid var(--border);
+                            "
+                        >
+                            <strong>Retraining Loop:</strong> Periodic
+                            re-evaluation of the model against new data to track
+                            drift in accuracy and R² over time.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- IMPACT & ETHICS -->
+        <section id="ethics" class="impact-section section-padding">
+            <div class="container">
+                <div class="research-question">
+                    "How can we use real-world water quality data to support
+                    awareness about drinking-water safety, while being honest
+                    about uncertainty and bias?"
+                </div>
+
+                <div class="ethics-grid">
+                    <div class="ethics-card">
+                        <h3>
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="var(--primary)"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                                />
+                            </svg>
+                            Potential Benefits
+                        </h3>
+                        <ul>
+                            <li style="margin-bottom: 0.5rem">
+                                Empowers local communities to ask better
+                                questions about their water.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                Democratizes access to complex EPA/USGS data
+                                through a simple UI.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                Serves as an educational tool for understanding
+                                chemical factors (pH, Turbidity) in water
+                                safety.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="ethics-card">
+                        <h3>
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#ef4444"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            Risks & Limitations
+                        </h3>
+                        <ul>
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Domain Shift:</strong> Training on
+                                global data may not perfectly represent specific
+                                US micro-climates.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Data Gaps:</strong> Rural or underserved
+                                regions often have fewer monitoring stations,
+                                leading to potential equity bias in prediction
+                                quality.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Simplification:</strong> WQI does not
+                                capture all contaminants like PFAS or heavy
+                                metals.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p
+                    class="text-center"
+                    style="
+                        margin-top: 2rem;
+                        font-size: 0.9rem;
+                        font-style: italic;
+                    "
+                >
+                    Disclaimer: This project is for educational purposes only.
+                    Do not use it to make real health, medical, or regulatory
+                    decisions.
+                </p>
+            </div>
+        </section>
+
+        <!-- TEAM -->
+        <section id="team" class="team-section section-padding">
+            <div class="container">
+                <h2 class="text-center">Meet the Team</h2>
+                <p class="text-center">Group 11C — AI4ALL Ignite</p>
+
+                <div class="team-grid">
+                    <!-- Member 1 -->
+                    <div class="team-card">
+                        <div class="team-header">
+                            <div class="team-avatar">
+                                <!-- Placeholder Image -->
+                                <img
+                                    src="assets/placeholder-headshot-joseann.png"
+                                    onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'"
+                                    alt="Joseann Boneo"
+                                />
+                            </div>
+                            <h3>Joseann Boneo</h3>
+                            <span class="team-role">Data & Modeling Lead</span>
+                        </div>
+                        <div class="team-body">
+                            <ul>
+                                <li>
+                                    Spearheaded Kaggle dataset cleaning and
+                                    feature engineering.
+                                </li>
+                                <li>
+                                    Tuned Random Forest hyperparameters for
+                                    optimal accuracy.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Member 2 -->
+                    <div class="team-card">
+                        <div class="team-header">
+                            <div class="team-avatar">
+                                <!-- Placeholder Image -->
+                                <img
+                                    src="assets/placeholder-headshot-sean.png"
+                                    onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'"
+                                    alt="Sean Esla"
+                                />
+                            </div>
+                            <h3>Sean Esla</h3>
+                            <span class="team-role">App & Infrastructure</span>
+                        </div>
+                        <div class="team-body">
+                            <ul>
+                                <li>
+                                    Built the Streamlit interface and integrated
+                                    pgeocode.
+                                </li>
+                                <li>
+                                    Implemented API fallbacks for robust data
+                                    fetching.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Member 3 -->
+                    <div class="team-card">
+                        <div class="team-header">
+                            <div class="team-avatar">
+                                <!-- Placeholder Image -->
+                                <img
+                                    src="assets/placeholder-headshot-lademi.png"
+                                    onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'"
+                                    alt="Lademi Aromolaran"
+                                />
+                            </div>
+                            <h3>Lademi Aromolaran</h3>
+                            <span class="team-role"
+                                >Analysis & Communication</span
+                            >
+                        </div>
+                        <div class="team-body">
+                            <ul>
+                                <li>
+                                    Conducted fairness analysis and bias
+                                    documentation.
+                                </li>
+                                <li>
+                                    Designed the "Impact & Ethics" framework for
+                                    the project.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GET STARTED -->
+        <section id="start" class="start-section section-padding">
+            <div class="container">
+                <h2 class="text-center">Get Started</h2>
+                <p class="text-center">
+                    Run the project locally to explore the code and models.
+                </p>
+
+                <div style="max-width: 700px; margin: 0 auto">
+                    <p><strong>1. Clone the repository</strong></p>
+                    <div class="code-block">
+                        git clone YOUR_GITHUB_REPO_URL_HERE
+                    </div>
+
+                    <p>
+                        <strong>2. Install dependencies (using Poetry)</strong>
+                    </p>
+                    <div class="code-block">poetry install</div>
+
+                    <p><strong>3. Run the Streamlit App</strong></p>
+                    <div class="code-block">
+                        poetry run streamlit run streamlit_app/app.py
+                    </div>
+                </div>
+
+                <div
+                    style="
+                        max-width: 700px;
+                        margin: 3rem auto 0 auto;
+                        border-top: 1px solid var(--border);
+                        padding-top: 2rem;
+                    "
+                >
+                    <h3>Want to extend this project?</h3>
+                    <p>
+                        Here are a few ways we hope to grow this work in the
+                        future:
+                    </p>
+                    <ul
+                        style="
+                            list-style: disc;
+                            padding-left: 1.5rem;
+                            color: var(--text-muted);
+                        "
+                    >
+                        <li>
+                            Host the application permanently on Streamlit
+                            Community Cloud.
+                        </li>
+                        <li>
+                            Incorporate heavy metals and PFAS data into the WQI
+                            calculation.
+                        </li>
+                        <li>
+                            Improve fairness analysis by specifically targeting
+                            data-sparse regions.
+                        </li>
+                    </ul>
+                    <div class="text-center" style="margin-top: 2rem">
+                        <a
+                            href="YOUR_GITHUB_REPO_URL_HERE"
+                            class="btn btn-primary"
+                            >Contribute on GitHub</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div class="container footer-content">
+                <div>
+                    <strong
+                        style="
+                            color: white;
+                            font-family: &quot;Poppins&quot;, sans-serif;
+                        "
+                        >Group 11C</strong
+                    >
+                    <p style="margin: 0; font-size: 0.8rem">
+                        Built as part of the AI4ALL Ignite program.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 1rem">
+                    <a href="#" style="opacity: 0.7">LinkedIn</a>
+                    <a href="YOUR_GITHUB_REPO_URL_HERE" style="opacity: 0.7"
+                        >GitHub</a
+                    >
+                </div>
+            </div>
+            <div
+                class="container text-center"
+                style="
+                    margin-top: 2rem;
+                    border-top: 1px solid #1e293b;
+                    padding-top: 1rem;
+                    font-size: 0.8rem;
+                    opacity: 0.5;
+                "
+            >
+                &copy; 2023 Environmental & Water Quality Prediction Team. All
+                rights reserved.
+            </div>
+        </footer>
+    </body>
+</html>
