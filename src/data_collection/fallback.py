@@ -4,12 +4,20 @@ Fallback data source utilities for water quality lookups.
 Provides helpers to convert USGS NWIS responses into the long-format shape
 expected by downstream WQP-based processing, and a generic fetch-with-fallback
 routine that first tries WQP then USGS.
+
+Also provides validation utilities to detect marine contamination and
+other data quality issues.
 """
 
+import logging
 from datetime import datetime
 from typing import List, Optional, Tuple
 
 import pandas as pd
+
+from .constants import MARINE_CONDUCTANCE_THRESHOLD
+
+logger = logging.getLogger(__name__)
 
 
 # Mapping from USGS parameter codes to the characteristic names used in WQP.
@@ -61,6 +69,69 @@ def convert_usgs_to_wqp_format(df: pd.DataFrame) -> pd.DataFrame:
     # Drop any rows that failed numeric coercion
     out = out.dropna(subset=["ResultMeasureValue"])
     return out.reset_index(drop=True)
+
+
+def validate_water_quality_data(
+    df: pd.DataFrame,
+    conductance_col: str = "conductance",
+) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Validate water quality data and filter out suspected marine contamination.
+
+    This function acts as a safety net to catch any marine/estuarine data that
+    may have slipped through the site type filtering at the API level.
+
+    Args:
+        df: DataFrame with water quality measurements. Can be either:
+            - Aggregated format with 'conductance' column
+            - Long-format WQP with 'CharacteristicName' and 'ResultMeasureValue'
+        conductance_col: Name of conductance column (for aggregated format)
+
+    Returns:
+        Tuple of (filtered_df, warnings_list)
+    """
+    if df is None or df.empty:
+        return df, []
+
+    warnings = []
+    df = df.copy()
+
+    # Handle aggregated format (e.g., from Streamlit app)
+    if conductance_col in df.columns:
+        high_cond = df[conductance_col] > MARINE_CONDUCTANCE_THRESHOLD
+        if high_cond.any():
+            count = high_cond.sum()
+            warnings.append(
+                f"Excluded {count} record(s) with conductance > "
+                f"{MARINE_CONDUCTANCE_THRESHOLD} uS/cm (possible marine contamination)"
+            )
+            logger.warning(warnings[-1])
+            df = df[~high_cond]
+
+    # Handle long-format WQP data
+    elif "CharacteristicName" in df.columns and "ResultMeasureValue" in df.columns:
+        cond_mask = df["CharacteristicName"] == "Specific conductance"
+        cond_values = pd.to_numeric(
+            df.loc[cond_mask, "ResultMeasureValue"], errors="coerce"
+        )
+        high_cond_idx = cond_values[cond_values > MARINE_CONDUCTANCE_THRESHOLD].index
+
+        if len(high_cond_idx) > 0:
+            # Get the monitoring locations with high conductance
+            problem_locations = df.loc[high_cond_idx, "MonitoringLocationIdentifier"].unique()
+            warnings.append(
+                f"Found {len(high_cond_idx)} conductance readings > "
+                f"{MARINE_CONDUCTANCE_THRESHOLD} uS/cm from {len(problem_locations)} "
+                f"station(s) (possible marine contamination)"
+            )
+            logger.warning(warnings[-1])
+
+            # Remove ALL records from stations with high conductance
+            # (they may have other contaminated readings too)
+            if "MonitoringLocationIdentifier" in df.columns:
+                df = df[~df["MonitoringLocationIdentifier"].isin(problem_locations)]
+
+    return df, warnings
 
 
 def fetch_with_fallback(
