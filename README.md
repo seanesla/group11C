@@ -43,6 +43,28 @@ The goal is to make regulatory-grade water-quality data more accessible while hi
 - **Fairness & environmental justice** – Scripts and tests to examine performance across regions and demographics, focusing on where data or models may under-serve certain communities.
 - **Tested Python package** – Modular `src/` layout with unit, integration, and end-to-end tests.
 
+## Documentation
+
+Most deep-dive docs live under `docs/`:
+
+- **Standards & risk**
+  - `docs/WQI_STANDARDS.md` – Scientific background for the WQI scale and parameter thresholds.
+  - `docs/EXECUTIVE_SUMMARY_MODEL_RISK.md` – High-level summary of model risk and deployment cautions.
+  - `docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md` – Step-by-step checklist for any serious deployment.
+- **Statistical validation**
+  - `docs/AGENT_12_VALIDATION.md` – US-only vs calibration-model statistical comparison.
+  - `docs/AGENT_12_STATISTICAL_VERIFICATION.md` – Independent verification of the Agent 12 validation math.
+  - `docs/STATISTICAL_REVIEW_DOMAIN_CALIBRATION.md` – Review of the domain calibration implementation and tests.
+- **Fairness & environmental justice**
+  - `docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md` – Narrative and results for EJ-focused experiments.
+  - `data/environmental_justice_*.csv` – Saved tabular results consumed by tests and analysis.
+- **Testing & UX**
+  - `docs/CHROME_DEVTOOLS_TEST_REPORT.md` – Browser-based performance and UX notes.
+  - `docs/screenshots/*.png` – UI snapshots used in reports and for README images.
+- **Course materials**
+  - `docs/projectspec/project.pdf` – Main project brief.
+  - `docs/projectspec/AI4ALL Ignite Rubrics.pdf`, `AI4ALL Ignite Syllabus.pdf`, `GitHub Guidelines.pdf` – Supporting course documents.
+
 ## Data Sources
 
 ### Training data (Kaggle)
