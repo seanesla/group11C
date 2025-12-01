@@ -750,6 +750,14 @@ def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[D
     if not aggregated:
         return None, None, None
 
+    # Warn if conductance is elevated (possible brackish or mineral-rich water)
+    if aggregated.get('conductance', 0) > 3000:
+        st.warning(
+            f"Elevated conductance detected ({aggregated['conductance']:.0f} uS/cm). "
+            "This may indicate saltwater intrusion, mineral-rich water, or estuarine influence. "
+            "Results should be interpreted with caution."
+        )
+
     try:
         wqi, scores, classification = calculator.calculate_wqi(**aggregated)
         return wqi, scores, classification
