@@ -764,11 +764,7 @@ def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[D
 
     # Warn if conductance is elevated (possible brackish or mineral-rich water)
     if aggregated.get('conductance', 0) > 3000:
-        st.warning(
-            f"Elevated conductance detected ({aggregated['conductance']:.0f} uS/cm). "
-            "This may indicate saltwater intrusion, mineral-rich water, or estuarine influence. "
-            "Results should be interpreted with caution."
-        )
+        st.warning(f"High conductance ({aggregated['conductance']:.0f} µS/cm) - possible saltwater or mineral influence.")
 
     try:
         wqi, scores, classification = calculator.calculate_wqi(**aggregated)
@@ -787,7 +783,6 @@ def main():
 
     # Title
     st.title("Water Quality Index Lookup")
-    st.markdown("Search for water quality data by ZIP code and view WQI scores with visualizations.")
 
     # Show ML model status
     if classifier and regressor:
@@ -977,12 +972,7 @@ def main():
         if ml_predictions:
             st.subheader("ML Model Predictions")
 
-            # Add disclaimer about training data
-            st.info(
-                "**Note:** These predictions come from machine learning models trained on a historical public water quality dataset "
-                "(Kaggle, 1991–2017). While chemical relationships are universal, predictions for US locations should be interpreted "
-                "with caution because the training data comes from different regions."
-            )
+            st.caption("Model trained on non-US data (Kaggle 1991–2017). US predictions may vary.")
 
             col1, col2, col3 = st.columns(3)
 
@@ -1014,22 +1004,12 @@ def main():
                 ])
                 st.dataframe(prob_df, width='stretch', hide_index=True)
 
-                st.markdown("""
-                **Model Information:**
-                - **Classifier:** RandomForest (98.64% accuracy on test set)
-                - **Regressor:** RandomForest (R² = 0.9859 on test set)
-                - **Training Data:** 2,939 samples from a historical public water quality dataset (1991–2017, non‑US regions)
-                - **Limitations:** Geographic mismatch between training data and US locations, missing turbidity data
-                """)
+                st.caption("RandomForest: Classifier 98.6% acc, Regressor R²=0.986 | 2,939 training samples")
 
             st.divider()
 
             # Future Trend Prediction Section
-            st.subheader("Future Water Quality Forecast")
-
-            st.markdown("""
-            Based on current water quality parameters and historical trends, here's the predicted WQI over the next 12 months.
-            """)
+            st.subheader("12-Month WQI Forecast")
 
             try:
                 # Try to derive forecast from observed history; fallback to model drift
@@ -1103,11 +1083,7 @@ def main():
                                 help="Predicted WQI score after 12 months"
                             )
 
-                        # Forecast disclaimer
-                        st.warning(
-                            "**Forecast Limitations:** Uses observed WQI trend over recent months when available (fallback: model drift). "
-                            "Actual water quality may shift with seasonality, infrastructure changes, and unmeasured contaminants. Guidance only."
-                        )
+                        st.caption("Forecast based on observed trends. Actual results may vary with seasonal/infrastructure changes.")
 
                 else:
                     st.info("Unable to generate forecast: temporal features not available in model.")
@@ -1120,12 +1096,7 @@ def main():
             st.divider()
 
         # === ML FEATURES TRANSPARENCY SECTION ===
-        st.subheader(":material/psychology: ML Model Features (59 Total)")
-
-        st.markdown("""
-        The ML models use **59 features** organized into 9 categories. This section shows exactly what data the models
-        analyze to make predictions, including which features are available for US data vs imputed from European averages.
-        """)
+        st.subheader(":material/psychology: ML Features (59)")
 
         # Get feature categories and counts
         feature_categories = get_feature_categories()
