@@ -93,6 +93,11 @@ class WQIPredictionRegressor:
                 'nitrate_missing',
                 'conductance_missing',
                 'n_params_available',
+                # Turbidity is not present as a real-valued feature in the Kaggle
+                # training data (the column is entirely NaN in the core feature
+                # pipeline). Excluding it keeps the regressor schema aligned with
+                # the 18-feature inference schema.
+                'turbidity',
             ]
 
         # Extract target

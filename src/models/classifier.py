@@ -92,6 +92,11 @@ class WaterQualityClassifier:
                 'nitrate_missing',
                 'conductance_missing',
                 'n_params_available',
+                # Turbidity is not available in the Kaggle training data and is
+                # always NaN in the core feature pipeline. Exclude it here so the
+                # trained model schema matches the 18-feature inference schema
+                # produced by prepare_us_features_for_prediction().
+                'turbidity',
             ]
 
         # Extract target
