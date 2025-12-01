@@ -1206,9 +1206,6 @@ def main():
         # PHASE 4.1: FEATURE IMPORTANCE ANALYSIS
         # ===================================================================
         st.subheader(":material/target: Feature Importance Analysis")
-        st.markdown("""
-        Understand which features most influence the ML model's predictions for water quality safety.
-        """)
 
         try:
             from utils.feature_importance import (
@@ -1269,13 +1266,7 @@ def main():
                 )
 
                 # Display feature importance tables in expandable sections
-                with st.expander(":material/bar_chart: Top 20 Features - Classifier (SAFE/UNSAFE)", expanded=False):
-                    st.markdown(f"""
-                    **What this shows:** The most important features the **binary classifier** uses
-                    to decide if water is SAFE (WQI ≥ 70) or UNSAFE (WQI < 70).
-
-                    **Top 10 Features Account For:** {summary['top_10_cumulative_classifier']:.1f}% of total importance
-                    """)
+                with st.expander(f":material/bar_chart: Classifier Features (top 10 = {summary['top_10_cumulative_classifier']:.0f}%)", expanded=False):
 
                     # Format display DataFrame
                     clf_display = clf_importance_df[['rank', 'feature', 'importance_pct', 'availability']].copy()
@@ -1310,13 +1301,7 @@ def main():
                     )
                     st.plotly_chart(fig_clf, width='stretch')
 
-                with st.expander(":material/bar_chart: Top 20 Features - Regressor (WQI Score)", expanded=False):
-                    st.markdown(f"""
-                    **What this shows:** The most important features the **regression model** uses
-                    to predict the exact WQI score (0-100).
-
-                    **Top 10 Features Account For:** {summary['top_10_cumulative_regressor']:.1f}% of total importance
-                    """)
+                with st.expander(f":material/bar_chart: Regressor Features (top 10 = {summary['top_10_cumulative_regressor']:.0f}%)", expanded=False):
 
                     # Format display DataFrame
                     reg_display = reg_importance_df[['rank', 'feature', 'importance_pct', 'availability']].copy()
@@ -1368,11 +1353,7 @@ def main():
         # ===================================================================
         # PHASE 4.2: PER-PREDICTION FEATURE CONTRIBUTIONS (SHAP)
         # ===================================================================
-        st.subheader(":material/search: Feature Contributions for This Prediction")
-        st.markdown("""
-        While **Feature Importance** shows which features matter most *overall*, **Feature Contributions** show
-        how the *specific values* of features in THIS water sample influenced THIS prediction.
-        """)
+        st.subheader(":material/search: Feature Contributions (This Sample)")
 
         try:
             # Get latest model paths
@@ -1434,10 +1415,7 @@ def main():
                 reg_match_error = abs(reg_contributions['shap_sum'] - reg_pred_delta)
 
                 # Show verification (collapsed by default)
-                with st.expander(":material/science: SHAP Mathematical Verification", expanded=False):
-                    st.markdown("""
-                    **SHAP (SHapley Additive exPlanations)** values must satisfy:
-                    """)
+                with st.expander(":material/science: SHAP Verification", expanded=False):
                     st.latex(r"\sum_{i=1}^{59} \text{SHAP}_i = \text{Prediction} - \text{Base Value}")
 
                     col1, col2 = st.columns(2)
@@ -1506,11 +1484,7 @@ def main():
 
                     st.plotly_chart(fig_clf_contrib, width='stretch')
 
-                    st.caption("""
-                    :green[**Green bars**]: Features pushing prediction toward SAFE (positive contribution)
-                    :orange[**Orange bars**]: Features pushing prediction toward UNSAFE (negative contribution)
-                    **Bar length**: Magnitude of influence on the prediction
-                    """)
+                    st.caption(":green[Green] = toward SAFE | :orange[Orange] = toward UNSAFE")
 
                 with viz_tab2:
                     # Regressor contributions bar chart
@@ -1549,23 +1523,10 @@ def main():
 
                     st.plotly_chart(fig_reg_contrib, width='stretch')
 
-                    st.caption("""
-                    🔵 **Blue bars**: Features increasing predicted WQI score (positive contribution)
-                    🟠 **Orange bars**: Features decreasing predicted WQI score (negative contribution)
-                    **Bar length**: WQI points added/subtracted by this feature
-                    """)
+                    st.caption(":blue[Blue] = increases WQI | :orange[Orange] = decreases WQI")
 
                 # Display classifier contributions
-                with st.expander(":material/target: Top 20 Feature Contributions - Classifier", expanded=False):
-                    st.markdown(f"""
-                    **What this shows:** How each feature VALUE in this water sample pushed the prediction
-                    toward SAFE (positive contribution) or UNSAFE (negative contribution).
-
-                    **This Prediction:**
-                    - Base value (average): **{clf_contributions['base_value']:.3f}** probability of SAFE
-                    - This sample prediction: **{clf_contributions['prediction']:.3f}** probability of SAFE
-                    - Net change: **{clf_pred_delta:+.3f}** (sum of contributions below)
-                    """)
+                with st.expander(f":material/target: Classifier Contributions (base {clf_contributions['base_value']:.3f} → {clf_contributions['prediction']:.3f})", expanded=False):
 
                     # Annotate with availability
                     us_features = get_us_available_features()
@@ -1597,24 +1558,8 @@ def main():
                         hide_index=True
                     )
 
-                    st.info("""
-                    **Interpretation:**
-                    - **Positive contribution**: Feature pushes prediction toward SAFE (WQI >= 70)
-                    - **Negative contribution**: Feature pushes prediction toward UNSAFE (WQI < 70)
-                    - **Magnitude**: How strongly this feature influenced the decision
-                    """)
-
                 # Display regressor contributions
-                with st.expander(":material/bar_chart: Top 20 Feature Contributions - Regressor", expanded=True):
-                    st.markdown(f"""
-                    **What this shows:** How each feature VALUE in this water sample pushed the predicted
-                    WQI score higher or lower.
-
-                    **This Prediction:**
-                    - Base value (average): **{reg_contributions['base_value']:.1f}** WQI
-                    - This sample prediction: **{reg_contributions['prediction']:.1f}** WQI
-                    - Net change: **{reg_pred_delta:+.1f}** points (sum of contributions below)
-                    """)
+                with st.expander(f":material/bar_chart: Regressor Contributions (base {reg_contributions['base_value']:.1f} → {reg_contributions['prediction']:.1f} WQI)", expanded=True):
 
                     reg_contrib_df = reg_contributions['contributions'].copy()
                     reg_contrib_df['availability'] = reg_contrib_df['feature'].apply(get_availability_marker)
@@ -1632,22 +1577,6 @@ def main():
                         width='stretch',
                         hide_index=True
                     )
-
-                    st.info("""
-                    **Interpretation:**
-                    - **Positive contribution**: Feature increases predicted WQI score
-                    - **Negative contribution**: Feature decreases predicted WQI score
-                    - **Magnitude**: How many WQI points this feature added/subtracted
-                    """)
-
-                # Add interpretation guide
-                with st.expander(":material/info: About SHAP Values", expanded=False):
-                    st.markdown("""
-                    **SHAP** explains why THIS sample got THIS prediction (not overall model behavior).
-                    - **Positive**: Pushes toward SAFE / higher WQI
-                    - **Negative**: Pushes toward UNSAFE / lower WQI
-                    - Sum of contributions = Prediction - Base Value
-                    """)
 
             else:
                 st.warning("ML models or predictions not available. Cannot calculate feature contributions.")
@@ -1838,33 +1767,9 @@ def main():
                         # Add explanation of current bracket
                         st.info(f"This parameter score is in the **{calculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
 
-                        # Add nitrate-specific unit explainer
+                        # Add nitrate-specific unit note
                         if param_name == 'nitrate':
-                            st.markdown("---")
-                            st.markdown("#### Nitrate Units: mg/L as N")
-                            st.markdown(f"""
-                            This app displays nitrate as **mg/L as N** (EPA/USGS standard), which measures only the nitrogen content of nitrate.
-
-                            **Data Sources:**
-                            - **US Water Quality Portal (WQP)**: Already reports nitrate as **mg/L as N** (USGS convention)
-                            - **European Kaggle Dataset**: Uses **mg{{NO₃}}/L** (molecular form) → converted during ML training
-
-                            **Why this matters:**
-                            - European data uses **mg{{NO₃}}/L** (full molecular form)
-                            - US data uses **mg/L as N** (nitrogen only)
-                            - This creates a **4.43× difference** in values
-
-                            **Conversion Factor (for reference):**
-                            """)
-                            st.latex(r"\text{mg/L as N} = \text{mg\{NO}_3\text{\}/L} \times " + f"{NITRATE_NO3_TO_N}")
-
-                            st.markdown(f"""
-                            **Example conversions:**
-                            - 44.3 mg{{NO₃}}/L = 10.0 mg/L as N (EPA MCL threshold)
-                            - 88.6 mg{{NO₃}}/L = 20.0 mg/L as N (2× EPA MCL, unsafe)
-
-                            The nitrate value you see above ({param_value:.2f} mg/L as N) is from USGS/EPA sources and is already in the correct unit. No conversion was applied to this displayed value.
-                            """)
+                            st.caption(f"Units: mg/L as N (EPA/USGS standard). Conversion: mg{{NO₃}}/L × {NITRATE_NO3_TO_N} = mg/L as N. EPA MCL = 10.0 mg/L as N.")
 
         st.divider()
 
@@ -1903,29 +1808,9 @@ def main():
         st.info("Enter a ZIP code in the sidebar and click Search to view water quality data")
 
         st.markdown("""
-        ### How to use this app:
+        **WQI Score**: 0-100 scale | **90+** Excellent | **70-89** Good | **50-69** Fair | **25-49** Poor | **<25** Very Poor
 
-        1. **Enter a ZIP code** in the sidebar (e.g., 20001 for Washington DC)
-        2. **Adjust search radius** to find monitoring stations near your location
-        3. **Select date range** to view historical data
-        4. **Click Search** to fetch real water quality data
-
-        ### What you'll see:
-
-        - **Overall WQI Score**: Water Quality Index on a 0-100 scale
-        - **Classification**: Excellent, Good, Fair, Poor, or Very Poor
-        - **Safety Indicator**: Whether water is safe for drinking (WQI ≥ 70)
-        - **Parameter Breakdown**: Individual scores for pH, dissolved oxygen, temperature, etc.
-        - **Visualizations**: Time series charts and parameter comparisons
-        - **Raw Data**: Complete dataset with download option
-
-        ### WQI Classifications:
-
-        - **90-100**: Excellent - Pristine water quality
-        - **70-89**: Good - Safe for most uses
-        - **50-69**: Fair - Acceptable but needs monitoring
-        - **25-49**: Poor - Treatment recommended
-        - **0-24**: Very Poor - Significant contamination
+        Results include: WQI score, safety classification, parameter breakdown, time series, and downloadable raw data.
         """)
 
 
