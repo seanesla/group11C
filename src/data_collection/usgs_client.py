@@ -125,7 +125,8 @@ class USGSClient:
         latitude: float,
         longitude: float,
         radius_miles: float = 50.0,
-        parameter_codes: Optional[List[str]] = None
+        parameter_codes: Optional[List[str]] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Find monitoring sites near a geographic location.
@@ -135,12 +136,19 @@ class USGSClient:
             longitude: Longitude coordinate
             radius_miles: Search radius in miles (default: 50)
             parameter_codes: List of USGS parameter codes to filter by
+            site_types: List of USGS site type codes to include (e.g., ['ST', 'LK']).
+                       Defaults to surface water types, excluding marine/estuarine.
 
         Returns:
             DataFrame containing site information
         """
+        from .constants import SURFACE_WATER_SITE_TYPES_USGS
+
         if parameter_codes is None:
             parameter_codes = list(self.PARAMETER_CODES.values())
+
+        if site_types is None:
+            site_types = SURFACE_WATER_SITE_TYPES_USGS
 
         # Calculate bounding box
         bbox = self._calculate_bounding_box(latitude, longitude, radius_miles)
@@ -149,7 +157,7 @@ class USGSClient:
             'format': 'rdb',
             'bBox': bbox,
             'parameterCd': ','.join(parameter_codes),
-            'siteType': 'ST',  # Stream sites
+            'siteType': ','.join(site_types),  # Surface water sites (excludes marine)
             'siteStatus': 'active'
         }
 
@@ -269,7 +277,8 @@ class USGSClient:
         radius_miles: float = 50.0,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        parameters: Optional[List[str]] = None
+        parameters: Optional[List[str]] = None,
+        site_types: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Retrieve water quality data for all sites near a location.
@@ -283,12 +292,15 @@ class USGSClient:
             start_date: Start date for data retrieval
             end_date: End date for data retrieval
             parameters: List of parameter names to retrieve
+            site_types: List of USGS site type codes. Defaults to surface water.
 
         Returns:
             DataFrame containing water quality measurements
         """
         # Find sites near the location
-        sites_df = self.find_sites_by_location(latitude, longitude, radius_miles)
+        sites_df = self.find_sites_by_location(
+            latitude, longitude, radius_miles, site_types=site_types
+        )
 
         if sites_df.empty:
             logger.warning(f"No sites found near ({latitude}, {longitude})")
