@@ -894,6 +894,9 @@ def main():
             if len(values) > 0:
                 aggregated[param_key] = float(values.median())
 
+        # Get daily WQI scores for forecast
+        daily_wqi = get_daily_wqi_scores(df)
+
         # Make ML predictions
         ml_predictions = make_ml_predictions(
             aggregated,

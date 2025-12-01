@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-# Critical Rules - NO EXCEPTIONS
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Critical Rules - NO EXCEPTIONS
 
 ### Never Guess or Assume
 - If you don't know something, **ask** or **search** for the answer
@@ -8,97 +10,96 @@
 - Don't proceed with uncertain information - verify first
 
 ### No Mocks or Fake Data
-- Use REAL DATA
+- Use REAL DATA only
 - No placeholder data, mock responses, or synthetic test data
 - If an API call fails, **fix it** - don't fake the response
 
 ### No Shortcuts
 - No incomplete implementations marked as "TODO"
 - No skipping error handling or edge cases
-- No "it works on my machine" - ensure it works properly
 - Test everything before claiming completion
 
 ### No Fallbacks or Graceful Degradation
 - If something fails, **stop and fix it**
 - Don't return partial results with a disclaimer
 - Don't paper over errors with default values
-- Be honest about failures - never pretend something works
 
-## Project Files
+## Commands
 
-### `.claude/plan.md`
-The single source of truth for project status and task tracking.
-- Contains the implementation plan and current todo list
-- Mark completed tasks with `[x]`
-- Mark in-progress tasks with `← IN PROGRESS`
-- If a plan is complete, delete it. If a plan is being replaced, delete it and replace with new one.
-- Note: the plan im referring to is the one you make with ExitPlanMode tool (your built-in plan mode that the user activates). It should NOT be some arbitrary plan that was not crafted with the ExitPlanMode tool.
+```bash
+# Install dependencies
+poetry install
 
-### Key Documentation
-- `projectspec/project.pdf` - Project proposal
-- This file - Core instructions and standards
+# Run Streamlit app
+poetry run streamlit run streamlit_app/app.py
 
-## Workflow
+# Train models (core features recommended for deployment)
+poetry run python train_models.py --core-params-only
 
-1. **Before coding:** Read relevant files, understand context
-2. **Plan first:** Think through implementation before writing code
-3. **Implement:** Write production-quality code with error handling
-4. **Verify:** Test that it actually works with real data
+# Fast tests (excludes integration tests with real API calls)
+poetry run pytest
 
-## Quality Standards
+# All tests including real API calls
+poetry run pytest -m ""
 
-- Production-ready code only
-- Real API integrations (if any)
-- Comprehensive error handling
-- Honest status reporting
-- Full test coverage
+# Single test
+poetry run pytest tests/test_streamlit_app.py::TestFetchWaterQualityData -q
 
-## When You Don't Know
+# Chunked test runner (for large test suite)
+poetry run python scripts/run_tests_chunked.py --group core_fast
 
-If you're uncertain about:
-- API endpoints or formats → Read API docs or ask
-- File locations → Use `view` tool to explore
-- Implementation details → Ask for clarification
-- Whether something works → Test it and verify
+# Code quality
+poetry run black .
+poetry run flake8 src
+poetry run mypy src
+```
 
-**Never proceed with guesswork. Always verify.**
+## Architecture
 
+### Core Data Flow
+```
+ZIP Code → Geocode (pgeocode) → API Query (USGS/WQP) →
+Daily Aggregation → WQI Calculation → ML Prediction →
+SHAP Explanation → Streamlit Visualization
+```
 
-# MCP Server Reference
+### Key Modules
+- `src/data_collection/` - USGS NWIS and Water Quality Portal API clients with fallback logic
+- `src/utils/wqi_calculator.py` - NSF-WQI implementation using 6 parameters (pH, DO, temp, turbidity, nitrate, conductance)
+- `src/models/` - Random Forest classifier (SAFE/UNSAFE) and regressor (WQI 0-100)
+- `src/services/search_strategies.py` - Progressive fallback for radius/history expansion
+- `streamlit_app/app.py` - UI only; business logic belongs in `src/services/` or `src/utils/`
 
-## Context7 MCP Server
+### Critical: Nitrate Unit Conversion
+The codebase handles a 4.43× unit mismatch between data sources:
+- **Kaggle dataset**: mg{NO3}/L (full nitrate molecule)
+- **EPA/USGS standard**: mg/L as N (nitrogen content only)
+- **Conversion factor**: `NITRATE_NO3_TO_N = 0.2258` in WQP client
 
-**Purpose:** Provides up-to-date, version-specific code documentation for AI coding assistants.
+### Model Limitations
+The ML models **cannot detect**: lead, heavy metals, bacteria, pesticides, or PFAS. The NSF-WQI excludes these parameters, resulting in 100% false negatives on lead-contaminated water (documented in `docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md`).
 
-**When to call:**
-- Need current documentation for libraries/frameworks
-- Want to avoid outdated or hallucinated code examples
-- Working with version-specific APIs or syntax
+## Test Markers
+```python
+@pytest.mark.unit          # No external dependencies
+@pytest.mark.integration   # Real API calls (excluded by default)
+@pytest.mark.slow          # Time-consuming tests
+```
 
-**Available tools:**
-- `resolve-library-id` - Maps library names to Context7-compatible IDs
-- `get-library-docs` - Retrieves current documentation for specified library/topic
+## Data Files
+- `data/raw/waterPollution.csv` - Kaggle training data (gitignored, must download)
+- `data/models/` - Trained models (binaries gitignored, metadata JSON tracked)
+- Environment variables: `WQP_TIMEOUT`, `USGS_TIMEOUT` for API timeouts
 
----
+## Plan Tracking
+- `.claude/plan.md` - Single source of truth for implementation plans
+- Mark completed: `[x]`, in-progress: `← IN PROGRESS`
+- Delete plans when complete or replacing
 
-## Chrome DevTools MCP Server
+## MCP Servers
 
-**Purpose:** Controls and inspects live Chrome browser via DevTools API for AI agents.
+### Context7
+Use `resolve-library-id` then `get-library-docs` for current documentation on any library/framework.
 
-**When to call:**
-- Browser automation tasks
-- Advanced debugging (network requests, console logs)
-- Performance analysis and trace collection
-- Screenshot capture
-- DOM inspection or manipulation
-
-**Capabilities:**
-- Performance traces and analysis
-- Network request inspection
-- Console log retrieval
-- Screenshot capture
-- Puppeteer-based reliable automation
-- use .gitignore
-
-- For large context analysis, use `gemini -p` CLI
-  -Core Strategy: Use Gemini CLI (1M+ token context) for reading/analyzing large codebases, Claude Code for editing/implementing Syntax: gemini -p "@src/ @tests/ Analyze architecture" - use @ to include files/directories When to Use: Analyzing >100KB files, entire codebases, checking if features are implemented, understanding project-wide patterns Key Advantage: Gemini consumes ~1% context per query vs Claude's ~10%; instant codebase understanding without file-by-file analysis. Limitations: Gemini is lazy for detailed planning (300 lines vs Claude's 1500); adds excessive code comments; free tier rate limited. gemini might also say wrong stuff because of its knowledge cutoff date, which might result in outdated perspectives. gemini is also not as good at coding as you.
+### Chrome DevTools / Playwright
+For browser automation, performance traces, network inspection, console logs, screenshots.
