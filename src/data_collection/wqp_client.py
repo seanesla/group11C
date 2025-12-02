@@ -37,14 +37,28 @@ class WQPClient:
         'total_phosphorus': 'Phosphorus',
     }
 
+    @staticmethod
+    def _get_validated_timeout(env_var: str, default: int, min_val: int = 5, max_val: int = 300) -> int:
+        """Get timeout from environment with bounds checking."""
+        try:
+            value = int(os.getenv(env_var, default))
+            if not (min_val <= value <= max_val):
+                logger.warning(f"{env_var}={value} outside range [{min_val}, {max_val}], using {default}")
+                return default
+            return value
+        except ValueError:
+            logger.warning(f"Invalid {env_var} value, using default {default}")
+            return default
+
     def __init__(self, rate_limit_delay: float = 1.0, timeout: Optional[int] = None):
         """
         Initialize the WQP client.
 
         Args:
             rate_limit_delay: Delay in seconds between API requests
+            timeout: Request timeout in seconds (default: WQP_TIMEOUT env var or 20)
         """
-        default_timeout = int(os.getenv("WQP_TIMEOUT", 20))
+        default_timeout = self._get_validated_timeout("WQP_TIMEOUT", 20)
         self.rate_limit_delay = rate_limit_delay
         self.timeout = timeout if timeout is not None else default_timeout
         self.session = requests.Session()

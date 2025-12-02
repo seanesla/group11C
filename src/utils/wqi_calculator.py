@@ -298,6 +298,20 @@ class WQICalculator:
         Returns:
             Tuple of (WQI score, parameter scores dict, classification)
         """
+        # Validate parameter ranges (warn but don't reject - data may still be usable)
+        if ph is not None and not pd.isna(ph) and not (0 <= ph <= 14):
+            logger.warning(f"pH value {ph} outside valid range [0, 14]")
+        if dissolved_oxygen is not None and not pd.isna(dissolved_oxygen) and dissolved_oxygen < 0:
+            logger.warning(f"Dissolved oxygen {dissolved_oxygen} cannot be negative")
+        if temperature is not None and not pd.isna(temperature) and not (-5 <= temperature <= 50):
+            logger.warning(f"Temperature {temperature}C outside typical range [-5, 50]")
+        if turbidity is not None and not pd.isna(turbidity) and turbidity < 0:
+            logger.warning(f"Turbidity {turbidity} cannot be negative")
+        if nitrate is not None and not pd.isna(nitrate) and nitrate < 0:
+            logger.warning(f"Nitrate {nitrate} cannot be negative")
+        if conductance is not None and not pd.isna(conductance) and conductance < 0:
+            logger.warning(f"Conductance {conductance} cannot be negative")
+
         # Calculate individual parameter scores
         scores = {}
         weights_used = {}
