@@ -267,15 +267,16 @@ def calculate_wqi_labels(df: pd.DataFrame) -> pd.DataFrame:
     for idx, row in df.iterrows():
         try:
             # Extract parameters (handle None and NaN)
-            # NOTE: Nitrate already converted to mg/L as N by extract_wqi_parameters() at line 182
+            # NOTE: Nitrate already converted to mg/L as N by extract_wqi_parameters() at line 221
             # Do NOT convert again here (previous bug: double conversion)
+            # Using direct indexing (row['param']) instead of row.get() to catch missing columns as errors
             params = {
-                'ph': row.get('ph') if pd.notna(row.get('ph')) else None,
-                'dissolved_oxygen': row.get('dissolved_oxygen') if pd.notna(row.get('dissolved_oxygen')) else None,
-                'temperature': row.get('temperature') if pd.notna(row.get('temperature')) else None,
-                'turbidity': row.get('turbidity') if pd.notna(row.get('turbidity')) else None,
-                'nitrate': row.get('nitrate') if pd.notna(row.get('nitrate')) else None,  # Already in mg/L as N from extract_wqi_parameters()
-                'conductance': row.get('conductance') if pd.notna(row.get('conductance')) else None,
+                'ph': row['ph'] if pd.notna(row['ph']) else None,
+                'dissolved_oxygen': row['dissolved_oxygen'] if pd.notna(row['dissolved_oxygen']) else None,
+                'temperature': row['temperature'] if pd.notna(row['temperature']) else None,
+                'turbidity': row['turbidity'] if pd.notna(row['turbidity']) else None,
+                'nitrate': row['nitrate'] if pd.notna(row['nitrate']) else None,  # Already in mg/L as N from extract_wqi_parameters()
+                'conductance': row['conductance'] if pd.notna(row['conductance']) else None,
             }
 
             # Calculate WQI (returns tuple: wqi, scores, classification)
@@ -377,6 +378,9 @@ def create_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     # === 3. MISSING VALUE INDICATORS ===
     logger.info("Creating missing value indicators")
 
+    # WARNING: These missing indicators are DATA ARTIFACTS from the Kaggle training set
+    # They may not generalize well to production data with different missing patterns
+    # Consider removing features like 'turbidity_missing' (always 1 in training) before deployment
     wqi_params = ['ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance']
     for param in wqi_params:
         df[f'{param}_missing'] = df[param].isna().astype(int)
@@ -517,6 +521,9 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     # === 3. MISSING VALUE INDICATORS ===
     logger.info("Creating missing value indicators")
 
+    # WARNING: These missing indicators are DATA ARTIFACTS from the Kaggle training set
+    # They may not generalize well to production data with different missing patterns
+    # Consider removing features like 'turbidity_missing' (always 1 in training) before deployment
     wqi_params = ['ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance']
     for param in wqi_params:
         df[f'{param}_missing'] = df[param].isna().astype(int)
@@ -608,23 +615,32 @@ def prepare_ml_dataset(
     # Step 2: Extract WQI parameters
     df = extract_wqi_parameters(df)
 
-    # Step 3: Calculate WQI labels
-    df = calculate_wqi_labels(df)
+    # Step 2.5: Check for duplicate (waterBody, year) combinations
+    duplicate_mask = df.duplicated(subset=['waterBodyIdentifier', 'year'], keep='first')
+    n_duplicates = duplicate_mask.sum()
+    if n_duplicates > 0:
+        logger.warning(f"Found {n_duplicates} duplicate (waterBody, year) combinations. Keeping first occurrence.")
+        df = df[~duplicate_mask].copy()
+        logger.info(f"After removing duplicates: {len(df)} rows remain")
 
-    # Step 3.5: Remove physically impossible outliers before model training
+    # Step 3: Remove physically impossible outliers BEFORE WQI calculation
+    # This ensures labels are computed on clean data only
     df = remove_physical_outliers(df)
 
-    # Step 4: Create ML features (conditional based on mode)
+    # Step 4: Calculate WQI labels (on cleaned data)
+    df = calculate_wqi_labels(df)
+
+    # Step 5: Create ML features (conditional based on mode)
     if core_params_only:
         df = create_core_ml_features(df)
     else:
         df = create_ml_features(df)
 
-    # Step 5: Remove rows with invalid WQI scores
+    # Step 6: Remove rows with invalid WQI scores
     valid_df = df[df['wqi_score'].notna()].copy()
     logger.info(f"\nFinal dataset: {len(valid_df)} valid samples (removed {len(df) - len(valid_df)} invalid)")
 
-    # Step 6: Save processed data
+    # Step 7: Save processed data
     if save_processed:
         output_path = "data/processed/ml_features.csv"
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)

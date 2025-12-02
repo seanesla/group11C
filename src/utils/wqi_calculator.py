@@ -397,11 +397,11 @@ class WQICalculator:
             wqi: Water Quality Index score
 
         Returns:
-            True if safe (WQI >= 90 = Excellent), False otherwise
+            True if safe (WQI >= 70 = Good or better), False otherwise
         """
-        # Only "Excellent" quality (90+) is considered safe
-        # "Good" (70-89) and below require caution
-        return not pd.isna(wqi) and wqi >= 90
+        # "Good" quality (70+) and above is considered safe
+        # This matches the training label definition (WQI >= 70)
+        return not pd.isna(wqi) and wqi >= 70
 
     @staticmethod
     def get_ph_thresholds() -> pd.DataFrame:
