@@ -17,6 +17,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Physical bounds for water quality parameters
+VALID_RANGES = {
+    'ph': (0.0, 14.0),
+    'dissolved_oxygen': (0.0, 15.0),  # Saturation limit
+    'temperature': (-2.0, 40.0),       # Liquid water range
+    'nitrate': (0.0, 50.0),            # Beyond EPA limit
+    'conductance': (0.0, 5000.0),      # Freshwater limit
+}
+
 
 def prepare_us_features_for_prediction(
     ph: Optional[float] = None,
@@ -57,6 +66,34 @@ def prepare_us_features_for_prediction(
 
     if year is None:
         year = datetime.now().year
+
+    # === VALIDATE INPUT PARAMETERS ===
+    # Check physical bounds for all provided parameters
+    params_to_validate = {
+        'ph': ph,
+        'dissolved_oxygen': dissolved_oxygen,
+        'temperature': temperature,
+        'nitrate': nitrate,
+        'conductance': conductance
+    }
+
+    for param_name, param_value in params_to_validate.items():
+        if param_value is not None:
+            min_val, max_val = VALID_RANGES[param_name]
+            if not (min_val <= param_value <= max_val):
+                raise ValueError(
+                    f"Parameter '{param_name}' value {param_value} is outside physical bounds "
+                    f"[{min_val}, {max_val}]. Please check the input data."
+                )
+
+    # Detect possible nitrate unit errors
+    # EPA limit is 10 mg/L as N, which equals 44.3 mg/L as NO3
+    if nitrate is not None and nitrate > 44.3:
+        logger.warning(
+            f"Nitrate value {nitrate:.2f} exceeds 44.3 mg/L (EPA limit in NO3 form). "
+            f"If this value is in mg/L as NO3, it should be converted to mg/L as N by "
+            f"multiplying by 0.2258. Expected range is 0-50 mg/L as N."
+        )
 
     # === BUILD CORE FEATURES IN EXACT ORDER EXPECTED BY MODEL ===
     features = {}
