@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    confusion_matrix, classification_report, roc_auc_score, roc_curve
+    confusion_matrix, classification_report, roc_auc_score
 )
 
 logger = logging.getLogger(__name__)
@@ -450,10 +450,11 @@ class WaterQualityClassifier:
         if self.model is None:
             raise ValueError("No model to save. Train first.")
 
-        # Generate filepath with timestamp
+        # Generate filepath with timestamp (using absolute path for robustness)
         if filepath is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filepath = f"data/models/classifier_{timestamp}.joblib"
+            models_dir = Path(__file__).parent.parent.parent / "data" / "models"
+            filepath = str(models_dir / f"classifier_{timestamp}.joblib")
 
         # Ensure directory exists
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)

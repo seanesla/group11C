@@ -591,10 +591,11 @@ class WQIPredictionRegressor:
         if self.model is None:
             raise ValueError("No model to save. Train first.")
 
-        # Generate filepath with timestamp
+        # Generate filepath with timestamp (using absolute path for robustness)
         if filepath is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filepath = f"data/models/regressor_{timestamp}.joblib"
+            models_dir = Path(__file__).parent.parent.parent / "data" / "models"
+            filepath = str(models_dir / f"regressor_{timestamp}.joblib")
 
         # Ensure directory exists
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)

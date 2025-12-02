@@ -289,9 +289,11 @@ class DomainCalibrator:
         if not self.is_fitted:
             raise ValueError("Cannot save unfitted calibrator")
 
+        # Generate filepath with timestamp (using absolute path for robustness)
         if filepath is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filepath = f"data/models/calibrator_us_{timestamp}.joblib"
+            models_dir = Path(__file__).parent.parent.parent / "data" / "models"
+            filepath = str(models_dir / f"calibrator_us_{timestamp}.joblib")
 
         # Ensure directory exists
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)

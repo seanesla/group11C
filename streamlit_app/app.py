@@ -13,7 +13,6 @@ from typing import Optional, Dict, Any, Tuple
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 
 # Add src directory to path for imports
 src_path = Path(__file__).parent.parent / "src"
@@ -33,7 +32,7 @@ from utils.ml_feature_definitions import (
 from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
-from services.search_strategies import build_search_strategies, SearchStrategy
+from services.search_strategies import build_search_strategies
 from utils.logging_config import configure_logging
 
 # Configure logging once at startup

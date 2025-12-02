@@ -15,8 +15,12 @@ from .regressor import WQIPredictionRegressor
 
 logger = logging.getLogger(__name__)
 
+# Project root and default paths (computed from file location for robustness)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+DEFAULT_MODELS_DIR = str(PROJECT_ROOT / "data" / "models")
 
-def get_latest_model_path(model_type: str = 'classifier', models_dir: str = 'data/models') -> Optional[str]:
+
+def get_latest_model_path(model_type: str = 'classifier', models_dir: str = None) -> Optional[str]:
     """
     Find the most recent model file by timestamp.
 
@@ -27,6 +31,8 @@ def get_latest_model_path(model_type: str = 'classifier', models_dir: str = 'dat
     Returns:
         Path to latest model file, or None if not found
     """
+    if models_dir is None:
+        models_dir = DEFAULT_MODELS_DIR
     pattern = f"{models_dir}/{model_type}_*.joblib"
     model_files = glob.glob(pattern)
 
@@ -41,16 +47,18 @@ def get_latest_model_path(model_type: str = 'classifier', models_dir: str = 'dat
     return latest
 
 
-def load_latest_models(models_dir: str = 'data/models') -> Tuple[Optional[WaterQualityClassifier], Optional[WQIPredictionRegressor]]:
+def load_latest_models(models_dir: str = None) -> Tuple[Optional[WaterQualityClassifier], Optional[WQIPredictionRegressor]]:
     """
     Load the most recent classifier and regressor models.
 
     Args:
-        models_dir: Directory containing model files
+        models_dir: Directory containing model files (default: data/models relative to project root)
 
     Returns:
         Tuple of (classifier, regressor). Either may be None if not found.
     """
+    if models_dir is None:
+        models_dir = DEFAULT_MODELS_DIR
     logger.info("Loading latest ML models...")
 
     # Load classifier
@@ -84,7 +92,7 @@ def save_model_metadata(
     regressor_path: Optional[str],
     classifier_metrics: Optional[Dict],
     regressor_metrics: Optional[Dict],
-    metadata_dir: str = 'data/models'
+    metadata_dir: str = None
 ) -> str:
     """
     Save metadata about trained models.
@@ -94,11 +102,13 @@ def save_model_metadata(
         regressor_path: Path to saved regressor
         classifier_metrics: Classifier metrics
         regressor_metrics: Regressor metrics
-        metadata_dir: Directory to save metadata
+        metadata_dir: Directory to save metadata (default: data/models relative to project root)
 
     Returns:
         Path to saved metadata file
     """
+    if metadata_dir is None:
+        metadata_dir = DEFAULT_MODELS_DIR
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     metadata_path = f"{metadata_dir}/metadata_{timestamp}.json"
 
