@@ -23,12 +23,10 @@ sys.path.append(str(Path(__file__).parent))
 
 from src.preprocessing.feature_engineering import prepare_ml_dataset
 from src.models.model_utils import train_and_save_models
+from src.utils.logging_config import configure_logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Configure logging once at startup
+configure_logging()
 logger = logging.getLogger(__name__)
 
 

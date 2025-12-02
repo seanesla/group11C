@@ -13,8 +13,6 @@ from typing import Optional, Dict, Any, Tuple
 import logging
 import numpy as np
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Manually maintain a small set of special-case ZIPs that are absent from the

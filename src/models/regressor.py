@@ -22,9 +22,31 @@ from sklearn.metrics import (
     explained_variance_score
 )
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Allowed directories for model loading (security measure)
+_ALLOWED_MODEL_DIRS = [
+    Path(__file__).parent.parent.parent / "data" / "models",
+]
+
+
+def _validate_model_path(filepath: str) -> None:
+    """Validate that model path is within allowed directories.
+
+    Prevents loading arbitrary files from untrusted locations,
+    mitigating joblib deserialization risks.
+    """
+    filepath_resolved = Path(filepath).resolve()
+    for allowed_dir in _ALLOWED_MODEL_DIRS:
+        try:
+            if filepath_resolved.is_relative_to(allowed_dir.resolve()):
+                return
+        except ValueError:
+            continue
+    raise ValueError(
+        f"Model path '{filepath}' is outside allowed directories. "
+        f"Models must be in: {[str(d) for d in _ALLOWED_MODEL_DIRS]}"
+    )
 
 
 class WQIPredictionRegressor:
@@ -608,6 +630,9 @@ class WQIPredictionRegressor:
         """
         if not Path(filepath).exists():
             raise FileNotFoundError(f"Model file not found: {filepath}")
+
+        # Security: validate path is within allowed directories
+        _validate_model_path(filepath)
 
         logger.info(f"Loading model from {filepath}")
         model_data = joblib.load(filepath)

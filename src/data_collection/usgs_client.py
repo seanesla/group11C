@@ -18,8 +18,6 @@ import time
 import logging
 import warnings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -79,7 +77,7 @@ class USGSClient:
             logger.error(f"Request timeout for URL: {url}")
             raise
         except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error {e.response.status_code}: {e.response.text}")
+            logger.error(f"HTTP error {e.response.status_code} from USGS NWIS API")
             raise
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed: {str(e)}")
@@ -182,8 +180,11 @@ class USGSClient:
 
             return df
 
-        except Exception as e:
-            logger.error(f"Error finding sites: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error finding sites: {e}")
+            return pd.DataFrame()
+        except (ValueError, KeyError) as e:
+            logger.error(f"Data parsing error finding sites: {e}")
             return pd.DataFrame()
 
     def get_water_quality_data(
@@ -266,8 +267,11 @@ class USGSClient:
 
             return df
 
-        except Exception as e:
-            logger.error(f"Error retrieving water quality data: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error retrieving water quality data: {e}")
+            return pd.DataFrame()
+        except (ValueError, KeyError, pd.errors.ParserError) as e:
+            logger.error(f"Data parsing error retrieving water quality data: {e}")
             return pd.DataFrame()
 
     def get_data_by_location(

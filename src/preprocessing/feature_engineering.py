@@ -21,8 +21,6 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.wqi_calculator import WQICalculator
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Nitrate unit conversion constant: NO3 (molecular form) → N (nitrogen form)

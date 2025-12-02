@@ -18,8 +18,6 @@ import numpy as np
 from typing import Dict, Optional, Tuple
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

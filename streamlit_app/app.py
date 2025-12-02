@@ -34,7 +34,10 @@ from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
 from services.search_strategies import build_search_strategies, SearchStrategy
+from utils.logging_config import configure_logging
 
+# Configure logging once at startup
+configure_logging()
 
 # Page configuration
 st.set_page_config(
@@ -538,10 +541,13 @@ def create_future_trend_chart(
         showlegend=True
     ))
 
-    # Add predicted WQI line
+    # Add predicted WQI line - prepend current point to connect to "Today" dot
+    plot_dates = [current_date] + list(dates)
+    plot_predictions = [current_wqi] + list(predictions)
+
     fig.add_trace(go.Scatter(
-        x=dates,
-        y=predictions,
+        x=plot_dates,
+        y=plot_predictions,
         mode='lines+markers',
         name='Predicted WQI',
         line=dict(color='#ff7f0e', width=2, dash='dot'),
@@ -599,11 +605,19 @@ def create_future_trend_chart(
 
 def build_forecast_from_history(
     daily_wqi: pd.DataFrame,
-    periods: int = 12
+    periods: int = 12,
+    current_wqi_override: Optional[float] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Derive a simple 12-month forecast from observed daily WQI history using
     linear extrapolation. Avoids flat lines by reflecting actual recent trend.
+
+    Args:
+        daily_wqi: DataFrame with 'Date' and 'WQI' columns
+        periods: Number of months to forecast
+        current_wqi_override: If provided, use this as the baseline for wqi_change
+            calculation instead of the most recent daily WQI. This ensures
+            consistency with the displayed "Today" value on the chart.
     """
     if daily_wqi is None or daily_wqi.empty or len(daily_wqi) < 3:
         return None
@@ -624,20 +638,24 @@ def build_forecast_from_history(
 
     slope, intercept = np.polyfit(ordinals, wqis, 1)  # WQI per day
     start_date = recent['Date'].max()
-    current_wqi = recent.loc[recent['Date'].idxmax(), 'WQI']
+    historical_current_wqi = recent.loc[recent['Date'].idxmax(), 'WQI']
+
+    # Use override for display baseline if provided, otherwise use historical
+    baseline_wqi = current_wqi_override if current_wqi_override is not None else historical_current_wqi
 
     dates = []
     predictions = []
     for i in range(1, periods + 1):
         future_date = start_date + relativedelta(months=i)
         days_ahead = (future_date - start_date).days
-        pred = current_wqi + slope * days_ahead
+        # Project from baseline using historical slope
+        pred = baseline_wqi + slope * days_ahead
         pred = max(0, min(100, pred))
         dates.append(future_date)
         predictions.append(pred)
 
     final_wqi = predictions[-1]
-    wqi_change = final_wqi - current_wqi
+    wqi_change = final_wqi - baseline_wqi
     if wqi_change > 2:
         trend = 'improving'
     elif wqi_change < -2:
@@ -650,7 +668,7 @@ def build_forecast_from_history(
         'predictions': predictions,
         'trend': trend,
         'trend_slope': wqi_change / periods,
-        'current_wqi': current_wqi,
+        'current_wqi': baseline_wqi,
         'final_wqi': final_wqi,
         'wqi_change': wqi_change,
         'periods': periods,
@@ -1014,7 +1032,7 @@ def main():
             try:
                 # Try to derive forecast from observed history; fallback to model drift
                 current_date = datetime.now()
-                trend_data = build_forecast_from_history(daily_wqi, periods=12)
+                trend_data = build_forecast_from_history(daily_wqi, periods=12, current_wqi_override=wqi)
 
                 if trend_data is None:
                     import numpy as np

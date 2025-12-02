@@ -21,9 +21,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Allowed directories for model loading (security measure)
+_ALLOWED_MODEL_DIRS = [
+    Path(__file__).parent.parent.parent / "data" / "models",
+]
+
+
+def _validate_model_path(filepath: str) -> None:
+    """Validate that model path is within allowed directories.
+
+    Prevents loading arbitrary files from untrusted locations,
+    mitigating joblib deserialization risks.
+    """
+    filepath_resolved = Path(filepath).resolve()
+    for allowed_dir in _ALLOWED_MODEL_DIRS:
+        try:
+            if filepath_resolved.is_relative_to(allowed_dir.resolve()):
+                return
+        except ValueError:
+            continue
+    raise ValueError(
+        f"Model path '{filepath}' is outside allowed directories. "
+        f"Models must be in: {[str(d) for d in _ALLOWED_MODEL_DIRS]}"
+    )
 
 
 class DomainCalibrator:
@@ -300,6 +322,9 @@ class DomainCalibrator:
         """
         if not Path(filepath).exists():
             raise FileNotFoundError(f"Calibrator file not found: {filepath}")
+
+        # Security: validate path is within allowed directories
+        _validate_model_path(filepath)
 
         logger.info(f"Loading calibrator from {filepath}")
         calibrator_data = joblib.load(filepath)

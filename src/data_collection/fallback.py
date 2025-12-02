@@ -159,9 +159,8 @@ def fetch_with_fallback(
         )
         if df is not None and not df.empty:
             return df, "WQP"
-    except Exception:
-        # Swallow and fall back to USGS
-        pass
+    except Exception as e:
+        logger.warning(f"WQP fetch failed, falling back to USGS: {type(e).__name__}: {e}")
 
     # USGS fallback
     try:
@@ -184,7 +183,7 @@ def fetch_with_fallback(
         converted = convert_usgs_to_wqp_format(usgs_df)
         if not converted.empty:
             return converted, "USGS NWIS"
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"USGS fallback also failed: {type(e).__name__}: {e}")
 
     return pd.DataFrame(), ""

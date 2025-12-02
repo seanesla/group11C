@@ -17,8 +17,6 @@ import logging
 import io
 import warnings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -87,7 +85,7 @@ class WQPClient:
                 if status >= 500 and attempt < retries - 1:
                     logger.warning(f"HTTP {status} from WQP, retrying ({attempt+1}/{retries})")
                     continue
-                logger.error(f"HTTP error {status}: {e.response.text[:200] if e.response else ''}")
+                logger.error(f"HTTP error {status} from WQP API")
             except requests.exceptions.RequestException as e:
                 last_exc = e
                 logger.error(f"Request failed: {str(e)}")
@@ -156,8 +154,11 @@ class WQPClient:
 
             return df
 
-        except Exception as e:
-            logger.error(f"Error retrieving stations: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error retrieving stations: {e}")
+            return pd.DataFrame()
+        except (ValueError, KeyError, pd.errors.ParserError) as e:
+            logger.error(f"Data parsing error retrieving stations: {e}")
             return pd.DataFrame()
 
     def get_water_quality_data(
@@ -254,8 +255,11 @@ class WQPClient:
 
             return df
 
-        except Exception as e:
-            logger.error(f"Error retrieving water quality data: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error retrieving water quality data: {e}")
+            return pd.DataFrame()
+        except (ValueError, KeyError, pd.errors.ParserError) as e:
+            logger.error(f"Data parsing error retrieving water quality data: {e}")
             return pd.DataFrame()
 
     def get_data_by_state(
