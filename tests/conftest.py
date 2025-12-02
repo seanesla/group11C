@@ -5,6 +5,11 @@ IMPORTANT: Following CLAUDE.md rules - NO MOCKS OR FAKE DATA.
 All fixtures contain REAL data samples or will make REAL API calls.
 """
 
+import os
+
+# Allow model save/load to use temp directories during testing
+os.environ["WQI_SKIP_PATH_VALIDATION"] = "1"
+
 import pytest
 import pandas as pd
 import numpy as np

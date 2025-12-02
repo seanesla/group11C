@@ -1394,8 +1394,9 @@ class TestModelSpecificBehavior:
         """Feature importances should sum to approximately 1.0."""
         importance_df = trained_regressor_small.get_feature_importance(top_n=100)
         total_importance = importance_df['importance'].sum()
-        # Should be close to 1.0 (may not be exact if top_n < total features)
-        assert 0 < total_importance <= 1.0
+        # Should be close to 1.0 (allow floating point tolerance)
+        assert 0 < total_importance
+        assert np.isclose(total_importance, 1.0, rtol=1e-9)
 
 
 # ============================================================================

@@ -98,14 +98,14 @@ class USGSClient:
                 logger.error(f"Request failed after {retries} attempts: {e}")
             except requests.exceptions.HTTPError as e:
                 last_exc = e
-                status = e.response.status_code if e.response else 'unknown'
+                status = e.response.status_code if e.response is not None else None
                 # Handle rate limiting (429)
                 if status == 429 and attempt < retries - 1:
                     retry_after = int(e.response.headers.get('Retry-After', 60))
                     logger.warning(f"Rate limited (429), waiting {retry_after}s before retry")
                     time.sleep(retry_after)
                     continue
-                if status >= 500 and attempt < retries - 1:
+                if status is not None and status >= 500 and attempt < retries - 1:
                     logger.warning(f"HTTP {status} from USGS, retrying ({attempt+1}/{retries})")
                     continue
                 logger.error(f"HTTP error {status} from USGS NWIS API")
