@@ -277,7 +277,48 @@ class WQIPredictionRegressor:
         # Best model
         self.model = self.grid_search.best_estimator_
         logger.info(f"Best parameters: {self.grid_search.best_params_}")
-        logger.info(f"Best CV R² score: {self.grid_search.best_score_:.4f}")
+
+        # Extract and store CV fold scores
+        best_idx = self.grid_search.best_index_
+        cv_scores = self.grid_search.cv_results_['split0_test_score'][best_idx:best_idx+1]
+        cv_fold_scores = []
+        for split_idx in range(5):  # 5-fold CV
+            split_key = f'split{split_idx}_test_score'
+            cv_fold_scores.append(self.grid_search.cv_results_[split_key][best_idx])
+
+        cv_mean = float(np.mean(cv_fold_scores))
+        cv_std = float(np.std(cv_fold_scores))
+
+        # Store CV metrics
+        self.metrics['cv_fold_scores'] = cv_fold_scores
+        self.metrics['cv_mean'] = cv_mean
+        self.metrics['cv_std'] = cv_std
+
+        logger.info("\n" + "=" * 60)
+        logger.info("CROSS-VALIDATION RESULTS (more realistic)")
+        logger.info("=" * 60)
+        logger.info(f"CV Mean R²:    {cv_mean:.4f}")
+        logger.info(f"CV Std R²:     {cv_std:.4f}")
+        logger.info(f"CV Fold scores: {[f'{s:.4f}' for s in cv_fold_scores]}")
+
+        # Log target distribution (not class imbalance since this is regression)
+        logger.info("\n" + "=" * 60)
+        logger.info("TARGET DISTRIBUTION IN TRAINING DATA")
+        logger.info("=" * 60)
+        logger.info(f"Mean WQI:  {np.mean(y_train):.2f}")
+        logger.info(f"Std WQI:   {np.std(y_train):.2f}")
+        logger.info(f"Min WQI:   {np.min(y_train):.2f}")
+        logger.info(f"Max WQI:   {np.max(y_train):.2f}")
+        logger.info(f"Median WQI: {np.median(y_train):.2f}")
+
+        # Check for extreme skewness in distribution
+        q1 = np.percentile(y_train, 25)
+        q3 = np.percentile(y_train, 75)
+        logger.info(f"Q1 (25%):  {q1:.2f}")
+        logger.info(f"Q3 (75%):  {q3:.2f}")
+
+        # Evaluate on training set (in-sample)
+        train_metrics = self.evaluate(X_train_processed, y_train, dataset_name="Train")
 
         # Evaluate on validation set
         val_metrics = self.evaluate(X_val_processed, y_val, dataset_name="Validation")
@@ -285,16 +326,44 @@ class WQIPredictionRegressor:
         # Evaluate on test set
         test_metrics = self.evaluate(X_test_processed, y_test, dataset_name="Test")
 
+        # Report both in-sample and CV metrics clearly
+        logger.info("\n" + "=" * 80)
+        logger.info("PERFORMANCE SUMMARY")
+        logger.info("=" * 80)
+        logger.info(f"\nIn-Sample (may be optimistic):")
+        logger.info(f"  Train R²:      {train_metrics['r2_score']:.4f}")
+        logger.info(f"  Train RMSE:    {train_metrics['rmse']:.2f}")
+        logger.info(f"\nCross-Validation (more realistic):")
+        logger.info(f"  CV Mean R²:    {cv_mean:.4f} ± {cv_std:.4f}")
+        logger.info(f"\nHeld-out Sets:")
+        logger.info(f"  Val R²:        {val_metrics['r2_score']:.4f}")
+        logger.info(f"  Val RMSE:      {val_metrics['rmse']:.2f}")
+        logger.info(f"  Test R²:       {test_metrics['r2_score']:.4f}")
+        logger.info(f"  Test RMSE:     {test_metrics['rmse']:.2f}")
+
         # Store results
         results = {
             'best_params': self.grid_search.best_params_,
             'best_cv_score': self.grid_search.best_score_,
+            'cv_fold_scores': cv_fold_scores,
+            'cv_mean': cv_mean,
+            'cv_std': cv_std,
+            'train_metrics': train_metrics,
             'val_metrics': val_metrics,
             'test_metrics': test_metrics,
             'feature_names': self.feature_names,
             'train_size': len(X_train),
             'val_size': len(X_val),
-            'test_size': len(X_test)
+            'test_size': len(X_test),
+            'target_distribution': {
+                'mean': float(np.mean(y_train)),
+                'std': float(np.std(y_train)),
+                'min': float(np.min(y_train)),
+                'max': float(np.max(y_train)),
+                'median': float(np.median(y_train)),
+                'q1': float(q1),
+                'q3': float(q3)
+            }
         }
 
         logger.info("=" * 80)
@@ -606,14 +675,14 @@ class WQIPredictionRegressor:
         # Ensure directory exists
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
 
-        # Save everything
+        # Save everything including CV metrics
         model_data = {
             'model': self.model,
             'scaler': self.scaler,
             'imputer': self.imputer,
             'feature_names': self.feature_names,
             'model_type': self.model_type,
-            'metrics': self.metrics,
+            'metrics': self.metrics,  # Includes cv_fold_scores, cv_mean, cv_std, train/val/test metrics
             'best_params': self.grid_search.best_params_ if self.grid_search else None,
             'timestamp': datetime.now().isoformat()
         }
