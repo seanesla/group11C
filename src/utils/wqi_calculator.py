@@ -217,7 +217,8 @@ class WQICalculator:
         elif turbidity <= 100:
             return 40
         else:
-            return max(0, 100 - turbidity * 0.5)
+            # Extrapolate from 40 (not 100) to maintain continuity at 100 NTU boundary
+            return max(0, 40 - (turbidity - 100) * 0.5)
 
     @staticmethod
     def calculate_nitrate_score(nitrate: float) -> float:
@@ -271,7 +272,8 @@ class WQICalculator:
         elif conductance <= 2000:
             return 40
         else:
-            return max(0, 100 - (conductance - 2000) * 0.02)
+            # Extrapolate from 40 (not 100) to maintain continuity with step function
+            return max(0, 40 - (conductance - 2000) * 0.02)
 
     def calculate_wqi(
         self,
@@ -395,9 +397,11 @@ class WQICalculator:
             wqi: Water Quality Index score
 
         Returns:
-            True if safe (WQI >= 70), False otherwise
+            True if safe (WQI >= 90 = Excellent), False otherwise
         """
-        return not pd.isna(wqi) and wqi >= 70
+        # Only "Excellent" quality (90+) is considered safe
+        # "Good" (70-89) and below require caution
+        return not pd.isna(wqi) and wqi >= 90
 
     @staticmethod
     def get_ph_thresholds() -> pd.DataFrame:

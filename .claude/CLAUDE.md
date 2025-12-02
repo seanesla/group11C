@@ -27,32 +27,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (requires Python 3.11+)
 poetry install
 
 # Run Streamlit app
 poetry run streamlit run streamlit_app/app.py
 
-# Train models (core features recommended for deployment)
-poetry run python train_models.py --core-params-only
-
-# Fast tests (excludes integration tests with real API calls)
-poetry run pytest
-
-# All tests including real API calls
-poetry run pytest -m ""
-
-# Single test
-poetry run pytest tests/test_streamlit_app.py::TestFetchWaterQualityData -q
-
-# Chunked test runner (for large test suite)
-poetry run python scripts/run_tests_chunked.py --group core_fast
+# Train models
+poetry run python train_models.py                  # Full feature set
+poetry run python train_models.py --core-params-only  # Core params only (recommended for deployment)
 
 # Code quality
 poetry run black .
 poetry run flake8 src
 poetry run mypy src
+
+# Run tests
+poetry run pytest                        # All tests
+poetry run pytest path/to/test_file.py   # Single file
+poetry run pytest -k "test_name"         # Single test by name
 ```
+
+## Commit Messages
+Use prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`. Keep imperative and short.
 
 ## Architecture
 
@@ -67,8 +64,14 @@ SHAP Explanation → Streamlit Visualization
 - `src/data_collection/` - USGS NWIS and Water Quality Portal API clients with fallback logic
 - `src/utils/wqi_calculator.py` - NSF-WQI implementation using 6 parameters (pH, DO, temp, turbidity, nitrate, conductance)
 - `src/models/` - Random Forest classifier (SAFE/UNSAFE) and regressor (WQI 0-100)
-- `src/services/search_strategies.py` - Progressive fallback for radius/history expansion
+- `src/services/search_strategies.py` - Progressive fallback: expands search radius (5→10→25→50 km) and date range when no data found
+- `src/geolocation/` - ZIP-to-lat/long via pgeocode
 - `streamlit_app/app.py` - UI only; business logic belongs in `src/services/` or `src/utils/`
+
+### Key Dependencies
+- **pgeocode** - ZIP code geocoding (offline postal code database)
+- **shap** - Model explanations (SHAP values for per-sample feature contributions)
+- **requests** - API clients (USGS NWIS, Water Quality Portal)
 
 ### Critical: Nitrate Unit Conversion
 The codebase handles a 4.43× unit mismatch between data sources:
@@ -79,17 +82,12 @@ The codebase handles a 4.43× unit mismatch between data sources:
 ### Model Limitations
 The ML models **cannot detect**: lead, heavy metals, bacteria, pesticides, or PFAS. The NSF-WQI excludes these parameters, resulting in 100% false negatives on lead-contaminated water (documented in `docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md`).
 
-## Test Markers
-```python
-@pytest.mark.unit          # No external dependencies
-@pytest.mark.integration   # Real API calls (excluded by default)
-@pytest.mark.slow          # Time-consuming tests
-```
-
 ## Data Files
 - `data/raw/waterPollution.csv` - Kaggle training data (gitignored, must download)
 - `data/models/` - Trained models (binaries gitignored, metadata JSON tracked)
-- Environment variables: `WQP_TIMEOUT`, `USGS_TIMEOUT` for API timeouts
+- Environment variables:
+  - `WQP_TIMEOUT`, `USGS_TIMEOUT` - API request timeouts
+  - `WQI_SKIP_PATH_VALIDATION` - Bypass model path security checks (testing only)
 
 ## Plan Tracking
 - `.claude/plan.md` - Single source of truth for implementation plans
@@ -101,5 +99,5 @@ The ML models **cannot detect**: lead, heavy metals, bacteria, pesticides, or PF
 ### Context7
 Use `resolve-library-id` then `get-library-docs` for current documentation on any library/framework.
 
-### Chrome DevTools / Playwright
-For browser automation, performance traces, network inspection, console logs, screenshots.
+### Chrome DevTools
+For browser performance traces, network inspection, console logs, screenshots.

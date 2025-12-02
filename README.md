@@ -24,14 +24,9 @@ Given a U.S. ZIP code, the Streamlit app:
 
 The goal is to make regulatory-grade water-quality data more accessible while highlighting environmental justice concerns around unequal data coverage and model performance.
 
-## Demo (media placeholders)
+## Demo
 
-> The image/GIF references below are **placeholders**. After running the app and scripts, replace them with real screenshots and animations stored under `docs/images/`.
-
-- ![Home screen: ZIP search and WQI summary](docs/images/app-home.png)
-- ![GIF: ZIP search flow and WQI trends](docs/images/zip-search-flow.gif)
-- ![Feature importance for core water-quality features](docs/images/shap-feature-importance.png)
-- ![Fairness diagnostic: WQI / safety vs demographics](docs/images/fairness-by-demographics.png)
+Screenshots of the application are available in `docs/screenshots/`.
 
 ## Key Features
 
@@ -41,7 +36,7 @@ The goal is to make regulatory-grade water-quality data more accessible while hi
 - **ML-based predictions** – Random forest classifier and regressor trained on a Kaggle water-pollution dataset, with support for a core-parameter-only feature set for better geographic generalization.
 - **Model interpretability** – Global feature importance (top features, availability in US data) and per-sample SHAP explanations, with mathematical checks that SHAP contributions sum to the prediction delta.
 - **Fairness & environmental justice** – Scripts and tests to examine performance across regions and demographics, focusing on where data or models may under-serve certain communities.
-- **Tested Python package** – Modular `src/` layout with unit, integration, and end-to-end tests.
+- **Modular Python package** – Clean `src/` layout with organized modules for data collection, preprocessing, models, and utilities.
 
 ## Documentation
 
@@ -113,10 +108,7 @@ data/
   models/               # Trained models + metadata
 
 scripts/
-  *.py                  # Training, calibration, fairness tests, chunked test runners
-
-tests/
-  test_*.py             # Unit, integration, and E2E tests
+  *.py                  # Training, calibration, fairness analysis
 
 docs/projectspec/       # Original project specification & GitHub guidelines (PDFs)
 pyproject.toml          # Poetry project configuration
@@ -188,24 +180,13 @@ Training will:
 
 The Streamlit app then loads the **latest** compatible models via `src/models/model_utils.py`.
 
-## Testing
-
-Fast test run (no external API calls):
+## Code Quality
 
 ```bash
-poetry run pytest
+poetry run black .
+poetry run flake8 src
+poetry run mypy src
 ```
-
-Highlights:
-
-- Core WQI science and unit handling (e.g., nitrate conversions) – `tests/test_wqi_*.py`, `tests/test_nitrate_*`.
-- Data collection clients with fixture-backed responses – `tests/test_usgs_client.py`, `tests/test_wqp_client.py`.
-- Preprocessing and feature engineering – `tests/test_feature_engineering.py`, `tests/test_us_data_features.py`.
-- Model training and robustness – `tests/test_classifier.py`, `tests/test_regressor.py`, `tests/test_ml_robustness.py`.
-- Streamlit backend and UI smoke tests – `tests/test_streamlit_app.py`, `tests/test_e2e_streamlit.py`.
-- Fairness and geographic coverage – `tests/test_geographic_*`, `tests/test_fairness_demographics.py`.
-
-Some tests and scripts are marked for heavier, exploratory analysis (e.g., SHAP hyper-thorough tests, fairness diagnostics). These may be slow and are intended for offline analysis rather than every CI run.
 
 ## Water Quality Index (WQI)
 
@@ -230,19 +211,10 @@ This is an educational project, not a production safety tool. Please keep in min
 - **Do not use this app as the sole basis for drinking or recreation decisions.** Always consult local water authorities and official advisories.
 - **Data coverage is uneven.** Many communities have sparse monitoring; model performance and WQI estimates are more uncertain in data-poor regions.
 - **Training data bias.** The Kaggle dataset and U.S. monitoring networks over-represent certain geographies and conditions, which can bias both the WQI calibration and ML models.
-- **Fairness & environmental justice.** The repository includes scripts/tests (e.g., under `scripts/` and `tests/test_fairness_demographics.py`) to explore whether errors or uncertainty cluster in particular demographic or geographic groups.
+- **Fairness & environmental justice.** The repository includes scripts (under `scripts/`) to explore whether errors or uncertainty cluster in particular demographic or geographic groups.
 - **Interpretability is an aid, not a guarantee.** SHAP and feature-importance plots explain model behavior but do not make the underlying data unbiased.
 
 Treat all numbers as **approximate indicators** to support learning and discussion about environmental justice, not as definitive regulatory values.
-
-## Media to Capture (for README screenshots & GIFs)
-
-When you are ready to polish the GitHub page, capture and save the following media under `docs/images/` to replace the placeholders above:
-
-1. `app-home.png` – A static screenshot of the Streamlit home screen right after running a successful ZIP search, showing the map (if present), WQI summary card(s), and the main WQI visualization.
-2. `zip-search-flow.gif` – A short screen recording (5–10 seconds) of a user entering a ZIP code, clicking the search button, and scrolling through the WQI time series and raw measurements table.
-3. `shap-feature-importance.png` – A screenshot of the **Feature Importance Analysis** section with the top-10 classifier bar chart and explanatory text visible.
-4. `fairness-by-demographics.png` – A static chart exported from your fairness / environmental justice analysis (e.g., from `scripts/test_environmental_justice_COMPLETE.py` or related notebooks), comparing model performance or WQI distributions across different demographic or geographic groups.
 
 ## Acknowledgements
 

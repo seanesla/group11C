@@ -204,37 +204,23 @@ def _standardize_nitrate_unit(self, df: pd.DataFrame) -> pd.DataFrame:
 | 88.6 | 20.0 | Unsafe (2× MCL) |
 | 221.5 | 50.0 | Very Unsafe (5× MCL) |
 
-### Testing
+### Validation Criteria
 
-Comprehensive test suite in `tests/test_nitrate_unit_system.py` (16 tests):
+The nitrate conversion system should satisfy:
 
-1. **Conversion Constant Tests** (3 tests)
-   - Constant exists
+1. **Conversion Constant**
    - Correct value (0.2258 ± 0.0001)
    - Valid range (0.2 - 0.3)
 
-2. **EPA Compliance Tests** (3 tests)
+2. **EPA Compliance**
    - 44.3 mg{NO3}/L → 10.0 mg/L as N (EPA MCL)
    - 88.6 mg{NO3}/L → 20.0 mg/L as N (2× MCL)
    - Relative safety levels maintained
 
-3. **WQP Client Tests** (4 tests)
-   - Converts mg{NO3}/L to mg/L as N
-   - Preserves mg/L as N values
-   - Handles missing data gracefully
-   - Handles NaN values correctly
-
-4. **USGS Client Tests** (3 tests)
-   - Accepts mg/L as N without warnings
-   - Warns on unexpected units
-   - Handles missing unit information
-
-5. **Conversion Accuracy Tests** (2 tests)
-   - Zero value handling
-   - Precision < 0.1% error
-
-6. **Integration Test** (1 test)
-   - Constant accessible in feature_engineering module
+3. **Client Behavior**
+   - WQP client converts mg{NO3}/L to mg/L as N
+   - USGS client accepts mg/L as N without warnings
+   - Both handle missing data gracefully
 
 ### Impact on ML Models
 

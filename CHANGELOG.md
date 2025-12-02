@@ -195,7 +195,7 @@ If you have local development work:
 1. Pull latest changes: `git pull origin main`
 2. Update dependencies: `poetry install`
 3. Retrain models if using local models: `poetry run python train_models.py`
-4. Run tests to verify: `poetry run pytest tests/ -v`
+4. Run code quality checks: `poetry run black . && poetry run flake8 src && poetry run mypy src`
 
 ### Contributors
 
@@ -216,6 +216,11 @@ If you have local development work:
 
 ## [Unreleased]
 
+### Removed
+- Test suite removed (commit e477315) - 945 tests across 50+ files
+- pytest.ini configuration removed
+- Unused dependencies: xgboost, lightgbm, hypothesis, playwright
+
 ### Planned Features
 - Mobile-responsive design improvements
 - Additional ML models for specific contaminants
@@ -226,6 +231,6 @@ If you have local development work:
 
 ---
 
-**Last Updated**: 2025-11-16
+**Last Updated**: 2025-12-02
 **Status**: Production Ready
-**Version**: 1.0.0
+**Version**: 1.0.1

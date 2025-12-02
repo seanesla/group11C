@@ -94,3 +94,4 @@ Thumbs.db
 # Course spec PDFs (track only the main brief)
 docs/projectspec/*
 !docs/projectspec/project.pdf
+.claude
