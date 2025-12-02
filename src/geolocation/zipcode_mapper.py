@@ -92,8 +92,11 @@ class ZipCodeMapper:
 
             return (float(lat), float(lng))
 
-        except Exception as e:
-            logger.error(f"Error looking up ZIP code {zip_code}: {str(e)}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Invalid data for ZIP code {zip_code}: {e}")
+            return None
+        except (KeyError, AttributeError) as e:
+            logger.error(f"Unexpected response structure for ZIP {zip_code}: {e}")
             return None
 
     def get_location_info(self, zip_code: str) -> Optional[Dict[str, Any]]:
@@ -147,8 +150,11 @@ class ZipCodeMapper:
             logger.info(f"Retrieved info for ZIP {zip_code}: {location_info['place_name']}, {location_info['state_code']}")
             return location_info
 
-        except Exception as e:
-            logger.error(f"Error getting location info for ZIP {zip_code}: {str(e)}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Invalid data for ZIP {zip_code}: {e}")
+            return None
+        except (KeyError, AttributeError) as e:
+            logger.error(f"Unexpected response for ZIP {zip_code}: {e}")
             return None
 
     def is_valid_zipcode(self, zip_code: str) -> bool:
@@ -173,7 +179,7 @@ class ZipCodeMapper:
             result = self.nomi.query_postal_code(zip_code)
             return result is not None and not pd.isna(result['latitude'])
 
-        except Exception:
+        except (ValueError, TypeError, KeyError, AttributeError):
             return False
 
     def calculate_distance(

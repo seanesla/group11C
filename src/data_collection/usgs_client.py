@@ -53,35 +53,54 @@ class USGSClient:
             'User-Agent': 'WaterQualityPrediction/1.0 (Educational Project)'
         })
 
-    def _make_request(self, url: str, params: Dict[str, Any]) -> requests.Response:
+    def _make_request(self, url: str, params: Dict[str, Any], retries: int = 3) -> requests.Response:
         """
-        Make an API request with rate limiting and error handling.
+        Make an API request with rate limiting, retry logic, and error handling.
 
         Args:
             url: The API endpoint URL
             params: Query parameters for the request
+            retries: Number of retry attempts for transient failures
 
         Returns:
             Response object
 
         Raises:
-            requests.RequestException: If the request fails
+            requests.RequestException: If the request fails after all retries
         """
-        time.sleep(self.rate_limit_delay)
+        last_exc = None
+        for attempt in range(retries):
+            time.sleep(self.rate_limit_delay * (2 ** attempt if attempt > 0 else 1))
 
-        try:
-            response = self.session.get(url, params=params, timeout=self.timeout)
-            response.raise_for_status()
-            return response
-        except requests.exceptions.Timeout:
-            logger.error(f"Request timeout for URL: {url}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error {e.response.status_code} from USGS NWIS API")
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {str(e)}")
-            raise
+            try:
+                response = self.session.get(url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                return response
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                last_exc = e
+                if attempt < retries - 1:
+                    logger.warning(f"Transient error, retrying ({attempt+1}/{retries}): {type(e).__name__}")
+                    continue
+                logger.error(f"Request failed after {retries} attempts: {e}")
+            except requests.exceptions.HTTPError as e:
+                last_exc = e
+                status = e.response.status_code if e.response else 'unknown'
+                # Handle rate limiting (429)
+                if status == 429 and attempt < retries - 1:
+                    retry_after = int(e.response.headers.get('Retry-After', 60))
+                    logger.warning(f"Rate limited (429), waiting {retry_after}s before retry")
+                    time.sleep(retry_after)
+                    continue
+                if status >= 500 and attempt < retries - 1:
+                    logger.warning(f"HTTP {status} from USGS, retrying ({attempt+1}/{retries})")
+                    continue
+                logger.error(f"HTTP error {status} from USGS NWIS API")
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+                logger.error(f"Request failed: {e}")
+                break
+
+        raise last_exc or RuntimeError("Unknown USGS request failure")
 
     def _calculate_bounding_box(
         self,
