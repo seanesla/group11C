@@ -866,6 +866,24 @@ def main():
     with st.sidebar.expander(":material/menu_book: Standards Reference"):
         display_epa_who_standards()
 
+    # Model Limitations Section in Sidebar
+    st.sidebar.divider()
+    with st.sidebar.expander("Model Limitations"):
+        st.markdown("""
+        **Lead Detection Failure:**
+        - NSF-WQI excludes lead, resulting in 100% false negatives on lead-contaminated water
+        - Get certified lab testing if home built before 1986
+
+        **Geographic Bias:**
+        - Model trained on European data (1991-2017)
+        - US predictions may not fully capture regional water quality patterns
+
+        **Training Data Issues:**
+        - Only 6 parameters tested (pH, DO, temperature, turbidity, nitrate, conductance)
+        - Missing: heavy metals, bacteria, PFAS, pesticides, pharmaceuticals
+        - Historical data may not reflect current conditions
+        """)
+
     # Main area
 
     # Keep safety context but avoid overwhelming users—one concise expander.
@@ -931,6 +949,9 @@ def main():
         # Display results
         st.success(f"Found {len(df)} measurements from {df['MonitoringLocationIdentifier'].nunique()} monitoring stations")
 
+        # Prominent warning about undetectable contaminants
+        st.warning("⚠️ **Limitations**: This tool cannot detect lead, heavy metals, bacteria, pesticides, or PFAS. A high WQI score does NOT guarantee water is safe for drinking.")
+
         # Location info card
         st.subheader("Location Information")
         col1, col2, col3 = st.columns(3)
@@ -979,6 +1000,10 @@ def main():
                 subtitle="Core parameters only. Lead, bacteria, PFAS not tested."
             )
 
+        # Uncertainty indicator for near-threshold predictions
+        if 65 <= wqi <= 75:
+            st.info("ℹ️ Prediction is near the safety threshold (70). Results should be interpreted with caution.")
+
         # WQI Methodology Explainer
         with st.expander(":material/bar_chart: How is WQI Calculated?", expanded=False):
             display_wqi_methodology()
@@ -1012,6 +1037,10 @@ def main():
                 confidence_pct = ml_predictions['confidence'] * 100
                 confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
                 render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
+
+            # Uncertainty indicator for ML predictions near threshold
+            if 65 <= ml_predictions['predicted_wqi'] <= 75:
+                st.info("ℹ️ Prediction is near the safety threshold (70). Results should be interpreted with caution.")
 
             # Show probability breakdown
             with st.expander("View Detailed Probabilities"):
