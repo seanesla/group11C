@@ -82,6 +82,15 @@ The codebase handles a 4.43× unit mismatch between data sources:
 ### Model Limitations
 The ML models **cannot detect**: lead, heavy metals, bacteria, pesticides, or PFAS. The NSF-WQI excludes these parameters, resulting in 100% false negatives on lead-contaminated water (documented in `docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md`).
 
+### Data Quality Pipeline
+The training data pipeline includes several quality controls:
+- **Physical bounds**: `VALID_RANGES` in `feature_engineering.py:93-99` filters impossible values
+- **Statistical outliers**: IQR detection (3× multiplier) in `detect_statistical_outliers()`
+- **Artifact features**: Missing indicators excluded if >95% missing (prevents spurious correlations like `turbidity_missing`)
+- **Imputation**: KNN with pre-scaling (5 neighbors, distance-weighted) in classifier/regressor
+- **Class weights**: Always `class_weight='balanced'` in classifier (not optional in grid search)
+- **Quality report**: Generated at `data/processed/data_quality_report.json` during training
+
 ## Data Files
 - `data/raw/waterPollution.csv` - Kaggle training data (gitignored, must download)
 - `data/models/` - Trained models (binaries gitignored, metadata JSON tracked)

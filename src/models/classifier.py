@@ -17,11 +17,13 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
+from sklearn.impute import KNNImputer
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, classification_report, roc_auc_score
 )
+from sklearn.utils.class_weight import compute_class_weight
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +74,13 @@ class WaterQualityClassifier:
         """
         self.model_type = model_type
         self.model = None
-        self.scaler = StandardScaler()
-        self.imputer = SimpleImputer(strategy='median')
+        # Single preprocessor pipeline: scale first (so KNN distances are meaningful),
+        # then impute using KNN on scaled data. Result is already scaled.
+        # This replaces separate scaler + SimpleImputer to avoid double scaling.
+        self.preprocessor = Pipeline([
+            ('scaler', StandardScaler()),
+            ('knn_imputer', KNNImputer(n_neighbors=5, weights='distance')),
+        ])
         self.feature_names = None
         self.metrics = {}
         self.grid_search = None
@@ -169,6 +176,29 @@ class WaterQualityClassifier:
         """
         logger.info(f"Preprocessing features (fit={fit})")
 
+        # CRITICAL: Validate feature order when predicting (not training)
+        if not fit and hasattr(X, 'columns') and self.feature_names:
+            input_features = list(X.columns)
+            expected_features = self.feature_names
+
+            if input_features != expected_features:
+                # Check if it's just order mismatch (can fix) vs missing features (error)
+                missing = set(expected_features) - set(input_features)
+                extra = set(input_features) - set(expected_features)
+
+                if missing:
+                    raise ValueError(
+                        f"Missing features for prediction: {missing}. "
+                        f"Expected {len(expected_features)} features: {expected_features}"
+                    )
+                if extra:
+                    logger.warning(f"Dropping unexpected features: {extra}")
+                    X = X[[col for col in input_features if col in expected_features]]
+
+                # Reorder to match expected order
+                logger.info("Reordering input features to match training order")
+                X = X[expected_features]
+
         # CRITICAL: Convert DataFrame to numpy array to avoid feature name mismatch
         # Models were trained on numpy arrays without feature names
         if hasattr(X, 'values'):  # Check if X is a DataFrame
@@ -179,19 +209,13 @@ class WaterQualityClassifier:
         if not isinstance(X, np.ndarray):
             raise TypeError(f"Expected numpy array after conversion, got {type(X)}")
 
-        # Impute missing values
+        # Preprocess: scale then impute using KNN (single pipeline, already scaled)
         if fit:
-            X_imputed = self.imputer.fit_transform(X)
+            X_processed = self.preprocessor.fit_transform(X)
         else:
-            X_imputed = self.imputer.transform(X)
+            X_processed = self.preprocessor.transform(X)
 
-        # Scale features
-        if fit:
-            X_scaled = self.scaler.fit_transform(X_imputed)
-        else:
-            X_scaled = self.scaler.transform(X_imputed)
-
-        return X_scaled
+        return X_processed
 
     def train(
         self,
@@ -241,13 +265,19 @@ class WaterQualityClassifier:
 
         # Define hyperparameter grid
         if self.model_type == 'random_forest':
-            base_model = RandomForestClassifier(random_state=random_state)
+            # Always use class_weight='balanced' to handle severe class imbalance (98.8% SAFE)
+            # This is hardcoded on the base model, not tuned via grid search
+            base_model = RandomForestClassifier(
+                random_state=random_state,
+                class_weight='balanced',
+                n_jobs=-1
+            )
             param_grid = {
                 'n_estimators': [100, 200, 300],
                 'max_depth': [10, 20, None],
                 'min_samples_split': [2, 5, 10],
                 'min_samples_leaf': [1, 2, 4],
-                'class_weight': ['balanced', None]
+                # class_weight REMOVED from grid - always 'balanced' from base_model
             }
         elif self.model_type == 'gradient_boosting':
             base_model = GradientBoostingClassifier(random_state=random_state)
@@ -316,7 +346,13 @@ class WaterQualityClassifier:
         logger.info(f"Unsafe: {len(y_train) - np.sum(y_train):5d} samples ({y_train_unsafe_pct:5.1f}%)")
         if y_train_safe_pct > 90 or y_train_unsafe_pct > 90:
             logger.warning(f"⚠ SEVERE CLASS IMBALANCE DETECTED (>90% one class)")
-            logger.warning(f"  Model may have difficulty learning minority class")
+            logger.warning(f"  Using class_weight='balanced' to mitigate")
+
+        # Compute and log effective balanced weights
+        classes = np.unique(y_train)
+        weights = compute_class_weight('balanced', classes=classes, y=y_train)
+        weight_dict = dict(zip(classes, weights))
+        logger.info(f"Effective class weights (balanced): {weight_dict}")
 
         # Evaluate on training set (in-sample)
         train_metrics = self.evaluate(X_train_processed, y_train, dataset_name="Train")
@@ -528,8 +564,7 @@ class WaterQualityClassifier:
         # Save everything including CV metrics
         model_data = {
             'model': self.model,
-            'scaler': self.scaler,
-            'imputer': self.imputer,
+            'preprocessor': self.preprocessor,  # Single pipeline: scaler + KNN imputer
             'feature_names': self.feature_names,
             'model_type': self.model_type,
             'metrics': self.metrics,  # Includes cv_fold_scores, cv_mean, cv_std, train/val/test metrics
@@ -565,8 +600,18 @@ class WaterQualityClassifier:
         # Create instance
         instance = cls(model_type=model_data['model_type'])
         instance.model = model_data['model']
-        instance.scaler = model_data['scaler']
-        instance.imputer = model_data['imputer']
+        # Handle both new format (preprocessor) and legacy format (scaler + imputer)
+        if 'preprocessor' in model_data:
+            instance.preprocessor = model_data['preprocessor']
+        elif 'scaler' in model_data and 'imputer' in model_data:
+            # Legacy model: create preprocessor from separate components
+            # Note: This preserves backwards compatibility but won't have KNN imputation
+            logger.warning("Loading legacy model with SimpleImputer (not KNN)")
+            from sklearn.impute import SimpleImputer
+            instance.preprocessor = Pipeline([
+                ('scaler', model_data['scaler']),
+                ('imputer', model_data['imputer']),
+            ])
         instance.feature_names = model_data['feature_names']
         instance.metrics = model_data['metrics']
 

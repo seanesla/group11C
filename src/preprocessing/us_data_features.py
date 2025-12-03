@@ -1,13 +1,17 @@
 """
 Prepare US Water Quality Portal data for ML model predictions.
 
-This module converts the 6 WQI parameters from US data into the ~30 CORE features
+This module converts the 6 WQI parameters from US data into the 18 CORE features
 that the ML models were trained on (water quality + temporal features only).
 
 CORE FEATURE APPROACH:
-The models are trained on UNIVERSAL water quality features only, excluding
-dataset-specific geographic, economic, and waste management features. This enables
-better generalization to US water quality data.
+The models are trained on UNIVERSAL water quality features only, excluding:
+- Dataset-specific geographic, economic, and waste management features
+- Missing value indicators (too brittle for production)
+- Turbidity (never available from US APIs)
+- Categorical features (nitrate_pollution_level)
+
+Feature order MUST match classifier.py exclude_cols schema exactly.
 """
 
 import pandas as pd
@@ -39,16 +43,19 @@ def prepare_us_features_for_prediction(
     """
     Convert US WQI parameters into CORE feature set matching ML model training.
 
-    Creates ~20 CORE features from 6 WQI parameters by engineering:
-    - Temporal features (year-based)
-    - Water quality derived features (ratios, categories)
-    - Missing value indicators
-    - Interaction features
+    Creates 18 CORE features from 6 WQI parameters by engineering:
+    - Raw parameters (5): ph, dissolved_oxygen, temperature, nitrate, conductance
+    - Temporal features (6): year, years_since_1991, decade, is_1990s, is_2000s, is_2010s
+    - Water quality derived (5): ph_deviation_from_7, do_temp_ratio, conductance_low/medium/high
+    - Interaction features (2): pollution_stress, temp_stress
 
-    EXCLUDES training‑region–specific features (geographic, environmental, waste management)
-    to enable better generalization to US water quality data.
+    EXCLUDES (intentionally, per classifier.py exclude_cols):
+    - Turbidity (never available from US APIs)
+    - Missing value indicators (too brittle for production)
+    - nitrate_pollution_level (categorical)
+    - Geographic/economic features
 
-    IMPORTANT: Feature order must match training data exactly.
+    IMPORTANT: Feature order must match classifier.py training schema exactly.
 
     Args:
         ph: pH value (6.5-8.5 typical)
@@ -96,12 +103,14 @@ def prepare_us_features_for_prediction(
         )
 
     # === BUILD CORE FEATURES IN EXACT ORDER EXPECTED BY MODEL ===
+    # Order must match classifier.py/regressor.py training schema (18 features)
+    # Missing indicators and turbidity are EXCLUDED per classifier.py exclude_cols
     features = {}
 
-    # 1. Year (identifier - needed by model)
+    # 1. Year (used by model)
     features['year'] = year
 
-    # 2. Raw WQI parameters
+    # 2. Raw WQI parameters (5 features, NO turbidity - always excluded)
     features['ph'] = ph
     features['dissolved_oxygen'] = dissolved_oxygen
     features['temperature'] = temperature
@@ -134,19 +143,7 @@ def prepare_us_features_for_prediction(
         features['conductance_medium'] = np.nan
         features['conductance_high'] = np.nan
 
-    # 6. Missing value indicators
-    features['ph_missing'] = int(ph is None)
-    features['dissolved_oxygen_missing'] = int(dissolved_oxygen is None)
-    features['temperature_missing'] = int(temperature is None)
-    features['turbidity_missing'] = int(turbidity is None)
-    features['nitrate_missing'] = int(nitrate is None)
-    features['conductance_missing'] = int(conductance is None)
-
-    # 7. Count of available parameters
-    wqi_params = [ph, dissolved_oxygen, temperature, turbidity, nitrate, conductance]
-    features['n_params_available'] = sum([int(p is not None) for p in wqi_params])
-
-    # 8. Interaction features
+    # 6. Interaction features
     nitrate_val = nitrate if nitrate is not None else 0
     do_val = dissolved_oxygen if dissolved_oxygen is not None else 10
     features['pollution_stress'] = (nitrate_val / 50) * (1 - do_val / 10)
@@ -154,31 +151,42 @@ def prepare_us_features_for_prediction(
     temp_val = temperature if temperature is not None else 15
     features['temp_stress'] = abs(temp_val - 15) / 15
 
-    # Convert to DataFrame with explicit column order (matches trained models: 18 features)
+    # Convert to DataFrame with explicit column order
+    # MUST match classifier.py/regressor.py training schema exactly (18 features)
+    # These are the features that remain AFTER exclude_cols are removed
     column_order = [
+        # Year + Raw WQI parameters (6 features, NO turbidity)
         'year',
         'ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance',
+        # Temporal features (5 features)
         'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s',
+        # Water quality derived (5 features)
         'ph_deviation_from_7', 'do_temp_ratio',
         'conductance_low', 'conductance_medium', 'conductance_high',
+        # Interaction features (2 features)
         'pollution_stress', 'temp_stress'
     ]
+    # Total: 6 + 5 + 5 + 2 = 18 features
 
     df = pd.DataFrame([features], columns=column_order)
 
-    # Verify feature count (should be 18 features to match model)
+    # Verify feature count
     expected_count = len(column_order)
     if len(df.columns) != expected_count:
         raise ValueError(f"Expected {expected_count} features, got {len(df.columns)}")
 
-    # Verify all expected features are present
+    # Verify all expected features are present in features dict
     missing_features = set(column_order) - set(features.keys())
     if missing_features:
         raise ValueError(f"Missing required features: {missing_features}")
 
+    # Count of available WQI parameters (for logging only)
+    wqi_params = [ph, dissolved_oxygen, temperature, nitrate, conductance]
+    n_params_available = sum([int(p is not None) for p in wqi_params])
+
     logger.info(f"Prepared {len(features)} CORE features for US data prediction")
-    logger.info(f"  WQI parameters provided: {features['n_params_available']}/6")
-    logger.info(f"  Missing core parameter values: {df[['ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance']].isna().sum().sum()}")
+    logger.info(f"  WQI parameters provided: {n_params_available}/5")
+    logger.info(f"  Missing parameter values: {df[['ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance']].isna().sum().sum()}")
 
     return df
 

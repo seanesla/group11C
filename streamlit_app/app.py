@@ -622,7 +622,8 @@ def create_future_trend_chart(
 def build_forecast_from_history(
     daily_wqi: pd.DataFrame,
     periods: int = 12,
-    current_wqi_override: Optional[float] = None
+    current_wqi_override: Optional[float] = None,
+    forecast_start_date: Optional[datetime] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Derive a simple 12-month forecast from observed daily WQI history using
@@ -634,6 +635,9 @@ def build_forecast_from_history(
         current_wqi_override: If provided, use this as the baseline for wqi_change
             calculation instead of the most recent daily WQI. This ensures
             consistency with the displayed "Today" value on the chart.
+        forecast_start_date: If provided, use this as the start date for projections
+            (typically datetime.now()). Ensures forecasts project into the future,
+            not from old historical dates.
     """
     if daily_wqi is None or daily_wqi.empty or len(daily_wqi) < 3:
         return None
@@ -653,17 +657,20 @@ def build_forecast_from_history(
         return None
 
     slope, intercept = np.polyfit(ordinals, wqis, 1)  # WQI per day
-    start_date = recent['Date'].max()
+    historical_last_date = recent['Date'].max()
     historical_current_wqi = recent.loc[recent['Date'].idxmax(), 'WQI']
 
     # Use override for display baseline if provided, otherwise use historical
     baseline_wqi = current_wqi_override if current_wqi_override is not None else historical_current_wqi
 
+    # Use provided forecast start date (today) or fall back to last historical date
+    projection_start = forecast_start_date if forecast_start_date is not None else historical_last_date
+
     dates = []
     predictions = []
     for i in range(1, periods + 1):
-        future_date = start_date + relativedelta(months=i)
-        days_ahead = (future_date - start_date).days
+        future_date = projection_start + relativedelta(months=i)
+        days_ahead = (future_date - projection_start).days
         # Project from baseline using historical slope
         pred = baseline_wqi + slope * days_ahead
         pred = max(0, min(100, pred))
@@ -1086,7 +1093,7 @@ def main():
 
             with col1:
                 # ML Classification - 5-level
-                ml_classification = ml_predictions['classification']
+                ml_classification = ml_predictions['predicted_classification']
                 ml_color = ml_predictions['wqi_color']
 
                 # Build margin subtitle
@@ -1146,7 +1153,7 @@ def main():
                 if ml_predictions['margin_down'] is not None:
                     st.markdown(f"- {ml_predictions['margin_down']} points above **{ml_predictions['next_down']}**")
 
-                st.caption("Based on WQI Regressor (R²=0.986) | 2,939 training samples")
+                st.caption("WQI Regressor: EU training R²=0.97, expected US R²=0.4-0.5 (different water chemistry) | 2,882 samples")
 
             st.divider()
 
@@ -1156,7 +1163,12 @@ def main():
             try:
                 # Try to derive forecast from observed history; fallback to model drift
                 current_date = datetime.now()
-                trend_data = build_forecast_from_history(daily_wqi, periods=12, current_wqi_override=wqi)
+                trend_data = build_forecast_from_history(
+                    daily_wqi,
+                    periods=12,
+                    current_wqi_override=wqi,
+                    forecast_start_date=current_date
+                )
 
                 if trend_data is None:
                     import numpy as np

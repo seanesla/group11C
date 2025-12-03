@@ -129,6 +129,80 @@ def remove_physical_outliers(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned
 
 
+def detect_statistical_outliers(
+    df: pd.DataFrame,
+    params: list = None,
+    iqr_multiplier: float = 3.0,
+    dry_run: bool = False
+) -> pd.DataFrame:
+    """
+    Remove rows with statistically extreme values (beyond IQR bounds).
+
+    Applied AFTER physical bounds filtering. Uses 3× IQR (very conservative)
+    to only catch true outliers, not natural variation.
+
+    Args:
+        df: DataFrame with water quality parameters
+        params: List of parameter columns to check (default: all WQI params except turbidity)
+        iqr_multiplier: IQR multiplier for bounds (default: 3.0, very conservative)
+        dry_run: If True, log outliers but don't remove them (for comparison)
+
+    Returns:
+        DataFrame with outliers removed (or unchanged if dry_run=True)
+    """
+    if params is None:
+        params = ['ph', 'dissolved_oxygen', 'temperature', 'nitrate', 'conductance']
+
+    if df.empty:
+        return df
+
+    original_len = len(df)
+    outlier_counts = {}
+    outlier_details = {}  # Store actual values for dry_run logging
+    mask = pd.Series(True, index=df.index)
+
+    for param in params:
+        if param not in df.columns:
+            continue
+        values = df[param].dropna()
+        if len(values) < 10:  # Need enough data for IQR
+            continue
+
+        Q1, Q3 = values.quantile([0.25, 0.75])
+        IQR = Q3 - Q1
+        lower = Q1 - iqr_multiplier * IQR
+        upper = Q3 + iqr_multiplier * IQR
+
+        param_outliers = df[param].notna() & ((df[param] < lower) | (df[param] > upper))
+        outlier_counts[param] = param_outliers.sum()
+        outlier_details[param] = {
+            'bounds': (lower, upper),
+            'values': df.loc[param_outliers, param].tolist()[:5]  # First 5 for logging
+        }
+        mask &= ~param_outliers
+
+    # Logging
+    mode = "DRY RUN" if dry_run else "ACTIVE"
+    logger.info(f"IQR outlier detection [{mode}] (multiplier={iqr_multiplier}):")
+    for param, count in outlier_counts.items():
+        if count > 0:
+            bounds = outlier_details[param]['bounds']
+            sample_vals = outlier_details[param]['values']
+            logger.info(f"  {param}: {count} outliers (bounds: {bounds[0]:.2f}-{bounds[1]:.2f})")
+            logger.info(f"    Sample values: {sample_vals}")
+
+    if dry_run:
+        total_outliers = (~mask).sum()
+        logger.info(f"Total: {total_outliers} rows WOULD BE removed (dry_run=True, keeping all)")
+        return df
+
+    cleaned = df[mask].copy()
+    dropped = original_len - len(cleaned)
+    logger.info(f"Total: {dropped} rows removed ({original_len} → {len(cleaned)})")
+
+    return cleaned
+
+
 def extract_wqi_parameters(df: pd.DataFrame) -> pd.DataFrame:
     """
     Extract and pivot the 5 available WQI parameters from long to wide format.
@@ -378,15 +452,22 @@ def create_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     # === 3. MISSING VALUE INDICATORS ===
     logger.info("Creating missing value indicators")
 
-    # WARNING: These missing indicators are DATA ARTIFACTS from the Kaggle training set
-    # They may not generalize well to production data with different missing patterns
-    # Consider removing features like 'turbidity_missing' (always 1 in training) before deployment
+    # Only create missing indicators for parameters with <95% missing
+    # Parameters with >95% missing (like turbidity) are data artifacts that create spurious correlations
     wqi_params = ['ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance']
+    created_missing_features = []
     for param in wqi_params:
-        df[f'{param}_missing'] = df[param].isna().astype(int)
+        if param in df.columns:
+            missing_rate = df[param].isna().mean()
+            if missing_rate < 0.95:  # Skip if >95% missing (no signal, just artifact)
+                df[f'{param}_missing'] = df[param].isna().astype(int)
+                created_missing_features.append(f'{param}_missing')
+            else:
+                logger.info(f"  Skipping {param}_missing feature (missing rate {missing_rate:.1%} > 95%)")
 
-    # Count of available parameters
-    df['n_params_available'] = sum([~df[param].isna() for param in wqi_params if param in df.columns])
+    # Count of available parameters (only count non-artifact params)
+    params_to_count = [p for p in wqi_params if f'{p}_missing' in created_missing_features or (p in df.columns and df[p].isna().mean() < 0.95)]
+    df['n_params_available'] = sum([~df[param].isna() for param in params_to_count if param in df.columns])
 
     # === 4. GEOGRAPHIC FEATURES ===
     logger.info("Creating geographic features")
@@ -521,15 +602,22 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     # === 3. MISSING VALUE INDICATORS ===
     logger.info("Creating missing value indicators")
 
-    # WARNING: These missing indicators are DATA ARTIFACTS from the Kaggle training set
-    # They may not generalize well to production data with different missing patterns
-    # Consider removing features like 'turbidity_missing' (always 1 in training) before deployment
+    # Only create missing indicators for parameters with <95% missing
+    # Parameters with >95% missing (like turbidity) are data artifacts that create spurious correlations
     wqi_params = ['ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance']
+    created_missing_features = []
     for param in wqi_params:
-        df[f'{param}_missing'] = df[param].isna().astype(int)
+        if param in df.columns:
+            missing_rate = df[param].isna().mean()
+            if missing_rate < 0.95:  # Skip if >95% missing (no signal, just artifact)
+                df[f'{param}_missing'] = df[param].isna().astype(int)
+                created_missing_features.append(f'{param}_missing')
+            else:
+                logger.info(f"  Skipping {param}_missing feature (missing rate {missing_rate:.1%} > 95%)")
 
-    # Count of available parameters
-    df['n_params_available'] = sum([~df[param].isna() for param in wqi_params if param in df.columns])
+    # Count of available parameters (only count non-artifact params)
+    params_to_count = [p for p in wqi_params if f'{p}_missing' in created_missing_features or (p in df.columns and df[p].isna().mean() < 0.95)]
+    df['n_params_available'] = sum([~df[param].isna() for param in params_to_count if param in df.columns])
 
     # === 4. INTERACTION FEATURES ===
     logger.info("Creating interaction features")
@@ -570,11 +658,12 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df[columns_to_keep]
 
     # === SUMMARY ===
+    n_missing_indicators = sum(1 for col in df.columns if col.endswith('_missing'))
     logger.info(f"\nCORE feature engineering complete:")
     logger.info(f"  Raw WQI parameters: 5")
     logger.info(f"  Temporal features: 5")
     logger.info(f"  Water quality derived: 6")
-    logger.info(f"  Missing indicators: 7")
+    logger.info(f"  Missing indicators: {n_missing_indicators}")
     logger.info(f"  Interaction features: 2")
     logger.info(f"  Total ML features: {len(df.columns) - 5}")  # Minus identifiers/targets
     logger.info(f"  EXCLUDED: geographic, environmental, economic, waste management features")
@@ -585,7 +674,8 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
 def prepare_ml_dataset(
     file_path: str = "data/raw/waterPollution.csv",
     save_processed: bool = True,
-    core_params_only: bool = False
+    core_params_only: bool = False,
+    outlier_dry_run: bool = False
 ) -> pd.DataFrame:
     """
     Complete pipeline: Load → Extract → Calculate → Feature Engineering.
@@ -597,6 +687,7 @@ def prepare_ml_dataset(
         save_processed: Whether to save processed data to data/processed/
         core_params_only: If True, use core water quality features only (~24 features)
                          If False, use full feature set including European-specific (59 features)
+        outlier_dry_run: If True, log statistical outliers but don't remove them (for comparison)
 
     Returns:
         Complete DataFrame ready for ML model training
@@ -627,6 +718,10 @@ def prepare_ml_dataset(
     # This ensures labels are computed on clean data only
     df = remove_physical_outliers(df)
 
+    # Step 3.5: Remove statistical outliers (IQR-based)
+    # Use outlier_dry_run=True to log candidates without dropping (for comparison)
+    df = detect_statistical_outliers(df, dry_run=outlier_dry_run)
+
     # Step 4: Calculate WQI labels (on cleaned data)
     df = calculate_wqi_labels(df)
 
@@ -639,6 +734,11 @@ def prepare_ml_dataset(
     # Step 6: Remove rows with invalid WQI scores
     valid_df = df[df['wqi_score'].notna()].copy()
     logger.info(f"\nFinal dataset: {len(valid_df)} valid samples (removed {len(df) - len(valid_df)} invalid)")
+
+    # Step 6.5: Generate data quality report
+    from utils.data_quality_report import generate_quality_report
+    report = generate_quality_report(valid_df)
+    logger.info(f"Data quality: {report['class_distribution']}")
 
     # Step 7: Save processed data
     if save_processed:

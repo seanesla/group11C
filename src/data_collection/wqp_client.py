@@ -450,10 +450,20 @@ class WQPClient:
                     "Converted nitrate from umol/L to mg/L as N: "
                     f"{original_value} → {df.at[idx, 'ResultMeasureValue']:.4f}"
                 )
-            else:
-                # For mg/L-style units we assume mg/L as N, consistent with USGS.
+            elif 'no3' in unit_str and 'as n' not in unit_str:
+                # mg{NO3}/L or mg/L as NO3 → convert to mg/L as N (divide by 4.43)
+                NITRATE_NO3_TO_N = 0.2258  # Atomic weight N / Molecular weight NO3
+                original_value = value
+                df.at[idx, 'ResultMeasureValue'] = float(original_value) * NITRATE_NO3_TO_N
+                df.at[idx, unit_col] = 'mg/L as N'
                 logger.debug(
-                    "Leaving nitrate value unchanged for unit '%s' at index %s",
+                    "Converted nitrate from mg{NO3}/L to mg/L as N: "
+                    f"{original_value} → {df.at[idx, 'ResultMeasureValue']:.4f}"
+                )
+            else:
+                # For mg/L-style units without "NO3" marker, assume mg/L as N (USGS convention)
+                logger.debug(
+                    "Leaving nitrate value unchanged for unit '%s' at index %s (assumed mg/L as N)",
                     unit_str,
                     idx,
                 )

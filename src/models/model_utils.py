@@ -92,7 +92,10 @@ def save_model_metadata(
     regressor_path: Optional[str],
     classifier_metrics: Optional[Dict],
     regressor_metrics: Optional[Dict],
-    metadata_dir: str = None
+    metadata_dir: str = None,
+    n_samples: int = None,
+    n_features: int = None,
+    feature_names: list = None
 ) -> str:
     """
     Save metadata about trained models.
@@ -103,6 +106,9 @@ def save_model_metadata(
         classifier_metrics: Classifier metrics
         regressor_metrics: Regressor metrics
         metadata_dir: Directory to save metadata (default: data/models relative to project root)
+        n_samples: Number of samples used for training
+        n_features: Number of features used for training
+        feature_names: List of feature names used for training
 
     Returns:
         Path to saved metadata file
@@ -124,8 +130,9 @@ def save_model_metadata(
         },
         'training_info': {
             'dataset': 'Kaggle Water Quality Dataset (1991-2017, non‑US monitoring sites)',
-            'samples': 2939,
-            'features': 69,
+            'samples': n_samples if n_samples is not None else 2939,
+            'features': n_features if n_features is not None else 69,
+            'feature_names': feature_names,
             'target_classifier': 'is_safe (WQI >= 70)',
             'target_regressor': 'wqi_score (0-100)'
         }
@@ -197,12 +204,17 @@ def train_and_save_models(
         'importance': reg_importance
     }
 
-    # Save metadata
+    # Save metadata with actual training info
+    n_samples = X_clf.shape[0]
+    n_features = X_clf.shape[1]
     metadata_path = save_model_metadata(
         classifier_path,
         regressor_path,
         clf_results['test_metrics'],
-        reg_results['test_metrics']
+        reg_results['test_metrics'],
+        n_samples=n_samples,
+        n_features=n_features,
+        feature_names=list(features_clf)
     )
 
     results['metadata_path'] = metadata_path

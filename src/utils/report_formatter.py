@@ -302,12 +302,12 @@ def format_results_for_clipboard(
                     lines.append(f'  {feature}: {value:.4f} -> {sign}{contribution:.4f}')
         lines.append('')
 
-    # Daily WQI (last 30 days)
+    # Daily WQI (most recent 30 measurements)
     if daily_wqi is not None and not daily_wqi.empty:
-        lines.append('DAILY WQI (last 30 days)')
+        lines.append('DAILY WQI (most recent 30 measurements)')
         lines.append('-' * 24)
 
-        # Sort by date descending, take last 30
+        # Sort by date descending, take most recent 30 measurements
         sorted_daily = daily_wqi.sort_values('Date', ascending=False).head(30)
 
         for _, row in sorted_daily.iterrows():

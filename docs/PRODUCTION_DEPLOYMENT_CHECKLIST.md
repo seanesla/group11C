@@ -37,7 +37,7 @@ The US-only model is **NOT READY** for production due to critical data quality a
 
 ---
 
-### 🔴 Blocker #2: Feature Engineering - Data Artifacts
+### 🟡 Blocker #2: Feature Engineering - Data Artifacts (CODE FIX IMPLEMENTED)
 
 **Issue**: Top feature (30% importance) is `turbidity_missing`, a data collection pattern, not water quality signal.
 
@@ -54,12 +54,17 @@ Model Prediction: WQI=75 (SAFE - because turbidity_missing=True)
 Confidence: 85% (certain it's right, but wrong)
 ```
 
-**Fix Required**:
-- [ ] Remove all missing data indicator features (turbidity_missing, has_turbidity, etc.)
-- [ ] Use imputation instead (median, KNN, or model-based)
-- [ ] Retrain and verify feature importance is chemistry-driven
+**Fix Implemented (2024-12-02)**:
+- [x] Artifact features excluded when >95% missing (e.g., `turbidity_missing` now skipped)
+- [x] KNN imputation with pre-scaling (5 neighbors, distance-weighted) replaces SimpleImputer
+- [x] IQR-based outlier detection (3x multiplier) added to pipeline
+- [x] `class_weight='balanced'` enforced on classifier
 
-**Priority**: P0 (immediate, deployment blocker)
+**Remaining**:
+- [ ] Retrain models with new pipeline (`poetry run python train_models.py --core-params-only`)
+- [ ] Verify feature importance is chemistry-driven (no `*_missing` features in top 10)
+
+**Priority**: P0 (code implemented, pending retraining)
 
 ---
 
