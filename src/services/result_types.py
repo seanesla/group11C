@@ -74,6 +74,14 @@ class MLPredictionResult:
         """Allow dict-style access for backward compatibility in the UI."""
         return getattr(self, key)
 
+    def __contains__(self, key: str) -> bool:
+        """Support 'in' operator for backward compatibility."""
+        return hasattr(self, key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Support dict-style .get() for backward compatibility."""
+        return getattr(self, key, default)
+
 
 @dataclass
 class ForecastResult:
