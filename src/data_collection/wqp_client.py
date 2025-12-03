@@ -275,6 +275,9 @@ class WQPClient:
             # Standardize nitrate units (convert mg{NO3}/L → mg/L as N if needed)
             df = self._standardize_nitrate_unit(df)
 
+            # Standardize temperature units (convert Fahrenheit → Celsius if needed)
+            df = self._standardize_temperature_unit(df)
+
             return df
 
         except requests.exceptions.RequestException as e:
@@ -467,6 +470,76 @@ class WQPClient:
                     unit_str,
                     idx,
                 )
+
+        return df
+
+    def _standardize_temperature_unit(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Standardize temperature units to Celsius.
+
+        WQP API returns temperature with various unit codes. This converts
+        all Fahrenheit values to Celsius for consistent downstream processing.
+
+        Conversion formula: °C = (°F - 32) × 5/9
+
+        Args:
+            df: DataFrame with water quality data in WQP long format
+
+        Returns:
+            DataFrame with all temperature values in Celsius
+        """
+        if df is None or df.empty:
+            return df
+
+        if 'CharacteristicName' not in df.columns or 'ResultMeasureValue' not in df.columns:
+            return df
+
+        unit_col = 'ResultMeasure/MeasureUnitCode'
+        if unit_col not in df.columns:
+            logger.warning(
+                "No ResultMeasure/MeasureUnitCode column for temperature - "
+                "assuming Celsius for all temperature measurements"
+            )
+            return df
+
+        temp_mask = df['CharacteristicName'] == 'Temperature, water'
+
+        CELSIUS_PATTERNS = {'deg c', 'cel', 'celsius', 'c', 'degc'}
+        FAHRENHEIT_PATTERNS = {'deg f', 'far', 'fahrenheit', 'f', 'degf'}
+
+        converted_count = 0
+        unrecognized_units = set()
+
+        for idx in df.loc[temp_mask].index:
+            value = df.at[idx, 'ResultMeasureValue']
+            unit = df.at[idx, unit_col]
+
+            if pd.isna(value) or pd.isna(unit):
+                continue
+
+            unit_str = str(unit).lower().strip()
+
+            if unit_str in FAHRENHEIT_PATTERNS:
+                original_value = float(value)
+                celsius_value = (original_value - 32) * 5 / 9
+                df.at[idx, 'ResultMeasureValue'] = celsius_value
+                df.at[idx, unit_col] = 'deg C'
+                converted_count += 1
+                logger.debug(
+                    f"Converted temperature {original_value:.1f}°F → {celsius_value:.1f}°C"
+                )
+            elif unit_str in CELSIUS_PATTERNS:
+                pass  # Already Celsius
+            else:
+                unrecognized_units.add(unit_str)
+
+        if converted_count > 0:
+            logger.info(f"Converted {converted_count} temperature values from Fahrenheit to Celsius")
+
+        if unrecognized_units:
+            logger.warning(
+                f"Unrecognized temperature units: {unrecognized_units}. Assuming Celsius."
+            )
 
         return df
 
