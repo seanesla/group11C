@@ -757,11 +757,11 @@ def fetch_water_quality_data(
 
         attempt_history = []
 
-        for strategy in strategies:
+        for idx, strategy in enumerate(strategies, 1):
             description = strategy.describe()
             attempt_history.append(description)
 
-            with st.spinner(f"Searching {description} for ZIP {zip_code}..."):
+            with st.spinner(f"[{idx}/{len(strategies)}] {description} (querying WQP + USGS in parallel)..."):
                 df, source_label = fetch_with_fallback(
                     latitude=lat,
                     longitude=lon,

@@ -10,6 +10,7 @@ other data quality issues.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -146,16 +147,26 @@ def fetch_with_fallback(
     usgs_client,
     site_types: Optional[List[str]] = None,
 ) -> Tuple[pd.DataFrame, str]:
-    """Try WQP first; if empty or error, try USGS. Returns (df, source_label).
+    """Parallel WQP + USGS fetch. Returns first successful result.
+
+    Runs both API calls concurrently for faster response. WQP is preferred;
+    if WQP returns data first, we return immediately. If USGS returns first,
+    we save it as backup and wait for WQP.
 
     Args:
-        site_types: Optional list of WQP site types to query. If None, uses
-                    WQP client's default (surface water only).
+        wqp_client: WQPClient instance (used for timeout config only)
+        usgs_client: USGSClient instance (used for timeout config only)
+        site_types: Optional list of WQP site types to query.
     """
+    # Import here to avoid circular imports
+    from .usgs_client import USGSClient
+    from .wqp_client import WQPClient
 
-    # WQP first
-    try:
-        df = wqp_client.get_data_by_location(
+    # Thread-safe: create fresh client instances for each thread
+    # requests.Session is NOT thread-safe, so we can't share the passed-in clients
+    def fetch_wqp():
+        client = WQPClient(timeout=wqp_client.timeout)
+        return client.get_data_by_location(
             latitude=latitude,
             longitude=longitude,
             radius_miles=radius_miles,
@@ -164,14 +175,10 @@ def fetch_with_fallback(
             characteristics=characteristics,
             site_types=site_types,
         )
-        if df is not None and not df.empty:
-            return df, "WQP"
-    except Exception as e:
-        logger.warning(f"WQP fetch failed, falling back to USGS: {type(e).__name__}: {e}")
 
-    # USGS fallback
-    try:
-        usgs_df = usgs_client.get_data_by_location(
+    def fetch_usgs():
+        client = USGSClient(timeout=usgs_client.timeout)
+        df = client.get_data_by_location(
             latitude=latitude,
             longitude=longitude,
             radius_miles=radius_miles,
@@ -186,11 +193,38 @@ def fetch_with_fallback(
                 "specific_conductance",
             ],
         )
+        # Convert in thread to avoid post-processing delay on main thread
+        return convert_usgs_to_wqp_format(df)
 
-        converted = convert_usgs_to_wqp_format(usgs_df)
-        if not converted.empty:
-            return converted, "USGS NWIS"
-    except Exception as e:
-        logger.warning(f"USGS fallback also failed: {type(e).__name__}: {e}")
+    executor = ThreadPoolExecutor(max_workers=2)
+    try:
+        wqp_future = executor.submit(fetch_wqp)
+        usgs_future = executor.submit(fetch_usgs)
+        futures = {wqp_future: "WQP", usgs_future: "USGS"}
 
-    return pd.DataFrame(), ""
+        usgs_backup = None
+
+        for future in as_completed(futures.keys()):
+            source = futures[future]
+            try:
+                df = future.result()
+                if df is not None and not df.empty:
+                    if source == "WQP":
+                        logger.debug("WQP returned data first, using WQP")
+                        return df, "WQP"  # WQP preferred - return immediately
+                    else:
+                        logger.debug("USGS returned data first, waiting for WQP")
+                        usgs_backup = df  # USGS succeeded - save as backup, wait for WQP
+            except Exception as e:
+                logger.warning(f"{source} parallel fetch failed: {type(e).__name__}: {e}")
+
+        # Both done - WQP was empty/failed, use USGS backup if available
+        if usgs_backup is not None and not usgs_backup.empty:
+            logger.debug("WQP empty/failed, using USGS backup")
+            return usgs_backup, "USGS NWIS"
+
+        return pd.DataFrame(), ""
+
+    finally:
+        # Don't block on remaining threads
+        executor.shutdown(wait=False, cancel_futures=True)
