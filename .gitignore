@@ -62,12 +62,17 @@ data/processed/*.json
 data/processed/*.parquet
 data/processed/*.pkl
 
-# Model files (can be large)
-data/models/*.pkl
-data/models/*.joblib
-data/models/*.h5
-data/models/*.pt
-data/models/*.pth
+# Model files (can be large) - ignore in root of data/models/ only
+# Using specific patterns instead of negation for Streamlit Cloud compatibility
+data/models/*_*.pkl
+data/models/*_*.h5
+data/models/*_*.pt
+data/models/*_*.pth
+data/models/classifier_*.joblib
+data/models/regressor_*.joblib
+
+# Production models in data/models/production/ are automatically tracked
+# (these patterns above only match files directly in data/models/, not in subdirectories)
 
 # Keep directory structure with .gitkeep
 !data/raw/.gitkeep
