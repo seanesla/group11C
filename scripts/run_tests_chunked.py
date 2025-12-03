@@ -25,52 +25,13 @@ import sys
 from typing import List
 
 
-# Curated groups to keep runtimes manageable and logically separated
+# Curated groups to keep runtimes manageable and logically separated.
+# The current repository only includes a small core test set; historical
+# references to many other tests have been removed.
 TEST_GROUPS = {
     "core_fast": [
-        "tests/test_calculate_wqi_labels.py",
-        "tests/test_wqi_calculator.py",
-        "tests/test_wqi_calculations.py",
-        "tests/test_wqi_calculation_nitrate_input.py",
-        "tests/test_wqi_scientific_validation.py",
-        "tests/test_nitrate_unit_system.py",
-        "tests/test_nitrate_bug_verification.py",
-        "tests/test_us_data_features.py",
-        "tests/test_feature_engineering.py",
-        "tests/test_prepare_ml_dataset.py",
-        "tests/test_load_kaggle_data.py",
-        "tests/test_extract_wqi_parameters.py",
-    ],
-    "models": [
-        "tests/test_classifier.py",
-        "tests/test_regressor.py",
-        "tests/test_ml_robustness.py",
-        "tests/test_compare_models_fair.py",
-        "tests/test_fairness_demographics.py",
-        "tests/test_shap_contributions_hyperthorough_1.py",
-        "tests/test_shap_contributions_hyperthorough_3.py",
-        "tests/test_shap_contributions_hyperthorough_4.py",
-    ],
-    "geo": [
-        "tests/test_zipcode_mapper.py",
-        "tests/test_geographic_coverage.py",
-        "tests/test_geographic_coverage_191_locations.py",
-        "tests/test_geographic_diagnostic.py",
-        "tests/test_geographic_dynamic_sampling.py",
-    ],
-    "clients": [
-        "tests/test_wqp_client.py",
-        "tests/test_usgs_client.py",
-        "tests/test_data_fallback.py",
-        "tests/test_kaggle_nitrate_integration.py",
-        "tests/test_wqi_calculation_nitrate_input.py",
-    ],
-    "ui": [
-        "tests/test_streamlit_app.py",
-        "tests/test_streamlit_e2e.py",
-        "tests/test_e2e_streamlit.py",
-        "tests/test_phase4_ui_comprehensive.py",
-        "tests/test_phase4_backend_comprehensive.py",
+        "tests/test_temperature_unit_conversion.py",
+        "tests/test_validation_metrics.py",
     ],
 }
 

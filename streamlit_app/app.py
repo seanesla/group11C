@@ -19,13 +19,6 @@ src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 from geolocation.zipcode_mapper import ZipCodeMapper
-from data_collection.wqp_client import WQPClient
-from data_collection.usgs_client import USGSClient
-from data_collection.fallback import fetch_with_fallback
-from data_collection.constants import (
-    SURFACE_WATER_SITE_TYPES_WQP,
-    GROUNDWATER_SITE_TYPES_WQP,
-)
 from utils.wqi_calculator import WQICalculator
 from utils.ml_feature_definitions import (
     get_feature_categories,
@@ -33,10 +26,16 @@ from utils.ml_feature_definitions import (
     get_training_only_features,
     get_us_available_features,
 )
-from models.model_utils import load_latest_models
 from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
-from services.search_strategies import build_search_strategies
+from services.constants import WQI_COLORS, PARAM_MAPPING
+from services.aggregation_service import get_daily_wqi_scores
+from services.model_loader import load_and_validate_models
+from services.prediction_service import make_ml_predictions, build_forecast_from_history
+from services.water_quality_service import (
+    calculate_overall_wqi,
+    fetch_water_quality_data,
+)
 from utils.logging_config import configure_logging
 from utils.report_formatter import format_results_for_clipboard
 
@@ -52,16 +51,6 @@ st.set_page_config(
 )
 
 
-# Color scheme for WQI classifications
-WQI_COLORS = {
-    "Excellent": "#00CC00",  # Green
-    "Good": "#0066FF",       # Blue
-    "Fair": "#FFCC00",       # Yellow
-    "Poor": "#FF6600",       # Orange
-    "Very Poor": "#CC0000"   # Red
-}
-
-
 # Parameter units mapping (NO HARDCODING - sourced from EPA/WHO standards)
 PARAMETER_UNITS = {
     'ph': '',  # pH is dimensionless (no unit)
@@ -74,16 +63,8 @@ PARAMETER_UNITS = {
 
 
 # Canonical parameter name mapping (WQP characteristic names -> internal keys)
-# Used for data aggregation - single source of truth
-PARAM_MAPPING = {
-    'pH': 'ph',
-    'Dissolved oxygen (DO)': 'dissolved_oxygen',
-    'Temperature, water': 'temperature',
-    'Turbidity': 'turbidity',
-    'Nitrate': 'nitrate',
-    'Specific conductance': 'conductance'
-}
-
+# Used for data aggregation - single source of truth. The mapping itself lives
+# in services.constants.PARAM_MAPPING and is imported above.
 
 def _expected_feature_columns() -> list[str]:
     """
@@ -112,29 +93,21 @@ def load_ml_models():
         Tuple of (classifier, regressor). Either may be None if not found or
         incompatible with the deployed feature schema.
     """
-    try:
-        classifier, regressor = load_latest_models()
-    except Exception as e:
-        st.error(f"Failed to load ML models: {e}")
-        return None, None
-
-    if classifier is None or regressor is None:
-        return classifier, regressor
-
     expected = _expected_feature_columns()
-    clf_features = getattr(classifier, "feature_names", None)
-    reg_features = getattr(regressor, "feature_names", None)
+    result = load_and_validate_models(expected_feature_names=expected)
 
-    if clf_features != expected or reg_features != expected:
-        st.warning(
-            "ML models were trained with a feature schema that does not match the "
-            "deployed US prediction pipeline. To enable ML predictions in the app, "
-            "retrain models with the core-parameter feature set "
-            "(`train_models.py --core-params-only`) and redeploy."
-        )
+    if not result.success:
+        if result.error:
+            st.error(result.error)
         return None, None
 
-    return classifier, regressor
+    for message in result.warnings:
+        st.warning(message)
+
+    if result.data is None:
+        return None, None
+
+    return result.data.classifier, result.data.regressor
 
 
 def get_wqi_color(classification: str) -> str:
@@ -164,100 +137,6 @@ def format_coordinates(lat: float, lon: float) -> str:
     lat_dir = "N" if lat >= 0 else "S"
     lon_dir = "E" if lon >= 0 else "W"
     return f"{abs(lat):.4f}°{lat_dir}, {abs(lon):.4f}°{lon_dir}"
-
-
-def make_ml_predictions(
-    aggregated_params: Dict[str, float],
-    classifier,
-    regressor,
-    year: Optional[int] = None
-) -> Optional[Dict[str, Any]]:
-    """
-    Make ML predictions from aggregated water quality parameters.
-
-    Args:
-        aggregated_params: Dict with keys like 'ph', 'dissolved_oxygen', etc.
-        classifier: Trained classifier model
-        regressor: Trained regressor model
-        year: Year of measurement (defaults to current year)
-
-    Returns:
-        Dictionary with ML prediction results, or None if models unavailable
-    """
-    if classifier is None or regressor is None:
-        return None
-
-    try:
-        # Prepare features
-        features = prepare_us_features_for_prediction(
-            ph=aggregated_params.get('ph'),
-            dissolved_oxygen=aggregated_params.get('dissolved_oxygen'),
-            temperature=aggregated_params.get('temperature'),
-            turbidity=aggregated_params.get('turbidity'),
-            nitrate=aggregated_params.get('nitrate'),
-            conductance=aggregated_params.get('conductance'),
-            year=year
-        )
-
-        # Make predictions
-        is_safe_pred = classifier.predict(features)[0]
-        is_safe_proba = classifier.predict_proba(features)[0]  # [P(unsafe), P(safe)]
-        wqi_pred = regressor.predict(features)[0]
-
-        # Derive 5-level classification from regressor's WQI prediction
-        classification = WQICalculator.classify_wqi(wqi_pred)
-        margins = WQICalculator.get_margin_to_thresholds(wqi_pred)
-        is_near, near_threshold = WQICalculator.is_near_threshold(wqi_pred)
-
-        return {
-            'predicted_wqi': float(wqi_pred),
-            'predicted_classification': classification,
-            'wqi_color': WQI_COLORS.get(classification, '#808080'),
-            'margin_up': margins['margin_up'],
-            'margin_down': margins['margin_down'],
-            'next_up': margins['next_up'],
-            'next_down': margins['next_down'],
-            'is_near_threshold': is_near,
-            'near_threshold_name': near_threshold,
-            # Keep for backwards compatibility
-            'is_safe': bool(wqi_pred >= 70),
-            'confidence': float(max(is_safe_proba))
-        }
-
-    except Exception as e:
-        st.warning(f"ML prediction failed: {e}")
-        return None
-
-
-def get_daily_wqi_scores(df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate raw measurements into daily WQI scores (one row per day)."""
-    if df.empty or 'ActivityStartDate' not in df.columns:
-        return pd.DataFrame()
-
-    calculator = WQICalculator()
-
-    df = df.copy()
-    df['ActivityStartDate'] = pd.to_datetime(df['ActivityStartDate'])
-
-    rows = []
-    for date, date_df in df.groupby('ActivityStartDate'):
-        params = {}
-        for characteristic_name, param_key in PARAM_MAPPING.items():
-            mask = date_df['CharacteristicName'] == characteristic_name
-            values = pd.to_numeric(date_df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
-            if len(values) > 0:
-                params[param_key] = float(values.median())
-        if params:
-            try:
-                wqi, _, _ = calculator.calculate_wqi(**params)
-                rows.append({"Date": date, "WQI": wqi})
-            except Exception:
-                continue
-
-    if not rows:
-        return pd.DataFrame()
-
-    return pd.DataFrame(rows).sort_values('Date').reset_index(drop=True)
 
 
 def create_time_series_chart(df: pd.DataFrame) -> go.Figure:
@@ -619,216 +498,6 @@ def create_future_trend_chart(
     return fig
 
 
-def build_forecast_from_history(
-    daily_wqi: pd.DataFrame,
-    periods: int = 12,
-    current_wqi_override: Optional[float] = None,
-    forecast_start_date: Optional[datetime] = None
-) -> Optional[Dict[str, Any]]:
-    """
-    Derive a simple 12-month forecast from observed daily WQI history using
-    linear extrapolation. Avoids flat lines by reflecting actual recent trend.
-
-    Args:
-        daily_wqi: DataFrame with 'Date' and 'WQI' columns
-        periods: Number of months to forecast
-        current_wqi_override: If provided, use this as the baseline for wqi_change
-            calculation instead of the most recent daily WQI. This ensures
-            consistency with the displayed "Today" value on the chart.
-        forecast_start_date: If provided, use this as the start date for projections
-            (typically datetime.now()). Ensures forecasts project into the future,
-            not from old historical dates.
-    """
-    if daily_wqi is None or daily_wqi.empty or len(daily_wqi) < 3:
-        return None
-
-    import numpy as np
-    from dateutil.relativedelta import relativedelta
-
-    # Use last 180 days to reduce noise
-    cutoff = daily_wqi['Date'].max() - pd.Timedelta(days=180)
-    recent = daily_wqi[daily_wqi['Date'] >= cutoff] if len(daily_wqi) > 30 else daily_wqi
-
-    ordinals = recent['Date'].map(datetime.toordinal).to_numpy()
-    wqis = recent['WQI'].to_numpy()
-
-    # If variance is zero, no meaningful slope
-    if np.isclose(wqis.std(), 0):
-        return None
-
-    slope, intercept = np.polyfit(ordinals, wqis, 1)  # WQI per day
-    historical_last_date = recent['Date'].max()
-    historical_current_wqi = recent.loc[recent['Date'].idxmax(), 'WQI']
-
-    # Use override for display baseline if provided, otherwise use historical
-    baseline_wqi = current_wqi_override if current_wqi_override is not None else historical_current_wqi
-
-    # Use provided forecast start date (today) or fall back to last historical date
-    projection_start = forecast_start_date if forecast_start_date is not None else historical_last_date
-
-    dates = []
-    predictions = []
-    for i in range(1, periods + 1):
-        future_date = projection_start + relativedelta(months=i)
-        days_ahead = (future_date - projection_start).days
-        # Project from baseline using historical slope
-        pred = baseline_wqi + slope * days_ahead
-        pred = max(0, min(100, pred))
-        dates.append(future_date)
-        predictions.append(pred)
-
-    final_wqi = predictions[-1]
-    wqi_change = final_wqi - baseline_wqi
-    if wqi_change > 2:
-        trend = 'improving'
-    elif wqi_change < -2:
-        trend = 'declining'
-    else:
-        trend = 'stable'
-
-    return {
-        'dates': dates,
-        'predictions': predictions,
-        'trend': trend,
-        'trend_slope': wqi_change / periods,
-        'current_wqi': baseline_wqi,
-        'final_wqi': final_wqi,
-        'wqi_change': wqi_change,
-        'periods': periods,
-        'frequency': 'M',
-        'method': 'historical_linear'
-    }
-
-
-def fetch_water_quality_data(
-    zip_code: str,
-    radius_miles: float,
-    start_date: datetime,
-    end_date: datetime,
-    include_groundwater: bool = False
-) -> Tuple[Optional[pd.DataFrame], Optional[str], Optional[str]]:
-    """
-    Fetch water quality data for a ZIP code.
-
-    Args:
-        include_groundwater: If True, include Well and Subsurface site types.
-                             Default False (surface water only).
-
-    Returns:
-        Tuple of (DataFrame, error_message, source_label)
-        If successful: (DataFrame, None, "<source> · <strategy>")
-        If failed: (None, error_message, None)
-    """
-    try:
-        # Initialize clients
-        mapper = ZipCodeMapper()
-        client = WQPClient()
-        usgs_client = USGSClient()
-
-        # Validate and convert ZIP code
-        if not mapper.is_valid_zipcode(zip_code):
-            return None, f"Invalid ZIP code: {zip_code}", None
-
-        coords = mapper.get_coordinates(zip_code)
-        if coords is None:
-            return None, f"Could not find coordinates for ZIP code: {zip_code}", None
-
-        lat, lon = coords
-
-        characteristics = [
-            "pH",
-            "Dissolved oxygen (DO)",
-            "Temperature, water",
-            "Turbidity",
-            "Nitrate",
-            "Specific conductance"
-        ]
-
-        # Build site_types based on user preference
-        site_types = SURFACE_WATER_SITE_TYPES_WQP.copy()
-        if include_groundwater:
-            site_types.extend(GROUNDWATER_SITE_TYPES_WQP)
-
-        strategies = build_search_strategies(
-            radius_miles=radius_miles,
-            start_date=start_date,
-            end_date=end_date
-        )
-
-        attempt_history = []
-
-        for idx, strategy in enumerate(strategies, 1):
-            description = strategy.describe()
-            attempt_history.append(description)
-
-            with st.spinner(f"[{idx}/{len(strategies)}] {description} (querying WQP + USGS in parallel)..."):
-                df, source_label = fetch_with_fallback(
-                    latitude=lat,
-                    longitude=lon,
-                    radius_miles=strategy.radius_miles,
-                    start_date=strategy.start_date,
-                    end_date=strategy.end_date,
-                    characteristics=characteristics,
-                    wqp_client=client,
-                    usgs_client=usgs_client,
-                    site_types=site_types,
-                )
-
-            if df is not None and not df.empty:
-                label = source_label or "WQP/USGS"
-                context = f"{label} · {description}"
-                if strategy.auto_adjusted:
-                    context += " (auto-extended)"
-                if include_groundwater:
-                    context += " [incl. groundwater]"
-                return df, None, context
-
-        attempts_text = "; ".join(attempt_history)
-        gw_note = " Consider enabling 'Include groundwater data' if this is a groundwater-dependent area." if not include_groundwater else ""
-        return None, (
-            f"No water quality data found for ZIP {zip_code} after trying: {attempts_text}. "
-            f"Try a different ZIP or select a broader date range.{gw_note}"
-        ), None
-
-    except Exception as e:
-        return None, f"Error fetching data: {str(e)}", None
-
-
-def calculate_overall_wqi(df: pd.DataFrame) -> Tuple[Optional[float], Optional[Dict[str, float]], Optional[str]]:
-    """Calculate overall WQI from DataFrame of measurements in long format."""
-    if df.empty:
-        return None, None, None
-
-    calculator = WQICalculator()
-
-    # WQP API returns data in long format with CharacteristicName and ResultMeasureValue columns
-    # Need to aggregate by characteristic name
-    aggregated = {}
-
-    for characteristic_name, param_key in PARAM_MAPPING.items():
-        # Filter rows for this characteristic
-        mask = df['CharacteristicName'] == characteristic_name
-        values = pd.to_numeric(df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
-
-        if len(values) > 0:
-            # Use median of all measurements for this parameter
-            aggregated[param_key] = float(values.median())
-
-    if not aggregated:
-        return None, None, None
-
-    # Warn if conductance is elevated (possible brackish or mineral-rich water)
-    if aggregated.get('conductance', 0) > 3000:
-        st.warning(f"High conductance ({aggregated['conductance']:.0f} µS/cm) - possible saltwater or mineral influence.")
-
-    try:
-        wqi, scores, classification = calculator.calculate_wqi(**aggregated)
-        return wqi, scores, classification
-    except Exception as e:
-        st.error(f"Error calculating WQI: {str(e)}")
-        return None, None, None
-
-
 # Main App
 def main():
     """Main application logic."""
@@ -998,15 +667,25 @@ def main():
             st.error("Please fix the issues in the sidebar (date range and/or radius) before searching.")
             return
 
-        # Fetch data with WQP → USGS fallback
-        df, error, source_label = fetch_water_quality_data(
-            zip_code, radius_miles, start_date, end_date, include_groundwater
+        # Fetch data with WQP → USGS fallback (service layer)
+        fetch_result = fetch_water_quality_data(
+            zip_code=zip_code,
+            radius_miles=radius_miles,
+            start_date=start_date,
+            end_date=end_date,
+            include_groundwater=include_groundwater,
         )
 
-        if error:
-            st.error(error)
-            st.info("Try increasing the search radius or adjusting the date range.")
+        if not fetch_result.success or fetch_result.data is None:
+            if fetch_result.error:
+                st.error(fetch_result.error)
+                st.info("Try increasing the search radius or adjusting the date range.")
+            else:
+                st.warning("No data available for the specified criteria.")
             return
+
+        df = fetch_result.data.df
+        source_label = fetch_result.data.source_label
 
         if df is None or df.empty:
             st.warning("No data available for the specified criteria.")
@@ -1029,21 +708,22 @@ def main():
         location_info = mapper.get_location_info(zip_code)
         coords = mapper.get_coordinates(zip_code)
 
-        # Calculate overall WQI
-        wqi, scores, classification = calculate_overall_wqi(df)
+        # Calculate overall WQI via service layer
+        wqi_result = calculate_overall_wqi(df)
 
-        if wqi is None:
-            st.warning("Unable to calculate WQI from available data.")
+        if not wqi_result.success or wqi_result.data is None:
+            if wqi_result.error:
+                st.warning(wqi_result.error)
             st.dataframe(df, width='stretch')
             return
 
-        # Get aggregated parameters for ML predictions
-        aggregated = {}
-        for characteristic_name, param_key in PARAM_MAPPING.items():
-            mask = df['CharacteristicName'] == characteristic_name
-            values = pd.to_numeric(df.loc[mask, 'ResultMeasureValue'], errors='coerce').dropna()
-            if len(values) > 0:
-                aggregated[param_key] = float(values.median())
+        for msg in wqi_result.warnings:
+            st.warning(msg)
+
+        wqi = wqi_result.data.wqi
+        scores = wqi_result.data.scores
+        classification = wqi_result.data.classification
+        aggregated = wqi_result.data.aggregated
 
         # Get daily WQI scores for forecast
         daily_wqi = get_daily_wqi_scores(df)
@@ -1097,24 +777,27 @@ def main():
                 # ML Predicted WQI as primary metric
                 st.metric(
                     "ML Safety Score",
-                    f"{ml_predictions['predicted_wqi']:.1f}",
-                    help="Machine learning prediction (0-100 scale) - more conservative than chemistry-only index"
+                    f"{ml_predictions.predicted_wqi:.1f}",
+                    help="Machine learning prediction (0-100 scale) - more conservative than chemistry-only index",
                 )
 
             with col2:
-                ml_classification = ml_predictions['predicted_classification']
-                ml_color = ml_predictions['wqi_color']
+                ml_classification = ml_predictions.predicted_classification
+                ml_color = ml_predictions.wqi_color
                 render_colored_card(ml_classification, ml_color, label="ML Classification")
 
             with col3:
                 # Confidence
-                confidence_pct = ml_predictions['confidence'] * 100
+                confidence_pct = ml_predictions.confidence * 100
                 confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
                 render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
 
             # Uncertainty indicator for ML predictions near threshold
-            if ml_predictions['is_near_threshold']:
-                st.info(f"ℹ️ Prediction is near the {ml_predictions['near_threshold_name']}. Classification may vary with small changes in water quality.")
+            if ml_predictions.is_near_threshold:
+                st.info(
+                    f"ℹ️ Prediction is near the {ml_predictions.near_threshold_name}. "
+                    "Classification may vary with small changes in water quality."
+                )
 
             st.caption("Model trained on non-US data (Kaggle 1991–2017). US predictions may vary.")
 
