@@ -68,6 +68,9 @@ def format_results_for_clipboard(
     location_info: Optional[Dict[str, Any]] = None,
     coords: Optional[Tuple[float, float]] = None,
     radius_miles: Optional[float] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    include_groundwater: Optional[bool] = None,
     source_label: Optional[str] = None,
     ml_predictions: Optional[Dict[str, Any]] = None,
     clf_importance_df: Optional[pd.DataFrame] = None,
@@ -90,6 +93,9 @@ def format_results_for_clipboard(
         location_info: Optional dict with place_name, state_name
         coords: Optional (lat, lon) tuple
         radius_miles: Optional search radius in miles
+        start_date: Optional query start date
+        end_date: Optional query end date
+        include_groundwater: Optional flag indicating if groundwater sources were included
         source_label: Optional data source label
         ml_predictions: Optional dict with ML prediction results
         clf_importance_df: Optional DataFrame with classifier feature importance
@@ -116,6 +122,13 @@ def format_results_for_clipboard(
     lines.append(f'ZIP Code: {zip_code}')
     if radius_miles is not None:
         lines.append(f'Search Radius: {radius_miles} miles')
+    if start_date is not None and end_date is not None:
+        start_str = start_date.strftime('%Y-%m-%d')
+        end_str = end_date.strftime('%Y-%m-%d')
+        lines.append(f'Date Range: {start_str} to {end_str}')
+    if include_groundwater is not None:
+        gw_str = 'Yes' if include_groundwater else 'No'
+        lines.append(f'Include Groundwater: {gw_str}')
     if source_label:
         lines.append(f'Data Source: {source_label}')
     lines.append(f'Measurements: {measurement_count}')

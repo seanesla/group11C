@@ -675,7 +675,7 @@ def prepare_ml_dataset(
     file_path: str = "data/raw/waterPollution.csv",
     save_processed: bool = True,
     core_params_only: bool = False,
-    outlier_dry_run: bool = False
+    outlier_dry_run: bool = True
 ) -> pd.DataFrame:
     """
     Complete pipeline: Load → Extract → Calculate → Feature Engineering.

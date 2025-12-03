@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-02T20:47:26.580558",
+  "classifier": {
+    "path": "/Users/seane/Documents/Github/dro/group11C/data/models/classifier_20251202_204704.joblib",
+    "metrics": {
+      "accuracy": 0.9826689774696707,
+      "precision": 0.981651376146789,
+      "recall": 0.9876923076923076,
+      "f1_score": 0.9846625766871165,
+      "roc_auc": 0.9982173382173382,
+      "true_negatives": 246,
+      "false_positives": 6,
+      "false_negatives": 4,
+      "true_positives": 321
+    }
+  },
+  "regressor": {
+    "path": "/Users/seane/Documents/Github/dro/group11C/data/models/regressor_20251202_204726.joblib",
+    "metrics": {
+      "r2_score": 0.9676133186812266,
+      "mae": 1.6716032441393598,
+      "mse": 25.904648582718227,
+      "rmse": 5.089660949682035,
+      "explained_variance": 0.9676583527470476,
+      "mean_residual": 0.18979125943043973,
+      "std_residual": 5.08612110164141,
+      "min_residual": -72.75,
+      "max_residual": 22.898264285714276
+    }
+  },
+  "training_info": {
+    "dataset": "Kaggle Water Quality Dataset (1991-2017, non\u2011US monitoring sites)",
+    "samples": 2882,
+    "features": 18,
+    "feature_names": [
+      "year",
+      "ph",
+      "dissolved_oxygen",
+      "temperature",
+      "nitrate",
+      "conductance",
+      "years_since_1991",
+      "decade",
+      "is_1990s",
+      "is_2000s",
+      "is_2010s",
+      "ph_deviation_from_7",
+      "do_temp_ratio",
+      "conductance_low",
+      "conductance_medium",
+      "conductance_high",
+      "pollution_stress",
+      "temp_stress"
+    ],
+    "target_classifier": "is_safe (WQI >= 70)",
+    "target_regressor": "wqi_score (0-100)"
+  }
+}
