@@ -15,7 +15,7 @@ References:
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
@@ -402,6 +402,118 @@ class WQICalculator:
         # "Good" quality (70+) and above is considered safe
         # This matches the training label definition (WQI >= 70)
         return not pd.isna(wqi) and wqi >= 70
+
+    @staticmethod
+    def get_wqi_thresholds() -> Dict[str, int]:
+        """
+        Return WQI classification thresholds as a dictionary.
+
+        Returns:
+            Dictionary mapping classification names to their minimum WQI scores
+        """
+        return {
+            'Excellent': 90,
+            'Good': 70,
+            'Fair': 50,
+            'Poor': 25,
+            'Very Poor': 0
+        }
+
+    @staticmethod
+    def get_margin_to_thresholds(wqi: float) -> Dict[str, Optional[int]]:
+        """
+        Calculate margin to adjacent classification thresholds.
+
+        Args:
+            wqi: Water Quality Index score (0-100)
+
+        Returns:
+            Dictionary with:
+            - 'classification': Current classification string
+            - 'margin_up': Points needed to reach next higher classification (None if Excellent)
+            - 'margin_down': Points above next lower classification (None if Very Poor)
+            - 'next_up': Name of next higher classification (None if Excellent)
+            - 'next_down': Name of next lower classification (None if Very Poor)
+        """
+        if pd.isna(wqi):
+            return {
+                'classification': 'Unknown',
+                'margin_up': None,
+                'margin_down': None,
+                'next_up': None,
+                'next_down': None
+            }
+
+        # Define thresholds in order from highest to lowest
+        levels = [
+            ('Excellent', 90, 100),
+            ('Good', 70, 89),
+            ('Fair', 50, 69),
+            ('Poor', 25, 49),
+            ('Very Poor', 0, 24)
+        ]
+
+        classification = WQICalculator.classify_wqi(wqi)
+        margin_up = None
+        margin_down = None
+        next_up = None
+        next_down = None
+
+        for i, (name, min_val, max_val) in enumerate(levels):
+            if name == classification:
+                # Calculate margin to next higher level
+                if i > 0:
+                    next_up = levels[i - 1][0]
+                    next_up_threshold = levels[i - 1][1]
+                    margin_up = int(next_up_threshold - wqi)
+                    if margin_up < 0:
+                        margin_up = 0
+
+                # Calculate margin above next lower level
+                if i < len(levels) - 1:
+                    next_down = levels[i + 1][0]
+                    current_threshold = min_val
+                    margin_down = int(wqi - current_threshold)
+                    if margin_down < 0:
+                        margin_down = 0
+                break
+
+        return {
+            'classification': classification,
+            'margin_up': margin_up,
+            'margin_down': margin_down,
+            'next_up': next_up,
+            'next_down': next_down
+        }
+
+    @staticmethod
+    def is_near_threshold(wqi: float, margin: int = 5) -> Tuple[bool, Optional[str]]:
+        """
+        Check if WQI is within margin of any classification threshold.
+
+        Args:
+            wqi: Water Quality Index score
+            margin: Points considered "near" a threshold (default: 5)
+
+        Returns:
+            Tuple of (is_near: bool, threshold_description: Optional[str])
+            threshold_description describes the boundary (e.g., "Good/Fair boundary at 70")
+        """
+        if pd.isna(wqi):
+            return False, None
+
+        thresholds = [
+            (90, 'Excellent/Good'),
+            (70, 'Good/Fair'),
+            (50, 'Fair/Poor'),
+            (25, 'Poor/Very Poor')
+        ]
+
+        for threshold_value, boundary_name in thresholds:
+            if abs(wqi - threshold_value) <= margin:
+                return True, f"{boundary_name} boundary at {threshold_value}"
+
+        return False, None
 
     @staticmethod
     def get_ph_thresholds() -> pd.DataFrame:

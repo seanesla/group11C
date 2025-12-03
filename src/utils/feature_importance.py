@@ -12,7 +12,23 @@ import joblib
 from pathlib import Path
 import logging
 
+from utils.wqi_calculator import WQICalculator
+
 logger = logging.getLogger(__name__)
+
+
+def _is_null(value) -> bool:
+    """Check if value is null/missing in a type-safe way.
+
+    pd.isna() and np.isnan() fail on non-numeric types (strings, objects).
+    This helper catches those exceptions and returns False for non-null objects.
+    """
+    if value is None:
+        return True
+    try:
+        return bool(pd.isna(value))
+    except (ValueError, TypeError):
+        return False
 
 
 def get_feature_importances(
@@ -102,10 +118,37 @@ def get_feature_importance_summary(
     }
 
 
+# Core water quality parameters that are directly measured
+CORE_PARAMS = {'ph', 'dissolved_oxygen', 'temperature', 'turbidity', 'nitrate', 'conductance'}
+
+# Derived features and their dependencies (core params they require)
+DERIVED_DEPENDENCIES = {
+    'ph_deviation_from_7': ['ph'],
+    'do_temp_ratio': ['dissolved_oxygen', 'temperature'],
+    'conductance_low': ['conductance'],
+    'conductance_medium': ['conductance'],
+    'conductance_high': ['conductance'],
+    'pollution_stress': ['nitrate', 'dissolved_oxygen'],
+    'temp_stress': ['temperature'],
+    # Missing indicator features depend on their respective params
+    'ph_missing': ['ph'],
+    'dissolved_oxygen_missing': ['dissolved_oxygen'],
+    'temperature_missing': ['temperature'],
+    'turbidity_missing': ['turbidity'],
+    'nitrate_missing': ['nitrate'],
+    'conductance_missing': ['conductance'],
+    'n_params_available': list(CORE_PARAMS),  # Depends on all core params
+}
+
+# Temporal features (query-derived, not measured)
+TEMPORAL_FEATURES = {'year', 'years_since_1991', 'decade', 'is_1990s', 'is_2000s', 'is_2010s'}
+
+
 def annotate_importance_with_availability(
     importance_df: pd.DataFrame,
     us_available_features: List[str],
-    european_only_features: List[str]
+    european_only_features: List[str],
+    sample_values: Optional[pd.Series] = None
 ) -> pd.DataFrame:
     """
     Add US data availability annotations to feature importance DataFrame.
@@ -114,20 +157,60 @@ def annotate_importance_with_availability(
         importance_df: DataFrame from get_feature_importances()
         us_available_features: List of features available for US data
         european_only_features: List of Europe-only features (will be imputed)
+        sample_values: Optional Series with actual feature values for current sample.
+            If provided, checks whether values are null to determine true availability.
 
     Returns:
         DataFrame with added 'availability' column:
-        - '🟢 Available': Feature available for US predictions
-        - '🔴 Imputed': Feature only available for Europe (imputed for US)
-        - '🟡 Partial': Feature partially available
+        - '🟢 Available': Feature has actual measured data for this sample
+        - '🟡 Imputed': Feature value was imputed from training median (core param missing)
+        - '🟡 Partial': Temporal/query-derived features
+        - '🔴 Imputed': Feature only available for Europe (always imputed for US)
     """
     df = importance_df.copy()
 
+    def _is_value_missing(feature_name: str) -> bool:
+        """Check if feature value is null/missing in sample."""
+        if sample_values is None:
+            return False
+        if feature_name not in sample_values.index:
+            return False
+        val = sample_values[feature_name]
+        return _is_null(val)
+
+    def _has_missing_dependency(feature_name: str) -> bool:
+        """Check if any dependency of a derived feature is missing."""
+        if feature_name not in DERIVED_DEPENDENCIES:
+            return False
+        deps = DERIVED_DEPENDENCIES[feature_name]
+        return any(_is_value_missing(dep) for dep in deps)
+
     def get_availability(feature_name: str) -> str:
+        # EU-only features are always imputed
+        if feature_name in european_only_features:
+            return '🔴 Imputed'
+
+        # Temporal features are query-derived, always partial
+        if feature_name in TEMPORAL_FEATURES:
+            return '🟡 Partial'
+
+        # If we have sample values, check actual availability
+        if sample_values is not None:
+            # Core params: check if value itself is missing
+            if feature_name in CORE_PARAMS:
+                if _is_value_missing(feature_name):
+                    return '🟡 Imputed'
+                return '🟢 Available'
+
+            # Derived features: check if any dependency is missing
+            if feature_name in DERIVED_DEPENDENCIES:
+                if _has_missing_dependency(feature_name):
+                    return '🟡 Imputed'
+                return '🟢 Available'
+
+        # Fallback to static metadata-based logic (no sample values provided)
         if feature_name in us_available_features:
             return '🟢 Available'
-        elif feature_name in european_only_features:
-            return '🔴 Imputed'
         else:
             return '🟡 Partial'
 
@@ -321,6 +404,7 @@ def get_prediction_contributions(
     contributions_df = pd.DataFrame({
         'feature': feature_names,
         'value': X_ordered.iloc[0].values,  # Original values (before scaling)
+        'imputed_value': X_imputed.iloc[0].values,  # After imputation (median fill)
         'contribution': shap_values_sample,
         'abs_contribution': np.abs(shap_values_sample)
     })
@@ -354,34 +438,44 @@ def generate_decision_explanation(
 
     Returns:
         Dictionary with:
-        - verdict: 'SAFE' or 'UNSAFE'
+        - verdict: 'SAFE', 'MARGINAL', or 'UNSAFE'
         - confidence: Percentage confidence (0-100)
         - predicted_wqi: WQI score from regressor
-        - wqi_category: 'Excellent'/'Good'/'Medium'/'Bad'/'Very Bad'
+        - wqi_category: 'Excellent'/'Good'/'Fair'/'Poor'/'Very Poor'
+        - margin_up: Points to next higher classification level
+        - margin_down: Points above next lower classification level
+        - next_up: Name of next higher level (or None if Excellent)
+        - next_down: Name of next lower level (or None if Very Poor)
         - primary_factors: List of main contributing factors (positive or negative)
         - parameter_assessment: Assessment of each core parameter
         - summary: 1-2 sentence overall explanation
-        - recommendations: List of improvement suggestions (for UNSAFE only)
+        - recommendations: List of improvement suggestions (for UNSAFE/MARGINAL)
     """
-    # Extract classifier prediction
-    clf_pred = classifier_contributions['prediction']
-    verdict = 'SAFE' if clf_pred >= 0.5 else 'UNSAFE'
-    confidence = clf_pred * 100 if verdict == 'SAFE' else (1 - clf_pred) * 100
-
-    # Extract regressor prediction (WQI)
+    # Extract regressor prediction (WQI) - this drives everything
     predicted_wqi = regressor_contributions['prediction']
 
-    # Determine WQI category
-    if predicted_wqi >= 90:
-        wqi_category = 'Excellent'
-    elif predicted_wqi >= 70:
-        wqi_category = 'Good'
-    elif predicted_wqi >= 50:
-        wqi_category = 'Medium'
-    elif predicted_wqi >= 25:
-        wqi_category = 'Bad'
+    # Use WQICalculator for consistent 5-level classification
+    wqi_category = WQICalculator.classify_wqi(predicted_wqi)
+    margins = WQICalculator.get_margin_to_thresholds(predicted_wqi)
+
+    # Derive verdict from WQI category (not binary classifier)
+    if wqi_category in ['Excellent', 'Good']:
+        verdict = 'SAFE'
+    elif wqi_category == 'Fair':
+        verdict = 'MARGINAL'
+    else:  # Poor or Very Poor
+        verdict = 'UNSAFE'
+
+    # Confidence based on distance from nearest threshold
+    if margins['margin_up'] is not None and margins['margin_down'] is not None:
+        min_margin = min(margins['margin_up'], margins['margin_down'])
+        confidence = min(95, 50 + min_margin * 3)
+    elif margins['margin_up'] is not None:
+        confidence = min(95, 50 + margins['margin_up'] * 3)
+    elif margins['margin_down'] is not None:
+        confidence = min(95, 50 + margins['margin_down'] * 3)
     else:
-        wqi_category = 'Very Bad'
+        confidence = 80.0
 
     # Get top contributing features from classifier
     clf_contribs = classifier_contributions['contributions'].head(10)
@@ -401,8 +495,8 @@ def generate_decision_explanation(
             continue
 
         # For SAFE prediction, focus on positive contributions
-        # For UNSAFE prediction, focus on negative contributions
-        if (verdict == 'SAFE' and contribution > 0) or (verdict == 'UNSAFE' and contribution < 0):
+        # For UNSAFE/MARGINAL prediction, focus on negative contributions
+        if (verdict == 'SAFE' and contribution > 0) or (verdict in ['UNSAFE', 'MARGINAL'] and contribution < 0):
             impact_desc = _describe_feature_impact(feature, value, contribution, verdict)
             if impact_desc:
                 primary_factors.append(impact_desc)
@@ -414,23 +508,26 @@ def generate_decision_explanation(
     # Assess core water quality parameters
     parameter_assessment = _assess_water_parameters(water_params)
 
-    # Generate summary
+    # Generate summary based on 5-level classification
     if verdict == 'SAFE':
         summary = (
-            f"Water quality is predicted as SAFE with {confidence:.0f}% confidence. "
-            f"The predicted WQI score is {predicted_wqi:.1f} ({wqi_category}), "
-            f"which meets safety standards for drinking water."
+            f"Water quality is **{wqi_category}** (WQI: {predicted_wqi:.1f}). "
+            f"This meets general safety standards for drinking water."
         )
-    else:
+    elif verdict == 'MARGINAL':
         summary = (
-            f"Water quality is predicted as UNSAFE with {confidence:.0f}% confidence. "
-            f"The predicted WQI score is {predicted_wqi:.1f} ({wqi_category}), "
-            f"which falls below the safety threshold (WQI ≥ 70)."
+            f"Water quality is **Fair** (WQI: {predicted_wqi:.1f}). "
+            f"This is borderline—suitable for some uses but not ideal for drinking without treatment."
+        )
+    else:  # UNSAFE
+        summary = (
+            f"Water quality is **{wqi_category}** (WQI: {predicted_wqi:.1f}). "
+            f"This falls below recommended standards for drinking water."
         )
 
-    # Generate recommendations (for UNSAFE only)
+    # Generate recommendations for UNSAFE and MARGINAL
     recommendations = []
-    if verdict == 'UNSAFE':
+    if verdict in ['UNSAFE', 'MARGINAL']:
         recommendations = _generate_recommendations(parameter_assessment, water_params)
 
     return {
@@ -438,6 +535,10 @@ def generate_decision_explanation(
         'confidence': confidence,
         'predicted_wqi': predicted_wqi,
         'wqi_category': wqi_category,
+        'margin_up': margins['margin_up'],
+        'margin_down': margins['margin_down'],
+        'next_up': margins['next_up'],
+        'next_down': margins['next_down'],
         'primary_factors': primary_factors,
         'parameter_assessment': parameter_assessment,
         'summary': summary,
@@ -458,6 +559,10 @@ def _describe_feature_impact(feature: str, value: float, contribution: float, ve
     Returns:
         Plain-language description or None if not a relevant feature
     """
+    # Guard against None/NaN values that would fail format strings
+    if _is_null(value):
+        return None
+
     # Core water quality parameters
     if feature == 'dissolved_oxygen':
         if contribution > 0:
@@ -537,8 +642,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
     assessment = {}
 
     # pH assessment
-    ph = params.get('ph', np.nan)
-    if not np.isnan(ph):
+    ph = params.get('ph')
+    if not _is_null(ph):
         if 6.8 <= ph <= 7.5:
             assessment['pH'] = {'status': 'excellent', 'reason': 'Neutral range (ideal for drinking water)'}
         elif 6.5 <= ph <= 8.5:
@@ -549,8 +654,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
             assessment['pH'] = {'status': 'poor', 'reason': 'Far from neutral, significant water quality concern'}
 
     # Dissolved Oxygen assessment
-    do = params.get('dissolved_oxygen', np.nan)
-    if not np.isnan(do):
+    do = params.get('dissolved_oxygen')
+    if not _is_null(do):
         if do >= 8:
             assessment['Dissolved Oxygen'] = {'status': 'excellent', 'reason': 'High oxygen content (>8 mg/L)'}
         elif do >= 6:
@@ -561,8 +666,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
             assessment['Dissolved Oxygen'] = {'status': 'poor', 'reason': 'Very low oxygen (<4 mg/L), indicates contamination'}
 
     # Temperature assessment
-    temp = params.get('temperature', np.nan)
-    if not np.isnan(temp):
+    temp = params.get('temperature')
+    if not _is_null(temp):
         if 10 <= temp <= 20:
             assessment['Temperature'] = {'status': 'excellent', 'reason': 'Optimal range (10-20°C)'}
         elif 5 <= temp < 10 or 20 < temp <= 25:
@@ -573,8 +678,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
             assessment['Temperature'] = {'status': 'concerning', 'reason': 'Very cold water'}
 
     # Turbidity assessment
-    turbidity = params.get('turbidity', np.nan)
-    if not np.isnan(turbidity):
+    turbidity = params.get('turbidity')
+    if not _is_null(turbidity):
         if turbidity < 1:
             assessment['Turbidity'] = {'status': 'excellent', 'reason': 'Meets EPA standard (<1 NTU)'}
         elif turbidity < 5:
@@ -585,8 +690,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
             assessment['Turbidity'] = {'status': 'poor', 'reason': f'{turbidity:.1f} NTU indicates filtration problems'}
 
     # Nitrate assessment
-    nitrate = params.get('nitrate', np.nan)
-    if not np.isnan(nitrate):
+    nitrate = params.get('nitrate')
+    if not _is_null(nitrate):
         if nitrate < 5:
             assessment['Nitrate'] = {'status': 'excellent', 'reason': 'Low nitrate (<5 mg/L)'}
         elif nitrate < 10:
@@ -597,8 +702,8 @@ def _assess_water_parameters(params: Dict[str, float]) -> Dict[str, Dict[str, st
             assessment['Nitrate'] = {'status': 'poor', 'reason': f'{nitrate:.1f} mg/L exceeds EPA MCL (10 mg/L)'}
 
     # Conductance assessment
-    conductance = params.get('conductance', np.nan)
-    if not np.isnan(conductance):
+    conductance = params.get('conductance')
+    if not _is_null(conductance):
         if 150 <= conductance <= 500:
             assessment['Conductivity'] = {'status': 'excellent', 'reason': 'Moderate mineral content'}
         elif 50 <= conductance < 150 or 500 < conductance <= 800:

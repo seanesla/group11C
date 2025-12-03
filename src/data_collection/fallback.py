@@ -144,8 +144,14 @@ def fetch_with_fallback(
     characteristics: List[str],
     wqp_client,
     usgs_client,
+    site_types: Optional[List[str]] = None,
 ) -> Tuple[pd.DataFrame, str]:
-    """Try WQP first; if empty or error, try USGS. Returns (df, source_label)."""
+    """Try WQP first; if empty or error, try USGS. Returns (df, source_label).
+
+    Args:
+        site_types: Optional list of WQP site types to query. If None, uses
+                    WQP client's default (surface water only).
+    """
 
     # WQP first
     try:
@@ -156,6 +162,7 @@ def fetch_with_fallback(
             start_date=start_date,
             end_date=end_date,
             characteristics=characteristics,
+            site_types=site_types,
         )
         if df is not None and not df.empty:
             return df, "WQP"

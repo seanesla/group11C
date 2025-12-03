@@ -29,6 +29,18 @@ SURFACE_WATER_SITE_TYPES_WQP: List[str] = [
     'Wetland',
 ]
 
+# Groundwater site types - included only when explicitly requested by user.
+# Groundwater chemistry differs fundamentally from surface water:
+#   - Low dissolved oxygen (0-2 mg/L vs 5-10 for surface water)
+#   - High conductance from mineral-rich aquifers
+#   - Stable temperature (not weather-dependent)
+# NSF-WQI was designed for surface water and may produce misleading scores.
+
+GROUNDWATER_SITE_TYPES_WQP: List[str] = [
+    'Well',
+    'Subsurface',
+]
+
 # Marine/estuarine site types to explicitly exclude
 # These would contaminate freshwater drinking water assessments with
 # saltwater chemistry (high conductance, different parameter baselines)

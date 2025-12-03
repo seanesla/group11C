@@ -22,6 +22,10 @@ from geolocation.zipcode_mapper import ZipCodeMapper
 from data_collection.wqp_client import WQPClient
 from data_collection.usgs_client import USGSClient
 from data_collection.fallback import fetch_with_fallback
+from data_collection.constants import (
+    SURFACE_WATER_SITE_TYPES_WQP,
+    GROUNDWATER_SITE_TYPES_WQP,
+)
 from utils.wqi_calculator import WQICalculator
 from utils.ml_feature_definitions import (
     get_feature_categories,
@@ -34,6 +38,7 @@ from preprocessing.us_data_features import prepare_us_features_for_prediction
 from preprocessing.feature_engineering import NITRATE_NO3_TO_N
 from services.search_strategies import build_search_strategies
 from utils.logging_config import configure_logging
+from utils.report_formatter import format_results_for_clipboard
 
 # Configure logging once at startup
 configure_logging()
@@ -199,12 +204,24 @@ def make_ml_predictions(
         is_safe_proba = classifier.predict_proba(features)[0]  # [P(unsafe), P(safe)]
         wqi_pred = regressor.predict(features)[0]
 
+        # Derive 5-level classification from regressor's WQI prediction
+        classification = WQICalculator.classify_wqi(wqi_pred)
+        margins = WQICalculator.get_margin_to_thresholds(wqi_pred)
+        is_near, near_threshold = WQICalculator.is_near_threshold(wqi_pred)
+
         return {
-            'is_safe': bool(is_safe_pred),
-            'prob_unsafe': float(is_safe_proba[0]),
-            'prob_safe': float(is_safe_proba[1]),
             'predicted_wqi': float(wqi_pred),
-            'confidence': float(max(is_safe_proba))  # Confidence is max probability
+            'predicted_classification': classification,
+            'wqi_color': WQI_COLORS.get(classification, '#808080'),
+            'margin_up': margins['margin_up'],
+            'margin_down': margins['margin_down'],
+            'next_up': margins['next_up'],
+            'next_down': margins['next_down'],
+            'is_near_threshold': is_near,
+            'near_threshold_name': near_threshold,
+            # Keep for backwards compatibility
+            'is_safe': bool(wqi_pred >= 70),
+            'confidence': float(max(is_safe_proba))
         }
 
     except Exception as e:
@@ -680,10 +697,15 @@ def fetch_water_quality_data(
     zip_code: str,
     radius_miles: float,
     start_date: datetime,
-    end_date: datetime
+    end_date: datetime,
+    include_groundwater: bool = False
 ) -> Tuple[Optional[pd.DataFrame], Optional[str], Optional[str]]:
     """
     Fetch water quality data for a ZIP code.
+
+    Args:
+        include_groundwater: If True, include Well and Subsurface site types.
+                             Default False (surface water only).
 
     Returns:
         Tuple of (DataFrame, error_message, source_label)
@@ -715,6 +737,11 @@ def fetch_water_quality_data(
             "Specific conductance"
         ]
 
+        # Build site_types based on user preference
+        site_types = SURFACE_WATER_SITE_TYPES_WQP.copy()
+        if include_groundwater:
+            site_types.extend(GROUNDWATER_SITE_TYPES_WQP)
+
         strategies = build_search_strategies(
             radius_miles=radius_miles,
             start_date=start_date,
@@ -736,7 +763,8 @@ def fetch_water_quality_data(
                     end_date=strategy.end_date,
                     characteristics=characteristics,
                     wqp_client=client,
-                    usgs_client=usgs_client
+                    usgs_client=usgs_client,
+                    site_types=site_types,
                 )
 
             if df is not None and not df.empty:
@@ -744,12 +772,15 @@ def fetch_water_quality_data(
                 context = f"{label} · {description}"
                 if strategy.auto_adjusted:
                     context += " (auto-extended)"
+                if include_groundwater:
+                    context += " [incl. groundwater]"
                 return df, None, context
 
         attempts_text = "; ".join(attempt_history)
+        gw_note = " Consider enabling 'Include groundwater data' if this is a groundwater-dependent area." if not include_groundwater else ""
         return None, (
             f"No water quality data found for ZIP {zip_code} after trying: {attempts_text}. "
-            "Try a different ZIP or select a broader date range."
+            f"Try a different ZIP or select a broader date range.{gw_note}"
         ), None
 
     except Exception as e:
@@ -858,6 +889,14 @@ def main():
         st.sidebar.error("Radius must be greater than zero miles.")
         has_input_error = True
 
+    # Data source options
+    st.sidebar.subheader("Data Sources")
+    include_groundwater = st.sidebar.checkbox(
+        "Include groundwater data",
+        value=False,
+        help="Include wells and aquifer monitoring. WQI was designed for surface water."
+    )
+
     # Submit button
     search_button = st.sidebar.button("Search", type="primary")
 
@@ -903,7 +942,9 @@ def main():
             return
 
         # Fetch data with WQP → USGS fallback
-        df, error, source_label = fetch_water_quality_data(zip_code, radius_miles, start_date, end_date)
+        df, error, source_label = fetch_water_quality_data(
+            zip_code, radius_miles, start_date, end_date, include_groundwater
+        )
 
         if error:
             st.error(error)
@@ -913,6 +954,18 @@ def main():
         if df is None or df.empty:
             st.warning("No data available for the specified criteria.")
             return
+
+        # Display groundwater warning when enabled
+        if include_groundwater:
+            st.warning(
+                "**Groundwater Mode Enabled**\n\n"
+                "Results include well and aquifer monitoring data. The NSF Water Quality Index "
+                "was designed for surface water and may not accurately represent groundwater quality:\n"
+                "- Groundwater naturally has low dissolved oxygen (0-2 mg/L)\n"
+                "- High conductance is common in mineral-rich aquifers\n"
+                "- Temperature is stable (not weather-dependent)\n\n"
+                "Consider this assessment as **informational only** for groundwater sources."
+            )
 
         # Get location info
         mapper = ZipCodeMapper()
@@ -937,6 +990,12 @@ def main():
 
         # Get daily WQI scores for forecast
         daily_wqi = get_daily_wqi_scores(df)
+
+        # Initialize tracking variables for copy-to-clipboard (assigned in try blocks below)
+        clf_importance_df = None
+        reg_importance_df = None
+        clf_contributions = None
+        reg_contributions = None
 
         # Make ML predictions
         ml_predictions = make_ml_predictions(
@@ -990,19 +1049,26 @@ def main():
             render_colored_card(classification, color)
 
         with col3:
-            calculator = WQICalculator()
-            is_safe = calculator.is_safe(wqi)
-            safety_text = "SAFE" if is_safe else "UNSAFE"
-            safety_color = "#00CC00" if is_safe else "#FF6600"
+            # Show margin information instead of binary SAFE/UNSAFE
+            margins = WQICalculator.get_margin_to_thresholds(wqi)
+            margin_parts = []
+            if margins['margin_up'] is not None:
+                margin_parts.append(f"{margins['margin_up']} pts to {margins['next_up']}")
+            if margins['margin_down'] is not None:
+                margin_parts.append(f"{margins['margin_down']} pts above {margins['next_down']}")
+
+            subtitle = " | ".join(margin_parts) if margin_parts else "Top classification"
             render_colored_card(
-                safety_text,
-                safety_color,
-                subtitle="Core parameters only. Lead, bacteria, PFAS not tested."
+                "Thresholds",
+                color,
+                subtitle=subtitle,
+                label="Distance to Levels"
             )
 
         # Uncertainty indicator for near-threshold predictions
-        if 65 <= wqi <= 75:
-            st.info("ℹ️ Prediction is near the safety threshold (70). Results should be interpreted with caution.")
+        is_near, near_threshold = WQICalculator.is_near_threshold(wqi)
+        if is_near:
+            st.info(f"ℹ️ Score is near the {near_threshold}. Classification may change with small variations in water quality.")
 
         # WQI Methodology Explainer
         with st.expander(":material/bar_chart: How is WQI Calculated?", expanded=False):
@@ -1019,10 +1085,24 @@ def main():
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                # ML Classification
-                ml_safety = "SAFE" if ml_predictions['is_safe'] else "UNSAFE"
-                ml_color = "#00CC00" if ml_predictions['is_safe'] else "#FF6600"
-                render_colored_card(ml_safety, ml_color, label="ML Classification")
+                # ML Classification - 5-level
+                ml_classification = ml_predictions['classification']
+                ml_color = ml_predictions['wqi_color']
+
+                # Build margin subtitle
+                margin_parts = []
+                if ml_predictions['margin_up'] is not None:
+                    margin_parts.append(f"{ml_predictions['margin_up']} pts to {ml_predictions['next_up']}")
+                if ml_predictions['margin_down'] is not None:
+                    margin_parts.append(f"{ml_predictions['margin_down']} above {ml_predictions['next_down']}")
+                margin_subtitle = " | ".join(margin_parts) if margin_parts else None
+
+                render_colored_card(
+                    ml_classification,
+                    ml_color,
+                    subtitle=margin_subtitle,
+                    label="ML Predicted Quality"
+                )
 
             with col2:
                 # ML Predicted WQI
@@ -1039,18 +1119,34 @@ def main():
                 render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
 
             # Uncertainty indicator for ML predictions near threshold
-            if 65 <= ml_predictions['predicted_wqi'] <= 75:
-                st.info("ℹ️ Prediction is near the safety threshold (70). Results should be interpreted with caution.")
+            if ml_predictions['is_near_threshold']:
+                st.info(f"ℹ️ Prediction is near the {ml_predictions['near_threshold_name']}. Classification may vary with small changes in water quality.")
 
-            # Show probability breakdown
-            with st.expander("View Detailed Probabilities"):
-                prob_df = pd.DataFrame([
-                    {"Prediction": "Unsafe (WQI < 70)", "Probability": f"{ml_predictions['prob_unsafe']*100:.1f}%"},
-                    {"Prediction": "Safe (WQI ≥ 70)", "Probability": f"{ml_predictions['prob_safe']*100:.1f}%"}
-                ])
-                st.dataframe(prob_df, width='stretch', hide_index=True)
+            # Show quality level details
+            with st.expander("View Quality Level Details"):
+                pred_wqi = ml_predictions['predicted_wqi']
 
-                st.caption("RandomForest: Classifier 98.6% acc, Regressor R²=0.986 | 2,939 training samples")
+                st.markdown("**WQI Classification Scale:**")
+
+                # Create visual scale showing where prediction falls
+                levels_data = [
+                    {"Level": "Excellent", "Range": "90-100", "Status": "← CURRENT" if pred_wqi >= 90 else ""},
+                    {"Level": "Good", "Range": "70-89", "Status": "← CURRENT" if 70 <= pred_wqi < 90 else ""},
+                    {"Level": "Fair", "Range": "50-69", "Status": "← CURRENT" if 50 <= pred_wqi < 70 else ""},
+                    {"Level": "Poor", "Range": "25-49", "Status": "← CURRENT" if 25 <= pred_wqi < 50 else ""},
+                    {"Level": "Very Poor", "Range": "0-24", "Status": "← CURRENT" if pred_wqi < 25 else ""}
+                ]
+                levels_df = pd.DataFrame(levels_data)
+                st.dataframe(levels_df, hide_index=True)
+
+                # Show margin details
+                st.markdown("**Distance to Adjacent Levels:**")
+                if ml_predictions['margin_up'] is not None:
+                    st.markdown(f"- {ml_predictions['margin_up']} points to reach **{ml_predictions['next_up']}**")
+                if ml_predictions['margin_down'] is not None:
+                    st.markdown(f"- {ml_predictions['margin_down']} points above **{ml_predictions['next_down']}**")
+
+                st.caption("Based on WQI Regressor (R²=0.986) | 2,939 training samples")
 
             st.divider()
 
@@ -1253,7 +1349,7 @@ def main():
                         summary['top_feature_classifier'].replace('_', ' ').title(),
                         f"{summary['top_importance_classifier']:.1f}% importance"
                     )
-                    st.caption("Most influential feature for SAFE/UNSAFE classification")
+                    st.caption("Most influential feature for quality classification")
 
                 with col2:
                     st.metric(
@@ -1266,20 +1362,32 @@ def main():
                 # Get full feature importances (top 20)
                 importances = get_feature_importances(classifier_path, regressor_path, top_n=20)
 
-                # Annotate with availability
+                # Annotate with availability (pass actual sample values for accurate status)
                 us_features = get_us_available_features()
                 training_only_features = get_training_only_features()
+
+                # Create sample values Series from core params for value-aware availability
+                sample_values = pd.Series({
+                    'ph': aggregated.get('ph'),
+                    'dissolved_oxygen': aggregated.get('dissolved_oxygen'),
+                    'temperature': aggregated.get('temperature'),
+                    'turbidity': aggregated.get('turbidity'),
+                    'nitrate': aggregated.get('nitrate'),
+                    'conductance': aggregated.get('conductance'),
+                })
 
                 clf_importance_df = annotate_importance_with_availability(
                     importances['classifier'],
                     us_features,
                     training_only_features,
+                    sample_values=sample_values,
                 )
 
                 reg_importance_df = annotate_importance_with_availability(
                     importances['regressor'],
                     us_features,
                     training_only_features,
+                    sample_values=sample_values,
                 )
 
                 # Display feature importance tables in expandable sections
@@ -1415,7 +1523,7 @@ def main():
                     st.metric(
                         "Classifier Base Value",
                         f"{clf_contributions['base_value']:.3f}",
-                        help="Average prediction across all training samples (probability of SAFE)"
+                        help="Average prediction across all training samples (probability of Good+ quality)"
                     )
                 with col2:
                     st.metric(
@@ -1487,7 +1595,7 @@ def main():
 
                     fig_clf_contrib.update_layout(
                         title=f"Top 10 Feature Contributions - Classifier<br><sub>Prediction: {clf_contributions['prediction']:.3f} (Base: {clf_contributions['base_value']:.3f}, Δ {clf_pred_delta:+.3f})</sub>",
-                        xaxis_title="Contribution to SAFE Probability",
+                        xaxis_title="Contribution to Quality Score",
                         yaxis_title="Feature",
                         yaxis=dict(autorange="reversed"),  # Top feature at top
                         height=500,
@@ -1501,7 +1609,7 @@ def main():
 
                     st.plotly_chart(fig_clf_contrib, width='stretch')
 
-                    st.caption(":green[Green] = toward SAFE | :orange[Orange] = toward UNSAFE")
+                    st.caption(":green[Green] = improves quality | :orange[Orange] = reduces quality")
 
                 with viz_tab2:
                     # Regressor contributions bar chart
@@ -1565,7 +1673,7 @@ def main():
                     clf_display = clf_contrib_df[['rank', 'feature', 'value', 'contribution', 'availability']].copy()
                     clf_display['feature'] = clf_display['feature'].str.replace('_', ' ').str.title()
                     clf_display['direction'] = clf_display['contribution'].apply(
-                        lambda x: f"→ SAFE (+{x:.4f})" if x > 0 else f"→ UNSAFE ({x:.4f})"
+                        lambda x: f"↑ Better (+{x:.4f})" if x > 0 else f"↓ Worse ({x:.4f})"
                     )
                     clf_display.columns = ['Rank', 'Feature', 'Value', 'Contribution', 'Availability', 'Direction']
 
@@ -1606,7 +1714,7 @@ def main():
         st.divider()
 
         # ===================================================================
-        # PHASE 4.3: "WHY SAFE/UNSAFE?" MODEL DECISION EXPLANATION
+        # PHASE 4.3: MODEL DECISION EXPLANATION (5-LEVEL CLASSIFICATION)
         # ===================================================================
         st.subheader(":material/chat: Decision Explanation")
 
@@ -1636,9 +1744,11 @@ def main():
                 wqi_category = explanation['wqi_category']
 
                 if verdict == 'SAFE':
-                    st.success(f"### Water Quality: **{verdict}**")
-                else:
-                    st.error(f"### Water Quality: **{verdict}**")
+                    st.success(f"### Water Quality: **{wqi_category}**")
+                elif verdict == 'MARGINAL':
+                    st.warning(f"### Water Quality: **{wqi_category}** (Borderline)")
+                else:  # UNSAFE
+                    st.error(f"### Water Quality: **{wqi_category}**")
 
                 # Display summary
                 st.markdown(f"**{explanation['summary']}**")
@@ -1649,7 +1759,7 @@ def main():
                     st.metric(
                         "Confidence",
                         f"{confidence:.1f}%",
-                        help=f"Model confidence in {verdict} prediction"
+                        help=f"Model confidence in {wqi_category} classification"
                     )
                 with col2:
                     st.metric(
@@ -1705,8 +1815,8 @@ def main():
                                         else:  # poor
                                             st.error(f"**{param_name}**: {reason}")
 
-                # Display recommendations (for UNSAFE only)
-                if explanation['recommendations'] and verdict == 'UNSAFE':
+                # Display recommendations (for UNSAFE and MARGINAL)
+                if explanation['recommendations'] and verdict in ['UNSAFE', 'MARGINAL']:
                     st.divider()
                     st.markdown("#### Recommendations for Improvement:")
                     for rec in explanation['recommendations']:
@@ -1740,7 +1850,7 @@ def main():
                     "Value": f"{aggregated.get(k, 0):.2f}",
                     "Unit": PARAMETER_UNITS.get(k, ''),
                     "Score": f"{v:.1f}",
-                    "Status": calculator.classify_wqi(v)
+                    "Status": WQICalculator.classify_wqi(v)
                 }
                 for k, v in scores.items()
             ])
@@ -1769,7 +1879,7 @@ def main():
 
                     with st.expander(f"{param_display} ({param_value:.2f}{unit_display}) → Score: {param_score:.1f}"):
                         st.markdown(f"**Current Value:** {param_value:.2f}{unit_display}")
-                        st.markdown(f"**Calculated Score:** {param_score:.1f} ({calculator.classify_wqi(param_score)})")
+                        st.markdown(f"**Calculated Score:** {param_score:.1f} ({WQICalculator.classify_wqi(param_score)})")
 
                         st.markdown("**Threshold Brackets:**")
                         # Style the DataFrame to highlight current bracket
@@ -1782,7 +1892,7 @@ def main():
                         )
 
                         # Add explanation of current bracket
-                        st.info(f"This parameter score is in the **{calculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
+                        st.info(f"This parameter score is in the **{WQICalculator.classify_wqi(param_score)}** range based on NSF-WQI methodology.")
 
                         # Add nitrate-specific unit note
                         if param_name == 'nitrate':
@@ -1819,6 +1929,31 @@ def main():
                 file_name=f"water_quality_{zip_code}_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
+
+        # === COPY RESULTS SECTION ===
+        st.divider()
+        results_text = format_results_for_clipboard(
+            zip_code=zip_code,
+            wqi=wqi,
+            classification=classification,
+            scores=scores,
+            aggregated=aggregated,
+            measurement_count=len(df),
+            station_count=df['MonitoringLocationIdentifier'].nunique(),
+            location_info=location_info,
+            coords=coords,
+            radius_miles=radius_miles,
+            source_label=source_label,
+            ml_predictions=ml_predictions,
+            clf_importance_df=clf_importance_df,
+            reg_importance_df=reg_importance_df,
+            clf_contributions=clf_contributions,
+            reg_contributions=reg_contributions,
+            daily_wqi=daily_wqi,
+        )
+
+        with st.expander("Copy Results for Debugging", expanded=False):
+            st.code(results_text, language="text")
 
     else:
         # Show instructions
