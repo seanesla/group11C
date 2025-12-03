@@ -1,19 +1,10 @@
 """
-Environmental Justice Analysis: COMPLETE System Testing
+Environmental Justice Analysis: Complete System Testing (WQI + ML Models).
 
-This script tests ALL THREE components of the production system on contaminated
-water scenarios from Flint, MI and Jackson, MS:
+Tests NSF-WQI calculator, ML classifier, and ML regressor on Flint/Jackson crisis
+scenarios. All components show 100% false negative rate on lead contamination.
 
-1. NSF-WQI Calculator (mathematical formula)
-2. ML Classifier (binary SAFE/UNSAFE prediction)
-3. ML Regressor (WQI score prediction)
-
-CRITICAL FINDING FROM PREVIOUS TEST:
-The NSF-WQI calculator showed 100% false negative rate (6/6 scenarios).
-Now we test if the ML models provide any additional safety detection.
-
-Author: Environmental Justice Analysis Team
-Date: 2025-11-17
+See docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md for full context and methodology.
 """
 
 import sys

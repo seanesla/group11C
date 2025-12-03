@@ -264,6 +264,11 @@ class WQIPredictionRegressor:
         X_test_processed = self.preprocess_features(X_test, fit=False)
 
         # Define hyperparameter grid
+        # Grid rationale:
+        # - n_estimators [100, 200, 300]: Standard range; diminishing returns beyond 300 for tabular data
+        # - max_depth: RF uses [10, 20, None] (deeper trees OK with bagging); GB uses [3, 5, 7] (shallow trees standard)
+        # - min_samples_split/leaf [2, 5, 10] / [1, 2, 4]: Higher values regularize against overfitting
+        # - learning_rate [0.01, 0.1, 0.2]: GB only; trades off training speed vs precision
         if self.model_type == 'random_forest':
             base_model = RandomForestRegressor(random_state=random_state)
             param_grid = {

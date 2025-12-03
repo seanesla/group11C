@@ -40,7 +40,7 @@ Examples:
   # Train with full feature set (59 features):
   python train_models.py
 
-  # Train with core parameters only (24 features):
+  # Train with core parameters only (18 features):
   python train_models.py --core-params-only
         """
     )
@@ -48,7 +48,7 @@ Examples:
     parser.add_argument(
         '--core-params-only',
         action='store_true',
-        help='Train using only core water quality features (~24 features) instead of '
+        help='Train using only core water quality features (18 features) instead of '
              'full feature set (59 features). This excludes dataset-specific context features '
              '(geographic, environmental, economic, waste management) to enable better '
              'generalization beyond the original training regions.'

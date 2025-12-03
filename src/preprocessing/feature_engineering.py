@@ -557,7 +557,7 @@ def create_core_ml_features(df: pd.DataFrame) -> pd.DataFrame:
         df: DataFrame with WQI parameters and labels
 
     Returns:
-        DataFrame ready for ML training with core features only (~25-30 features)
+        DataFrame ready for ML training with core features only (18 features)
     """
     logger.info("Creating CORE ML features (water quality + temporal only)")
 
@@ -685,7 +685,7 @@ def prepare_ml_dataset(
     Args:
         file_path: Path to raw Kaggle CSV
         save_processed: Whether to save processed data to data/processed/
-        core_params_only: If True, use core water quality features only (~24 features)
+        core_params_only: If True, use core water quality features only (18 features)
                          If False, use full feature set including European-specific (59 features)
         outlier_dry_run: If True, log statistical outliers but don't remove them (for comparison)
 
@@ -695,7 +695,7 @@ def prepare_ml_dataset(
     logger.info("=" * 80)
     logger.info("Starting ML dataset preparation pipeline")
     if core_params_only:
-        logger.info("Feature mode: CORE PARAMETERS ONLY (~24 features)")
+        logger.info("Feature mode: CORE PARAMETERS ONLY (18 features)")
     else:
         logger.info("Feature mode: FULL FEATURE SET (59 features)")
     logger.info("=" * 80)

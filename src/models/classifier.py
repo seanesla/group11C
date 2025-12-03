@@ -159,6 +159,8 @@ class WaterQualityClassifier:
                 X = X.drop(columns=[col])
 
         self.feature_names = X.columns.tolist()
+        # CONTRACT: This feature order MUST match prepare_us_features_for_prediction() output.
+        # See src/preprocessing/us_data_features.py for the canonical 18-feature schema.
         X = X.values
 
         logger.info(f"Prepared {X.shape[0]} samples with {X.shape[1]} features")
@@ -277,6 +279,11 @@ class WaterQualityClassifier:
         X_test_processed = self.preprocess_features(X_test, fit=False)
 
         # Define hyperparameter grid
+        # Grid rationale:
+        # - n_estimators [100, 200, 300]: Standard range; diminishing returns beyond 300 for tabular data
+        # - max_depth: RF uses [10, 20, None] (deeper trees OK with bagging); GB uses [3, 5, 7] (shallow trees standard)
+        # - min_samples_split/leaf [2, 5, 10] / [1, 2, 4]: Higher values regularize against class imbalance
+        # - learning_rate [0.01, 0.1, 0.2]: GB only; trades off training speed vs precision
         if self.model_type == 'random_forest':
             # Always use class_weight='balanced' to handle severe class imbalance (98.8% SAFE)
             # This is hardcoded on the base model, not tuned via grid search

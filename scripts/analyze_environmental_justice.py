@@ -1,25 +1,10 @@
 """
-Environmental Justice Analysis: Testing WQI Model on Contaminated Water Scenarios
+Environmental Justice Analysis: WQI Model Limitations on Lead-Contaminated Water.
 
-This script tests the NSF Water Quality Index model on real contaminated water
-scenarios from the Flint, MI and Jackson, MS water crises to demonstrate the
-model's critical limitation: it CANNOT detect lead contamination.
+Analyzes NSF-WQI on Flint/Jackson crisis scenarios. The model CANNOT detect lead,
+causing false negatives on water that poisoned vulnerable communities.
 
-CRITICAL FINDING:
-The NSF-WQI uses only 6 parameters (pH, DO, temperature, turbidity, nitrate, conductance)
-and does NOT include lead, the primary contaminant that poisoned Flint and Jackson residents.
-
-This creates catastrophic false negatives where the model predicts "Excellent" or "Good"
-water quality for water that is highly toxic due to lead contamination.
-
-Environmental Justice Impact:
-- Flint residents: 53% Black, 41% below poverty line
-- Jackson residents: 83% Black, 25% below poverty line
-- Lead causes permanent IQ damage in children with no safe level
-- Model failure disproportionately harms vulnerable communities
-
-Author: Environmental Justice Analysis Team
-Date: 2025-11-17
+See docs/ENVIRONMENTAL_JUSTICE_ANALYSIS.md for full context and methodology.
 """
 
 import sys
@@ -33,20 +18,9 @@ from src.utils.wqi_calculator import WQICalculator
 
 def test_flint_contaminated_scenarios():
     """
-    Test WQI model on Flint, MI water crisis scenarios (2014-2019).
+    Analyze WQI on Flint, MI crisis scenarios (lead contamination 2014-2019).
 
-    Flint Crisis Summary:
-    - April 2014: City switched from Lake Huron to Flint River (cost-saving)
-    - Water was corrosive and lacked corrosion control treatment
-    - Lead leached from aging pipes and service lines
-    - Lead levels: Some homes tested >100 ppb (EPA action level: 15 ppb)
-    - Health impact: 12 deaths from Legionnaires', permanent IQ damage in children
-    - Demographics: 53% Black, 41% below poverty
-
-    Sources:
-    - EPA Flint Response (2016-2019)
-    - Virginia Tech Study (2015)
-    - CDC Health Impact Assessment
+    Demonstrates false negatives: model predicts Good/Excellent for lead-poisoned water.
     """
     print("=" * 80)
     print("FLINT, MICHIGAN WATER CRISIS SCENARIOS")
@@ -138,21 +112,9 @@ def test_flint_contaminated_scenarios():
 
 def test_jackson_contaminated_scenarios():
     """
-    Test WQI model on Jackson, MS water crisis scenarios (2021-2023).
+    Analyze WQI on Jackson, MS crisis scenarios (infrastructure failure 2021-2023).
 
-    Jackson Crisis Summary:
-    - August 2022: Pearl River flood caused treatment plant failure
-    - 100-year-old infrastructure, chronic underfunding
-    - 300+ boil water notices since 2018, 7,300+ water line breaks
-    - Ongoing lead contamination and discoloration (Feb 2023)
-    - Health impact: Boil notices, lead exposure, gastrointestinal illness
-    - Demographics: 83% Black, 25% below poverty
-    - Estimated repair cost: $2 billion
-
-    Sources:
-    - EPA Jackson Emergency Response (2022-2023)
-    - ProPublica Investigation (2023)
-    - Mississippi State Department of Health Reports
+    Demonstrates false negatives: model predicts Good/Excellent for contaminated water.
     """
     print()
     print("=" * 80)

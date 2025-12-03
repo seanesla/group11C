@@ -42,7 +42,7 @@ def load_us_ground_truth(min_params: int = 6):
     Load US samples with ground truth WQI.
 
     Returns:
-        DataFrame with columns: features (25 cols), actual_wqi, metadata
+        DataFrame with columns: features (18 cols), actual_wqi, metadata
     """
     logger.info("Loading US ground truth data...")
 
@@ -79,7 +79,7 @@ def load_us_ground_truth(min_params: int = 6):
 
         # Add ground truth and metadata
         sample = {
-            'features': features_df.values[0],  # 25 features
+            'features': features_df.values[0],  # 18 features
             'actual_wqi': r['wqi']['score'],
             'zip_code': r['zip_code'],
             'state': r['geolocation']['state_code'] if r['geolocation'] else 'Unknown',
