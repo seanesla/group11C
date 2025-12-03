@@ -24,6 +24,9 @@ def get_latest_model_path(model_type: str = 'classifier', models_dir: str = None
     """
     Find the most recent model file by timestamp.
 
+    Checks production/ folder first (for deployment), then falls back to
+    the main models directory (for local development).
+
     Args:
         model_type: 'classifier' or 'regressor'
         models_dir: Directory containing model files
@@ -33,6 +36,18 @@ def get_latest_model_path(model_type: str = 'classifier', models_dir: str = None
     """
     if models_dir is None:
         models_dir = DEFAULT_MODELS_DIR
+
+    # Check production folder first (for deployment)
+    production_dir = f"{models_dir}/production"
+    production_pattern = f"{production_dir}/{model_type}_*.joblib"
+    production_files = glob.glob(production_pattern)
+
+    if production_files:
+        latest = sorted(production_files, reverse=True)[0]
+        logger.info(f"Found {model_type} in production: {latest}")
+        return latest
+
+    # Fall back to main models directory (for local dev)
     pattern = f"{models_dir}/{model_type}_*.joblib"
     model_files = glob.glob(pattern)
 
