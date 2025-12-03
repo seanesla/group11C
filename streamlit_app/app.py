@@ -36,6 +36,7 @@ from services.water_quality_service import (
     calculate_overall_wqi,
     fetch_water_quality_data,
 )
+from models.model_utils import get_latest_model_path
 from utils.logging_config import configure_logging
 from utils.report_formatter import format_results_for_clipboard
 
@@ -733,6 +734,8 @@ def main():
         reg_importance_df = None
         clf_contributions = None
         reg_contributions = None
+        classifier_path: Optional[str] = None
+        regressor_path: Optional[str] = None
 
         # Make ML predictions
         ml_predictions = make_ml_predictions(
@@ -1070,17 +1073,16 @@ def main():
                 get_feature_importance_summary,
                 annotate_importance_with_availability,
                 get_prediction_contributions,
-                generate_decision_explanation
+                generate_decision_explanation,
             )
 
-            # Get latest model paths
-            import glob
-            classifier_files = sorted(glob.glob('data/models/classifier_*.joblib'), reverse=True)
-            regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
+            # Get latest model paths using shared model_utils logic.
+            # This checks data/models/production/ first (for deployment)
+            # and falls back to data/models/ for local development.
+            classifier_path = get_latest_model_path("classifier")
+            regressor_path = get_latest_model_path("regressor")
 
-            if classifier_files and regressor_files:
-                classifier_path = classifier_files[0]
-                regressor_path = regressor_files[0]
+            if classifier_path and regressor_path:
 
                 # Get feature importance summary
                 summary = get_feature_importance_summary(classifier_path, regressor_path)
@@ -1225,16 +1227,7 @@ def main():
         st.subheader(":material/search: Feature Contributions (This Sample)")
 
         try:
-            # Get latest model paths
-            import glob
-            import numpy as np
-            classifier_files = sorted(glob.glob('data/models/classifier_*.joblib'), reverse=True)
-            regressor_files = sorted(glob.glob('data/models/regressor_*.joblib'), reverse=True)
-
-            if classifier_files and regressor_files and ml_predictions:
-                classifier_path = classifier_files[0]
-                regressor_path = regressor_files[0]
-
+            if classifier_path and regressor_path and ml_predictions:
                 # Prepare 59-feature ML input for the current sample
                 # prepare_us_features_for_prediction() already returns a DataFrame
                 X_sample_df = prepare_us_features_for_prediction(
@@ -1463,7 +1456,13 @@ def main():
         st.subheader(":material/chat: Decision Explanation")
 
         try:
-            if classifier_files and regressor_files and ml_predictions and 'clf_contributions' in locals() and 'reg_contributions' in locals():
+            if (
+                classifier_path
+                and regressor_path
+                and ml_predictions
+                and "clf_contributions" in locals()
+                and "reg_contributions" in locals()
+            ):
                 # Prepare water parameters dict
                 water_params = {
                     'ph': aggregated.get('ph'),

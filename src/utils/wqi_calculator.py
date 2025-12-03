@@ -360,7 +360,11 @@ class WQICalculator:
         # Classify water quality
         classification = self.classify_wqi(wqi)
 
-        logger.info(f"Calculated WQI: {wqi:.2f} ({classification})")
+        # Per-sample WQI logging is very verbose at INFO level when
+        # working with thousands of records. Use DEBUG so production
+        # logs stay focused on API and service-level events, while
+        # still allowing detailed tracing when needed.
+        logger.debug(f"Calculated WQI: {wqi:.2f} ({classification})")
 
         return round(wqi, 2), scores, classification
 
