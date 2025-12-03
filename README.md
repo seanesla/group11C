@@ -35,6 +35,7 @@ Screenshots of the application are available in `docs/screenshots/`.
 - **Scientific WQI calculation** – Implements an NSF/EPA-inspired Water Quality Index using six core parameters with documented thresholds and weights.
 - **ML-based predictions** – Random forest classifier and regressor trained on a Kaggle water-pollution dataset, with support for a core-parameter-only feature set for better geographic generalization.
 - **Model interpretability** – Global feature importance (top features, availability in US data) and per-sample SHAP explanations, with mathematical checks that SHAP contributions sum to the prediction delta.
+- **Validation metrics** – Bootstrap 95% confidence intervals, probability calibration (Brier score, ECE), and residual diagnostics (normality, heteroscedasticity) for uncertainty quantification.
 - **Fairness & environmental justice** – Scripts and tests to examine performance across regions and demographics, focusing on where data or models may under-serve certain communities.
 - **Modular Python package** – Clean `src/` layout with organized modules for data collection, preprocessing, models, and utilities.
 

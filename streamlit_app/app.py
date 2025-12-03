@@ -930,6 +930,56 @@ def main():
         - Historical data may not reflect current conditions
         """)
 
+    # Model Diagnostics Section in Sidebar (only if models loaded)
+    if classifier and regressor:
+        with st.sidebar.expander("Model Diagnostics"):
+            # Classifier metrics
+            clf_metrics = getattr(classifier, 'metrics', {}).get('test', {})
+            if clf_metrics:
+                st.markdown("**Classifier (SAFE/UNSAFE)**")
+                brier = clf_metrics.get('brier_score')
+                ece = clf_metrics.get('ece')
+                if brier is not None:
+                    st.markdown(f"- Brier Score: `{brier:.4f}` {'(good)' if brier < 0.1 else ''}")
+                if ece is not None:
+                    st.markdown(f"- ECE: `{ece:.4f}` {'(well-calibrated)' if ece < 0.1 else ''}")
+
+                # Show CIs if available
+                acc_lo = clf_metrics.get('accuracy_ci_lower')
+                acc_hi = clf_metrics.get('accuracy_ci_upper')
+                if acc_lo is not None and acc_hi is not None:
+                    st.markdown(f"- 95% CI Accuracy: `[{acc_lo:.3f}, {acc_hi:.3f}]`")
+
+                roc_lo = clf_metrics.get('roc_auc_ci_lower')
+                roc_hi = clf_metrics.get('roc_auc_ci_upper')
+                if roc_lo is not None and roc_hi is not None:
+                    st.markdown(f"- 95% CI ROC-AUC: `[{roc_lo:.3f}, {roc_hi:.3f}]`")
+
+            # Regressor metrics
+            reg_metrics = getattr(regressor, 'metrics', {}).get('test', {})
+            if reg_metrics:
+                st.markdown("**Regressor (WQI Score)**")
+                r2_lo = reg_metrics.get('r2_score_ci_lower')
+                r2_hi = reg_metrics.get('r2_score_ci_upper')
+                if r2_lo is not None and r2_hi is not None:
+                    st.markdown(f"- 95% CI R²: `[{r2_lo:.3f}, {r2_hi:.3f}]`")
+
+                rmse_lo = reg_metrics.get('rmse_ci_lower')
+                rmse_hi = reg_metrics.get('rmse_ci_upper')
+                if rmse_lo is not None and rmse_hi is not None:
+                    st.markdown(f"- 95% CI RMSE: `[{rmse_lo:.2f}, {rmse_hi:.2f}]`")
+
+                het = reg_metrics.get('heteroscedastic')
+                if het is not None:
+                    st.markdown(f"- Heteroscedastic: `{het}`")
+
+                normal = reg_metrics.get('residuals_normal')
+                if normal is not None:
+                    st.markdown(f"- Residuals Normal: `{normal}`")
+
+            if not clf_metrics and not reg_metrics:
+                st.info("Diagnostics available after retraining models.")
+
     # Main area
 
     # Keep safety context but avoid overwhelming users—one concise expander.

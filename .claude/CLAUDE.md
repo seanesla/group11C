@@ -63,6 +63,7 @@ SHAP Explanation → Streamlit Visualization
 ### Key Modules
 - `src/data_collection/` - USGS NWIS and Water Quality Portal API clients with fallback logic
 - `src/utils/wqi_calculator.py` - NSF-WQI implementation using 6 parameters (pH, DO, temp, turbidity, nitrate, conductance)
+- `src/utils/validation_metrics.py` - Bootstrap CIs, ECE, Brier score, reliability diagrams for model validation
 - `src/models/` - Random Forest classifier (SAFE/UNSAFE) and regressor (WQI 0-100)
 - `src/services/search_strategies.py` - Progressive fallback: expands search radius (5→10→25→50 km) and date range when no data found
 - `src/geolocation/` - ZIP-to-lat/long via pgeocode
@@ -71,6 +72,7 @@ SHAP Explanation → Streamlit Visualization
 ### Key Dependencies
 - **pgeocode** - ZIP code geocoding (offline postal code database)
 - **shap** - Model explanations (SHAP values for per-sample feature contributions)
+- **scipy** - Statistical tests (Shapiro-Wilk, Spearman) for model validation
 - **requests** - API clients (USGS NWIS, Water Quality Portal)
 
 ### Critical: Nitrate Unit Conversion
@@ -85,9 +87,9 @@ The ML models **cannot detect**: lead, heavy metals, bacteria, pesticides, or PF
 ### Data Quality Pipeline
 The training data pipeline includes several quality controls:
 - **Physical bounds**: `VALID_RANGES` in `feature_engineering.py:93-99` filters impossible values
-- **Statistical outliers**: IQR detection (3× multiplier) in `detect_statistical_outliers()`
+- **Statistical outliers**: IQR detection (3× multiplier) runs in dry-run mode by default (logs candidates without removing) because it flagged valid DO values 5-9 mg/L due to skewed distribution
 - **Artifact features**: Missing indicators excluded if >95% missing (prevents spurious correlations like `turbidity_missing`)
-- **Imputation**: KNN with pre-scaling (5 neighbors, distance-weighted) in classifier/regressor
+- **Imputation**: Median imputation (robust to outliers with 60-75% missingness; KNN was tested but degraded performance)
 - **Class weights**: Always `class_weight='balanced'` in classifier (not optional in grid search)
 - **Quality report**: Generated at `data/processed/data_quality_report.json` during training
 
