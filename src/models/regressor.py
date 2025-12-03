@@ -17,12 +17,18 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import KNNImputer
-from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     r2_score, mean_absolute_error, mean_squared_error,
     explained_variance_score
 )
+from scipy import stats
+
+# Dual import to work in both training (src.utils.*) and Streamlit (utils.*) contexts
+try:
+    from utils.validation_metrics import bootstrap_confidence_interval
+except ImportError:
+    from src.utils.validation_metrics import bootstrap_confidence_interval
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +79,10 @@ class WQIPredictionRegressor:
         """
         self.model_type = model_type
         self.model = None
-        # Single preprocessor pipeline: scale first (so KNN distances are meaningful),
-        # then impute using KNN on scaled data. Result is already scaled.
-        # This replaces separate scaler + SimpleImputer to avoid double scaling.
-        self.preprocessor = Pipeline([
-            ('scaler', StandardScaler()),
-            ('knn_imputer', KNNImputer(n_neighbors=5, weights='distance')),
-        ])
+        # Impute missing values with median (robust to outliers), then scale
+        # KNN imputation was tested but performed poorly with 60-75% missingness
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
         self.feature_names = None
         self.metrics = {}
         self.grid_search = None
@@ -205,11 +208,13 @@ class WQIPredictionRegressor:
         if not isinstance(X, np.ndarray):
             raise TypeError(f"Expected numpy array after conversion, got {type(X)}")
 
-        # Preprocess: scale then impute using KNN (single pipeline, already scaled)
+        # Preprocess: impute missing values with median, then scale
         if fit:
-            X_processed = self.preprocessor.fit_transform(X)
+            X_imputed = self.imputer.fit_transform(X)
+            X_processed = self.scaler.fit_transform(X_imputed)
         else:
-            X_processed = self.preprocessor.transform(X)
+            X_imputed = self.imputer.transform(X)
+            X_processed = self.scaler.transform(X_imputed)
 
         return X_processed
 
@@ -346,8 +351,10 @@ class WQIPredictionRegressor:
         # Evaluate on validation set
         val_metrics = self.evaluate(X_val_processed, y_val, dataset_name="Validation")
 
-        # Evaluate on test set
-        test_metrics = self.evaluate(X_test_processed, y_test, dataset_name="Test")
+        # Evaluate on test set (with bootstrap CIs)
+        test_metrics = self.evaluate(
+            X_test_processed, y_test, dataset_name="Test", compute_intervals=True
+        )
 
         # Report both in-sample and CV metrics clearly
         logger.info("\n" + "=" * 80)
@@ -399,7 +406,8 @@ class WQIPredictionRegressor:
         self,
         X: np.ndarray,
         y: np.ndarray,
-        dataset_name: str = "Test"
+        dataset_name: str = "Test",
+        compute_intervals: bool = False
     ) -> Dict[str, float]:
         """
         Evaluate regressor with comprehensive metrics.
@@ -440,6 +448,49 @@ class WQIPredictionRegressor:
             'max_residual': float(np.max(residuals))
         })
 
+        # Residual diagnostics
+        # Normality test (Shapiro-Wilk, subsample for large n)
+        sample_size = min(len(residuals), 5000)
+        if sample_size < len(residuals):
+            rng = np.random.RandomState(42)
+            residual_sample = rng.choice(residuals, sample_size, replace=False)
+        else:
+            residual_sample = residuals
+        _, normality_p = stats.shapiro(residual_sample)
+        metrics['residual_normality_p'] = float(normality_p)
+        metrics['residuals_normal'] = bool(normality_p > 0.05)
+
+        # Heteroscedasticity check (correlation between |residuals| and predictions)
+        het_corr, het_p = stats.spearmanr(np.abs(residuals), y_pred)
+        metrics['heteroscedasticity_corr'] = float(het_corr)
+        metrics['heteroscedasticity_p'] = float(het_p)
+        metrics['heteroscedastic'] = bool(het_p < 0.05 and abs(het_corr) > 0.1)
+
+        # Q-Q plot data (downsampled to 100 points for JSON size)
+        n_qq_points = min(100, len(residuals))
+        qq_indices = np.linspace(0, len(residuals) - 1, n_qq_points, dtype=int)
+        sorted_residuals = np.sort(residuals)
+        theoretical_quantiles = stats.norm.ppf(
+            np.linspace(0.01, 0.99, n_qq_points)
+        )
+        metrics['qq_plot_data'] = {
+            'theoretical': [float(x) for x in theoretical_quantiles],
+            'observed': [float(sorted_residuals[i]) for i in qq_indices]
+        }
+
+        # Bootstrap confidence intervals (test set only, expensive)
+        if compute_intervals:
+            logger.info("Computing bootstrap confidence intervals (n=1000)...")
+
+            for metric_name, metric_fn in [
+                ('r2_score', r2_score),
+                ('mae', mean_absolute_error),
+                ('rmse', lambda yt, yp: np.sqrt(mean_squared_error(yt, yp))),
+            ]:
+                _, lower, upper = bootstrap_confidence_interval(y, y_pred, metric_fn)
+                metrics[f'{metric_name}_ci_lower'] = lower
+                metrics[f'{metric_name}_ci_upper'] = upper
+
         # Log results
         logger.info(f"\nMetrics:")
         logger.info(f"  R² Score:           {metrics['r2_score']:.4f}")
@@ -452,6 +503,16 @@ class WQIPredictionRegressor:
         logger.info(f"  Mean:   {metrics['mean_residual']:.4f}")
         logger.info(f"  Std:    {metrics['std_residual']:.4f}")
         logger.info(f"  Range:  [{metrics['min_residual']:.4f}, {metrics['max_residual']:.4f}]")
+
+        logger.info(f"\nResidual Diagnostics:")
+        logger.info(f"  Normality (p={metrics['residual_normality_p']:.4f}): {'Normal' if metrics['residuals_normal'] else 'Non-normal'}")
+        logger.info(f"  Heteroscedasticity (corr={metrics['heteroscedasticity_corr']:.3f}): {'Detected' if metrics['heteroscedastic'] else 'Not detected'}")
+
+        if compute_intervals:
+            logger.info(f"\n95% Confidence Intervals:")
+            logger.info(f"  R² Score: [{metrics['r2_score_ci_lower']:.4f}, {metrics['r2_score_ci_upper']:.4f}]")
+            logger.info(f"  MAE:      [{metrics['mae_ci_lower']:.4f}, {metrics['mae_ci_upper']:.4f}]")
+            logger.info(f"  RMSE:     [{metrics['rmse_ci_lower']:.4f}, {metrics['rmse_ci_upper']:.4f}]")
 
         # Prediction quality by WQI range
         logger.info(f"\nPrediction Quality by WQI Range:")
@@ -701,7 +762,8 @@ class WQIPredictionRegressor:
         # Save everything including CV metrics
         model_data = {
             'model': self.model,
-            'preprocessor': self.preprocessor,  # Single pipeline: scaler + KNN imputer
+            'imputer': self.imputer,
+            'scaler': self.scaler,
             'feature_names': self.feature_names,
             'model_type': self.model_type,
             'metrics': self.metrics,  # Includes cv_fold_scores, cv_mean, cv_std, train/val/test metrics
@@ -738,18 +800,19 @@ class WQIPredictionRegressor:
         # Create instance
         instance = cls(model_type=model_data['model_type'])
         instance.model = model_data['model']
-        # Handle both new format (preprocessor) and legacy format (scaler + imputer)
-        if 'preprocessor' in model_data:
-            instance.preprocessor = model_data['preprocessor']
-        elif 'scaler' in model_data and 'imputer' in model_data:
-            # Legacy model: create preprocessor from separate components
-            # Note: This preserves backwards compatibility but won't have KNN imputation
-            logger.warning("Loading legacy model with SimpleImputer (not KNN)")
-            from sklearn.impute import SimpleImputer
-            instance.preprocessor = Pipeline([
-                ('scaler', model_data['scaler']),
-                ('imputer', model_data['imputer']),
-            ])
+        # Handle new format (imputer + scaler) and legacy format (preprocessor Pipeline)
+        if 'imputer' in model_data and 'scaler' in model_data:
+            # New format: separate imputer and scaler
+            instance.imputer = model_data['imputer']
+            instance.scaler = model_data['scaler']
+        elif 'preprocessor' in model_data:
+            # Legacy KNN Pipeline format: extract components
+            logger.warning("Loading legacy model with KNN Pipeline - extracting components")
+            pipeline = model_data['preprocessor']
+            instance.scaler = pipeline.named_steps.get('scaler', StandardScaler())
+            # Create a new SimpleImputer since we're removing KNN
+            instance.imputer = SimpleImputer(strategy='median')
+            logger.warning("Replaced KNN imputer with median imputer for legacy model")
         instance.feature_names = model_data['feature_names']
         instance.metrics = model_data['metrics']
 

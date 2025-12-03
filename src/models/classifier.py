@@ -17,13 +17,27 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import KNNImputer
-from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    confusion_matrix, classification_report, roc_auc_score
+    confusion_matrix, classification_report, roc_auc_score,
+    brier_score_loss
 )
 from sklearn.utils.class_weight import compute_class_weight
+
+# Dual import to work in both training (src.utils.*) and Streamlit (utils.*) contexts
+try:
+    from utils.validation_metrics import (
+        bootstrap_confidence_interval,
+        expected_calibration_error,
+        reliability_diagram_data,
+    )
+except ImportError:
+    from src.utils.validation_metrics import (
+        bootstrap_confidence_interval,
+        expected_calibration_error,
+        reliability_diagram_data,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -74,13 +88,10 @@ class WaterQualityClassifier:
         """
         self.model_type = model_type
         self.model = None
-        # Single preprocessor pipeline: scale first (so KNN distances are meaningful),
-        # then impute using KNN on scaled data. Result is already scaled.
-        # This replaces separate scaler + SimpleImputer to avoid double scaling.
-        self.preprocessor = Pipeline([
-            ('scaler', StandardScaler()),
-            ('knn_imputer', KNNImputer(n_neighbors=5, weights='distance')),
-        ])
+        # Impute missing values with median (robust to outliers), then scale
+        # KNN imputation was tested but performed poorly with 60-75% missingness
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
         self.feature_names = None
         self.metrics = {}
         self.grid_search = None
@@ -209,11 +220,13 @@ class WaterQualityClassifier:
         if not isinstance(X, np.ndarray):
             raise TypeError(f"Expected numpy array after conversion, got {type(X)}")
 
-        # Preprocess: scale then impute using KNN (single pipeline, already scaled)
+        # Preprocess: impute missing values with median, then scale
         if fit:
-            X_processed = self.preprocessor.fit_transform(X)
+            X_imputed = self.imputer.fit_transform(X)
+            X_processed = self.scaler.fit_transform(X_imputed)
         else:
-            X_processed = self.preprocessor.transform(X)
+            X_imputed = self.imputer.transform(X)
+            X_processed = self.scaler.transform(X_imputed)
 
         return X_processed
 
@@ -360,8 +373,10 @@ class WaterQualityClassifier:
         # Evaluate on validation set
         val_metrics = self.evaluate(X_val_processed, y_val, dataset_name="Validation")
 
-        # Evaluate on test set
-        test_metrics = self.evaluate(X_test_processed, y_test, dataset_name="Test")
+        # Evaluate on test set (with bootstrap CIs)
+        test_metrics = self.evaluate(
+            X_test_processed, y_test, dataset_name="Test", compute_intervals=True
+        )
 
         # Report both in-sample and CV metrics clearly
         logger.info("\n" + "=" * 80)
@@ -408,7 +423,8 @@ class WaterQualityClassifier:
         self,
         X: np.ndarray,
         y: np.ndarray,
-        dataset_name: str = "Test"
+        dataset_name: str = "Test",
+        compute_intervals: bool = False
     ) -> Dict[str, float]:
         """
         Evaluate classifier with comprehensive metrics.
@@ -452,6 +468,38 @@ class WaterQualityClassifier:
             'true_positives': int(tp)
         })
 
+        # Probability calibration metrics (always computed)
+        metrics['brier_score'] = float(brier_score_loss(y, y_pred_proba))
+        metrics['ece'] = expected_calibration_error(y, y_pred_proba, n_bins=10)
+
+        # Reliability diagram data
+        rel_data = reliability_diagram_data(y, y_pred_proba, n_bins=10)
+        metrics['reliability_diagram'] = rel_data
+
+        # Bootstrap confidence intervals (test set only, expensive)
+        if compute_intervals:
+            logger.info("Computing bootstrap confidence intervals (n=1000)...")
+
+            ci_metrics = {}
+            for metric_name, metric_fn in [
+                ('accuracy', accuracy_score),
+                ('precision', lambda yt, yp: precision_score(yt, yp, zero_division=0)),
+                ('recall', lambda yt, yp: recall_score(yt, yp, zero_division=0)),
+                ('f1_score', lambda yt, yp: f1_score(yt, yp, zero_division=0)),
+            ]:
+                _, lower, upper = bootstrap_confidence_interval(y, y_pred, metric_fn)
+                ci_metrics[f'{metric_name}_ci_lower'] = lower
+                ci_metrics[f'{metric_name}_ci_upper'] = upper
+
+            # ROC-AUC CI (uses probabilities)
+            _, roc_lower, roc_upper = bootstrap_confidence_interval(
+                y, y_pred_proba, roc_auc_score
+            )
+            ci_metrics['roc_auc_ci_lower'] = roc_lower
+            ci_metrics['roc_auc_ci_upper'] = roc_upper
+
+            metrics.update(ci_metrics)
+
         # Log results
         logger.info(f"\nMetrics:")
         logger.info(f"  Accuracy:  {metrics['accuracy']:.4f}")
@@ -459,6 +507,16 @@ class WaterQualityClassifier:
         logger.info(f"  Recall:    {metrics['recall']:.4f}")
         logger.info(f"  F1 Score:  {metrics['f1_score']:.4f}")
         logger.info(f"  ROC-AUC:   {metrics['roc_auc']:.4f}")
+
+        logger.info(f"\nCalibration Metrics:")
+        logger.info(f"  Brier Score: {metrics['brier_score']:.4f}")
+        logger.info(f"  ECE:         {metrics['ece']:.4f}")
+
+        if compute_intervals:
+            logger.info(f"\n95% Confidence Intervals:")
+            logger.info(f"  Accuracy:  [{metrics['accuracy_ci_lower']:.4f}, {metrics['accuracy_ci_upper']:.4f}]")
+            logger.info(f"  F1 Score:  [{metrics['f1_score_ci_lower']:.4f}, {metrics['f1_score_ci_upper']:.4f}]")
+            logger.info(f"  ROC-AUC:   [{metrics['roc_auc_ci_lower']:.4f}, {metrics['roc_auc_ci_upper']:.4f}]")
 
         logger.info(f"\nConfusion Matrix:")
         logger.info(f"                 Predicted")
@@ -564,7 +622,8 @@ class WaterQualityClassifier:
         # Save everything including CV metrics
         model_data = {
             'model': self.model,
-            'preprocessor': self.preprocessor,  # Single pipeline: scaler + KNN imputer
+            'imputer': self.imputer,
+            'scaler': self.scaler,
             'feature_names': self.feature_names,
             'model_type': self.model_type,
             'metrics': self.metrics,  # Includes cv_fold_scores, cv_mean, cv_std, train/val/test metrics
@@ -600,18 +659,19 @@ class WaterQualityClassifier:
         # Create instance
         instance = cls(model_type=model_data['model_type'])
         instance.model = model_data['model']
-        # Handle both new format (preprocessor) and legacy format (scaler + imputer)
-        if 'preprocessor' in model_data:
-            instance.preprocessor = model_data['preprocessor']
-        elif 'scaler' in model_data and 'imputer' in model_data:
-            # Legacy model: create preprocessor from separate components
-            # Note: This preserves backwards compatibility but won't have KNN imputation
-            logger.warning("Loading legacy model with SimpleImputer (not KNN)")
-            from sklearn.impute import SimpleImputer
-            instance.preprocessor = Pipeline([
-                ('scaler', model_data['scaler']),
-                ('imputer', model_data['imputer']),
-            ])
+        # Handle new format (imputer + scaler) and legacy format (preprocessor Pipeline)
+        if 'imputer' in model_data and 'scaler' in model_data:
+            # New format: separate imputer and scaler
+            instance.imputer = model_data['imputer']
+            instance.scaler = model_data['scaler']
+        elif 'preprocessor' in model_data:
+            # Legacy KNN Pipeline format: extract components
+            logger.warning("Loading legacy model with KNN Pipeline - extracting components")
+            pipeline = model_data['preprocessor']
+            instance.scaler = pipeline.named_steps.get('scaler', StandardScaler())
+            # Create a new SimpleImputer since we're removing KNN
+            instance.imputer = SimpleImputer(strategy='median')
+            logger.warning("Replaced KNN imputer with median imputer for legacy model")
         instance.feature_names = model_data['feature_names']
         instance.metrics = model_data['metrics']
 
