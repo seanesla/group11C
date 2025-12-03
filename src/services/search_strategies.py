@@ -100,7 +100,8 @@ def build_search_strategies(
         expanded_radius = max(radius_miles * 1.5, radius_miles + 15, 40)
         add_strategy(expanded_radius, start_date, "Expanded radius", auto=True)
 
-    # 3) Modest history extension to 3 years (no extra radius bump)
-    add_strategy(radius_miles, _extend_start(start_date, end_date, 3), "Extended history (3yr)", True)
+    # 3) Modest history extension to 4 years (no extra radius bump)
+    # 4 years ensures coverage of infrequent monitoring programs (e.g., groundwater)
+    add_strategy(radius_miles, _extend_start(start_date, end_date, 4), "Extended history (4yr)", True)
 
     return strategies
