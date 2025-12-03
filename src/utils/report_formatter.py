@@ -177,11 +177,12 @@ def format_results_for_clipboard(
             lines.append(f'{display_name}: N/A')
     lines.append('')
 
-    # Calculated WQI
-    lines.append('CALCULATED WQI')
-    lines.append('-' * 14)
+    # NSF Surface Water Index (Chemistry-Only)
+    lines.append('NSF SURFACE WATER INDEX')
+    lines.append('-' * 23)
     lines.append(f'Score: {wqi:.2f}')
     lines.append(f'Classification: {classification}')
+    lines.append('Note: Chemistry-only index (6 parameters). See WARNINGS for limitations.')
     lines.append('')
 
     # ML Predictions

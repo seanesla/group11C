@@ -1065,9 +1065,6 @@ def main():
         # Display results
         st.success(f"Found {len(df)} measurements from {df['MonitoringLocationIdentifier'].nunique()} monitoring stations")
 
-        # Prominent warning about undetectable contaminants
-        st.warning("⚠️ **Limitations**: This tool cannot detect lead, heavy metals, bacteria, pesticides, or PFAS. A high WQI score does NOT guarantee water is safe for drinking.")
-
         # Location info card
         st.subheader("Location Information")
         col1, col2, col3 = st.columns(3)
@@ -1087,23 +1084,60 @@ def main():
 
         st.divider()
 
-        # WQI Summary
-        st.subheader("Water Quality Summary")
-        if source_label:
+        # === PRIMARY: ML-Based Water Safety Score ===
+        if ml_predictions:
+            st.subheader("Estimated Water Safety Score")
+            st.caption("Primary indicator based on machine learning model")
+            if source_label:
+                st.caption(f"Data source: {source_label}")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                # ML Predicted WQI as primary metric
+                st.metric(
+                    "ML Safety Score",
+                    f"{ml_predictions['predicted_wqi']:.1f}",
+                    help="Machine learning prediction (0-100 scale) - more conservative than chemistry-only index"
+                )
+
+            with col2:
+                ml_classification = ml_predictions['predicted_classification']
+                ml_color = ml_predictions['wqi_color']
+                render_colored_card(ml_classification, ml_color, label="ML Classification")
+
+            with col3:
+                # Confidence
+                confidence_pct = ml_predictions['confidence'] * 100
+                confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
+                render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
+
+            # Uncertainty indicator for ML predictions near threshold
+            if ml_predictions['is_near_threshold']:
+                st.info(f"ℹ️ Prediction is near the {ml_predictions['near_threshold_name']}. Classification may vary with small changes in water quality.")
+
+            st.caption("Model trained on non-US data (Kaggle 1991–2017). US predictions may vary.")
+
+        st.divider()
+
+        # === SECONDARY: NSF Surface Water Index (Chemistry-Only) ===
+        st.subheader("NSF Surface Water Index")
+        st.caption("Chemistry-only score using 6 parameters (pH, DO, temperature, turbidity, nitrate, conductance)")
+        if source_label and not ml_predictions:
             st.caption(f"Data source: {source_label}")
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric(
-                "Overall WQI Score",
+                "Chemistry Index",
                 f"{wqi:.1f}",
-                help="Water Quality Index (0-100 scale)"
+                help="NSF-WQI style index based on 6 measured parameters"
             )
 
         with col2:
             color = get_wqi_color(classification)
-            render_colored_card(classification, color)
+            render_colored_card(classification, color, label="NSF Classification")
 
         with col3:
             # Show margin information instead of binary SAFE/UNSAFE
@@ -1127,57 +1161,22 @@ def main():
         if is_near:
             st.info(f"ℹ️ Score is near the {near_threshold}. Classification may change with small variations in water quality.")
 
+        # Disclaimer about chemistry-only limitation
+        st.warning(
+            "⚠️ **Chemistry-only index**: Based on 6 parameters (pH, DO, temperature, turbidity, "
+            "nitrate, conductance). Does **not** test for lead, bacteria, PFAS, pesticides, or other contaminants. "
+            "The ML Safety Score above is typically more conservative."
+        )
+
         # WQI Methodology Explainer
-        with st.expander(":material/bar_chart: How is WQI Calculated?", expanded=False):
+        with st.expander(":material/bar_chart: How is NSF-WQI Calculated?", expanded=False):
             display_wqi_methodology()
 
         st.divider()
 
-        # ML Predictions Section
+        # ML Predictions Details Section (expanded view with margin details)
         if ml_predictions:
-            st.subheader("ML Model Predictions")
-
-            st.caption("Model trained on non-US data (Kaggle 1991–2017). US predictions may vary.")
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                # ML Classification - 5-level
-                ml_classification = ml_predictions['predicted_classification']
-                ml_color = ml_predictions['wqi_color']
-
-                # Build margin subtitle
-                margin_parts = []
-                if ml_predictions['margin_up'] is not None:
-                    margin_parts.append(f"{ml_predictions['margin_up']} pts to {ml_predictions['next_up']}")
-                if ml_predictions['margin_down'] is not None:
-                    margin_parts.append(f"{ml_predictions['margin_down']} above {ml_predictions['next_down']}")
-                margin_subtitle = " | ".join(margin_parts) if margin_parts else None
-
-                render_colored_card(
-                    ml_classification,
-                    ml_color,
-                    subtitle=margin_subtitle,
-                    label="ML Predicted Quality"
-                )
-
-            with col2:
-                # ML Predicted WQI
-                st.metric(
-                    "ML Predicted WQI",
-                    f"{ml_predictions['predicted_wqi']:.1f}",
-                    help="Machine learning regression prediction"
-                )
-
-            with col3:
-                # Confidence
-                confidence_pct = ml_predictions['confidence'] * 100
-                confidence_color = "#00CC00" if confidence_pct >= 80 else "#FFCC00" if confidence_pct >= 60 else "#FF6600"
-                render_colored_card(f"{confidence_pct:.1f}%", confidence_color, label="Model Confidence")
-
-            # Uncertainty indicator for ML predictions near threshold
-            if ml_predictions['is_near_threshold']:
-                st.info(f"ℹ️ Prediction is near the {ml_predictions['near_threshold_name']}. Classification may vary with small changes in water quality.")
+            st.subheader("ML Prediction Details")
 
             # Show quality level details
             with st.expander("View Quality Level Details"):
