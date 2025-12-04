@@ -26,6 +26,8 @@ The goal is to make regulatory-grade water-quality data more accessible while hi
 
 ## Demo
 
+**Live site**: https://seanesla.github.io/group11C/
+
 Screenshots of the application are available in `docs/screenshots/`.
 
 ## Key Features
